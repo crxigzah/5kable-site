@@ -43,13 +43,32 @@
   .btn.primary{ background:rgba(0,201,167,0.15); border-color:rgba(0,201,167,0.35); color:var(--teal); }
   .btn.active{ background:rgba(0,201,167,0.22); border-color:var(--teal); color:var(--teal); }
 
+  .map-layout{ width:100%; display:flex; gap:16px; align-items:flex-start; justify-content:center; }
+
   #map-wrap{
-    width:100%; height:65vh; min-height:420px; border-radius:14px; overflow:hidden;
+    flex:1; min-width:0; height:65vh; min-height:420px; border-radius:14px; overflow:hidden;
     border:1px solid var(--border); box-shadow:0 20px 50px rgba(0,0,0,0.35); position:relative;
   }
   #map{ width:100%; height:100%; }
 
-  .hint{ color:var(--muted); font-size:12px; margin-top:12px; text-align:center; max-width:640px; }
+  #pano-panel{
+    width:340px; flex-shrink:0; height:65vh; min-height:420px; background:var(--panel);
+    border:1px solid var(--border); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;
+  }
+  #pano-view{ width:100%; flex:1; background:var(--panel2); }
+  #pano-placeholder{
+    flex:1; display:flex; align-items:center; justify-content:center; text-align:center;
+    color:var(--muted); font-size:13px; padding:24px; line-height:1.6;
+  }
+  #pano-footer{ padding:12px; border-top:1px solid var(--border); display:flex; gap:8px; }
+  #pano-footer .btn{ flex:1; font-size:12px; padding:9px 10px; }
+  #pano-status{ font-size:11px; color:var(--muted); padding:0 12px 10px; text-align:center; }
+
+  @media (max-width:900px){
+    .map-layout{ flex-direction:column; align-items:center; }
+    #pano-panel{ width:100%; max-width:560px; height:300px; }
+    #map-wrap{ width:100%; max-width:560px; }
+  }
 
   #config-warning{
     width:100%; max-width:640px; background:rgba(255,107,107,0.08); border:1px solid rgba(255,107,107,0.3);
@@ -57,6 +76,8 @@
   }
   #config-warning code{ background:var(--panel2); padding:1px 6px; border-radius:4px; font-size:12px; }
   #config-warning a{ color:var(--teal); }
+
+  .pac-container{ z-index:9999; }
 </style>
 </head>
 <body>
@@ -75,7 +96,8 @@
     This page needs its own Google Maps JavaScript API key to work — open <code>coverage-map.html</code> and replace
     <code>YOUR_GOOGLE_MAPS_API_KEY</code> with a real key from the
     <a href="https://console.cloud.google.com/google/maps-apis" target="_blank">Google Cloud Console</a>
-    (enable the <strong>Maps JavaScript API</strong> on that project).
+    (enable the <strong>Maps JavaScript API</strong> and <strong>Places API</strong> on that project — Places is needed
+    for the search-suggestions dropdown).
     Google also offers a no-billing-required <strong>Maps Demo Key</strong> if you just want to test this out first.
   </div>
 
@@ -83,31 +105,103 @@
     <input type="text" id="search-box" placeholder="Jump to a country or city...">
     <button class="btn primary" onclick="jumpToSearch()">Search</button>
     <button class="btn active" id="coverage-toggle-btn" onclick="toggleCoverage()">🔵 Coverage: On</button>
+    <button class="btn active" id="labels-toggle-btn" onclick="toggleLabels()">🏷️ Labels: On</button>
   </div>
 
-  <div id="map-wrap">
-    <div id="map"></div>
-  </div>
+  <div class="map-layout">
+    <div id="map-wrap">
+      <div id="map"></div>
+    </div>
 
-  <p class="hint">Blue lines/dots mark road-level Street View coverage. Coverage density is a genuine meta signal — sparse,
-    patchy coverage often narrows down rural regions or entire countries with limited Street View presence.</p>
+    <div id="pano-panel">
+      <div id="pano-placeholder">Click anywhere on a blue coverage line to preview that spot here.</div>
+      <div id="pano-view" style="display:none;"></div>
+      <div id="pano-status"></div>
+      <div id="pano-footer" style="display:none;">
+        <button class="btn" onclick="removeMarker()">✕ Remove marker</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <script>
-let map, coverageLayer, geocoder;
+let map, coverageLayer, geocoder, streetViewService, panorama, marker, autocomplete;
 let coverageOn = true;
+let labelsOn = true;
+
+const LABELS_OFF_STYLE = [{ elementType: 'labels', stylers: [{ visibility: 'off' }] }];
 
 function initCoverageMap(){
   geocoder = new google.maps.Geocoder();
+  streetViewService = new google.maps.StreetViewService();
+
   map = new google.maps.Map(document.getElementById('map'), {
     center: { lat: 20, lng: 0 },
     zoom: 3,
-    mapId: 'DEMO_MAP_ID',
     streetViewControl: false,
     fullscreenControl: false,
   });
+
   coverageLayer = new google.maps.StreetViewCoverageLayer();
   coverageLayer.setMap(map);
+
+  panorama = new google.maps.StreetViewPanorama(document.getElementById('pano-view'), {
+    addressControl: false, showRoadLabels: false, motionTracking: false, fullscreenControl: false,
+  });
+
+  map.addListener('click', (e) => handleMapClick(e.latLng));
+
+  // Autocomplete dropdown on the search box
+  autocomplete = new google.maps.places.Autocomplete(document.getElementById('search-box'), {
+    fields: ['geometry', 'name'],
+  });
+  autocomplete.addListener('place_changed', () => {
+    const place = autocomplete.getPlace();
+    if (!place.geometry) return;
+    if (place.geometry.viewport) map.fitBounds(place.geometry.viewport);
+    else { map.setCenter(place.geometry.location); map.setZoom(12); }
+  });
+}
+
+function handleMapClick(latLng){
+  const statusEl = document.getElementById('pano-status');
+  statusEl.textContent = 'Checking for coverage...';
+  streetViewService.getPanorama({
+    location: latLng, radius: 50, source: google.maps.StreetViewSource.OUTDOOR
+  }, (data, status) => {
+    if (status === 'OK') {
+      const pos = data.location.latLng;
+      placeMarker(pos);
+      panorama.setPano(data.location.pano);
+      panorama.setPov({ heading: 0, pitch: 0 });
+      showPano();
+      statusEl.textContent = data.location.description || '';
+    } else {
+      statusEl.textContent = 'No Street View coverage within ~50m of that click — try clicking closer to a blue line.';
+    }
+  });
+}
+
+function placeMarker(position){
+  if (marker) marker.setPosition(position);
+  else marker = new google.maps.Marker({ position, map, title: 'Preview location' });
+}
+
+function removeMarker(){
+  if (marker) { marker.setMap(null); marker = null; }
+  document.getElementById('pano-status').textContent = '';
+  hidePano();
+}
+
+function showPano(){
+  document.getElementById('pano-placeholder').style.display = 'none';
+  document.getElementById('pano-view').style.display = 'block';
+  document.getElementById('pano-footer').style.display = 'flex';
+}
+function hidePano(){
+  document.getElementById('pano-placeholder').style.display = 'flex';
+  document.getElementById('pano-view').style.display = 'none';
+  document.getElementById('pano-footer').style.display = 'none';
 }
 
 function toggleCoverage(){
@@ -116,6 +210,14 @@ function toggleCoverage(){
   const btn = document.getElementById('coverage-toggle-btn');
   btn.textContent = coverageOn ? '🔵 Coverage: On' : '⚪ Coverage: Off';
   btn.classList.toggle('active', coverageOn);
+}
+
+function toggleLabels(){
+  labelsOn = !labelsOn;
+  map.setOptions({ styles: labelsOn ? [] : LABELS_OFF_STYLE });
+  const btn = document.getElementById('labels-toggle-btn');
+  btn.textContent = labelsOn ? '🏷️ Labels: On' : '🏷️ Labels: Off';
+  btn.classList.toggle('active', labelsOn);
 }
 
 function jumpToSearch(){
@@ -135,7 +237,7 @@ document.getElementById('search-box').addEventListener('keydown', (e) => {
 
 function handleMapsAuthFailure(){
   document.getElementById('config-warning').style.display = 'block';
-  document.getElementById('map-wrap').style.display = 'none';
+  document.querySelector('.map-layout').style.display = 'none';
 }
 window.gm_authFailure = handleMapsAuthFailure;
 </script>
@@ -144,11 +246,11 @@ window.gm_authFailure = handleMapsAuthFailure;
     const key = 'AIzaSyBhcV4E74jmlUv5dcCZThOEutgqiYqGQp0';
     if (key === 'YOUR_GOOGLE_MAPS_API_KEY') {
       document.getElementById('config-warning').style.display = 'block';
-      document.getElementById('map-wrap').style.display = 'none';
+      document.querySelector('.map-layout').style.display = 'none';
       return;
     }
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&callback=initCoverageMap&v=weekly&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initCoverageMap&v=weekly&loading=async`;
     script.async = true;
     document.head.appendChild(script);
   })();
