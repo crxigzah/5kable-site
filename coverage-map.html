@@ -119,7 +119,6 @@
     <button class="btn primary" onclick="jumpToSearch()">Search</button>
     <button class="btn active" id="coverage-toggle-btn" onclick="toggleCoverage()">🔵 Coverage: On</button>
     <button class="btn active" id="labels-toggle-btn" onclick="toggleLabels()">🏷️ Labels: On</button>
-    <button class="btn active" id="mask-toggle-btn" onclick="toggleMask()">🌍 GeoGuessr Countries Only: On</button>
   </div>
 
   <div class="map-layout">
@@ -144,32 +143,8 @@
 let map, coverageLayer, geocoder, streetViewService, panorama, marker, autocomplete;
 let coverageOn = true;
 let labelsOn = true;
-let maskOn = true;
 
 const LABELS_OFF_STYLE = [{ elementType: 'labels', stylers: [{ visibility: 'off' }] }];
-
-// Same 114-country list as the rest of 5kable (admin.html's SUPPORTED_COUNTRIES),
-// mapped to ISO 3166-1 alpha-3 codes so it can be matched against the boundary
-// GeoJSON below. Kept in sync manually — if SUPPORTED_COUNTRIES changes, update here too.
-const GEOGUESSR_ISO3 = new Set([
-  "ALB","AND","ARG","AUS","AUT","BGD","BEL","BTN","BOL","BWA","BRA","BGR","KHM","CAN","CHL",
-  "COL","CRI","HRV","CYP","CZE","DNK","DOM","ECU","EST","SWZ","FIN","FRA",
-  "GEO","DEU","GHA","GRC","GRL","GTM","HUN",
-  "ISL","IND","IDN","IRL","ISR","ITA","JPN","JOR",
-  "KAZ","KEN","KGZ","LAO","LVA","LBN","LSO",
-  "LIE","LTU","LUX","MDG","MYS","MLT",
-  "MEX","MCO","MNG","MNE","NAM","NPL","NLD",
-  "NZL","NGA","MKD","NOR","OMN","PAK",
-  "PSE","PAN","PER","PHL","POL","PRT","QAT",
-  "ROU","RUS","RWA","SMR","STP","SEN",
-  "SRB","SGP","SVK","SVN","ZAF","KOR",
-  "ESP","LKA","SWE","CHE","TWN","THA","TUN",
-  "TUR","UGA","UKR","ARE","GBR",
-  "USA","URY","VNM",
-  "BMU","CUW","FRO","GUM","IMN","JEY",
-  "MNP","ASM","PRI","VIR","CXR","REU"
-]);
-const COUNTRY_BOUNDARIES_URL = 'https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/countries.geojson';
 
 function initCoverageMap(){
   geocoder = new google.maps.Geocoder();
@@ -184,22 +159,6 @@ function initCoverageMap(){
 
   coverageLayer = new google.maps.StreetViewCoverageLayer();
   coverageLayer.setMap(map);
-
-  // "GeoGuessr countries only" mask: dims out every country that isn't in
-  // the game's coverage pool, so leftover Street View lines in non-playable
-  // countries (or countries GeoGuessr just doesn't use) are visually muted.
-  map.data.loadGeoJson(COUNTRY_BOUNDARIES_URL, null, () => {
-    map.data.setStyle((feature) => {
-      const iso = feature.getId();
-      const covered = GEOGUESSR_ISO3.has(iso);
-      return {
-        fillColor: '#000000',
-        fillOpacity: covered ? 0 : 0.55,
-        strokeWeight: 0,
-        clickable: false,
-      };
-    });
-  });
 
   panorama = new google.maps.StreetViewPanorama(document.getElementById('pano-view'), {
     addressControl: false, showRoadLabels: false, motionTracking: false, fullscreenControl: false,
@@ -274,22 +233,6 @@ function toggleLabels(){
   const btn = document.getElementById('labels-toggle-btn');
   btn.textContent = labelsOn ? '🏷️ Labels: On' : '🏷️ Labels: Off';
   btn.classList.toggle('active', labelsOn);
-}
-
-function toggleMask(){
-  maskOn = !maskOn;
-  map.data.setStyle((feature) => {
-    const covered = GEOGUESSR_ISO3.has(feature.getId());
-    return {
-      fillColor: '#000000',
-      fillOpacity: (maskOn && !covered) ? 0.55 : 0,
-      strokeWeight: 0,
-      clickable: false,
-    };
-  });
-  const btn = document.getElementById('mask-toggle-btn');
-  btn.textContent = maskOn ? '🌍 GeoGuessr Countries Only: On' : '🌍 GeoGuessr Countries Only: Off';
-  btn.classList.toggle('active', maskOn);
 }
 
 function jumpToSearch(){
