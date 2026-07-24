@@ -119,7 +119,7 @@
     <button class="btn primary" onclick="jumpToSearch()">Search</button>
     <button class="btn active" id="coverage-toggle-btn" onclick="toggleCoverage()">🔵 Coverage: On</button>
     <button class="btn active" id="labels-toggle-btn" onclick="toggleLabels()">🏷️ Labels: On</button>
-    <button class="btn active" id="contrast-toggle-btn" onclick="toggleContrast()">🎨 High Contrast: On</button>
+    <button class="btn" id="reset-lock-btn" onclick="resetCountryLock()" style="display:none;">🔓 Show all countries</button>
   </div>
 
   <div class="map-layout">
@@ -147,23 +147,29 @@ let labelsOn = true;
 
 const LABELS_OFF_STYLE = [{ elementType: 'labels', stylers: [{ visibility: 'off' }] }];
 
-// Flatter, higher-contrast base style so Google's fixed-color coverage
-// lines read as distinct lines rather than blending into the default
-// map's muted grays/teals. Coverage layer color itself can't be changed —
-// this just gives it a cleaner backdrop to sit on top of.
-const HIGH_CONTRAST_STYLE = [
-  { elementType: 'geometry', stylers: [{ color: '#f2efe4' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#6b6b5a' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#f2efe4' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#a9d1e0' }] },
-  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#e4e8d8' }] },
-  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#f7d774' }, { visibility: 'simplified' }] },
-  { featureType: 'road', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#8a8a78' }] },
-];
-let highContrastOn = true;
+// Used for the "lock to one country" feature: dims out every country
+// except the one searched for, and restricts panning to its bounds.
+const COUNTRY_BOUNDARIES_URL = 'https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/countries.geojson';
+// Handles a few common name mismatches between what Autocomplete returns
+// and this boundary file's naming (e.g. official vs common name). Best
+// effort — if a country isn't in here and doesn't match exactly, the mask
+// step is skipped for safety (see lockToCountry) rather than risk hiding
+// the wrong country.
+const COUNTRY_NAME_ALIASES = {
+  'czechia': 'czech republic',
+  'south korea': 'republic of korea',
+  'united states': 'united states of america',
+  'russia': 'russian federation',
+  'ivory coast': "cote d'ivoire",
+  'the bahamas': 'bahamas',
+  'the gambia': 'gambia',
+  'myanmar': 'burma',
+  'laos': "lao people's democratic republic",
+  'vietnam': 'viet nam',
+  'syria': 'syrian arab republic',
+};
+let boundariesLoaded = false;
+let lockedCountryName = null;
 
 function initCoverageMap(){
   geocoder = new google.maps.Geocoder();
@@ -174,7 +180,6 @@ function initCoverageMap(){
     zoom: 3,
     streetViewControl: false,
     fullscreenControl: false,
-    styles: HIGH_CONTRAST_STYLE,
   });
 
   coverageLayer = new google.maps.StreetViewCoverageLayer();
@@ -188,13 +193,19 @@ function initCoverageMap(){
 
   // Autocomplete dropdown on the search box
   autocomplete = new google.maps.places.Autocomplete(document.getElementById('search-box'), {
-    fields: ['geometry', 'name'],
+    fields: ['geometry', 'name', 'types'],
   });
   autocomplete.addListener('place_changed', () => {
     const place = autocomplete.getPlace();
     if (!place.geometry) return;
-    if (place.geometry.viewport) map.fitBounds(place.geometry.viewport);
-    else { map.setCenter(place.geometry.location); map.setZoom(12); }
+    const bounds = place.geometry.viewport || place.geometry.bounds;
+    if (bounds) map.fitBounds(bounds); else { map.setCenter(place.geometry.location); map.setZoom(12); }
+
+    if (place.types && place.types.includes('country')) {
+      lockToCountry(place.name, bounds);
+    } else {
+      resetCountryLock();
+    }
   });
 }
 
@@ -247,26 +258,74 @@ function toggleCoverage(){
   btn.classList.toggle('active', coverageOn);
 }
 
-function applyMapStyle(){
-  let style = highContrastOn ? HIGH_CONTRAST_STYLE.slice() : [];
-  if (!labelsOn) style = style.concat(LABELS_OFF_STYLE);
-  map.setOptions({ styles: style });
-}
-
 function toggleLabels(){
   labelsOn = !labelsOn;
-  applyMapStyle();
+  map.setOptions({ styles: labelsOn ? [] : LABELS_OFF_STYLE });
   const btn = document.getElementById('labels-toggle-btn');
   btn.textContent = labelsOn ? '🏷️ Labels: On' : '🏷️ Labels: Off';
   btn.classList.toggle('active', labelsOn);
 }
 
-function toggleContrast(){
-  highContrastOn = !highContrastOn;
-  applyMapStyle();
-  const btn = document.getElementById('contrast-toggle-btn');
-  btn.textContent = highContrastOn ? '🎨 High Contrast: On' : '🎨 High Contrast: Off';
-  btn.classList.toggle('active', highContrastOn);
+function normalizeCountryName(name){
+  return name.toLowerCase().trim();
+}
+
+function lockToCountry(countryName, bounds){
+  lockedCountryName = normalizeCountryName(countryName);
+  document.getElementById('reset-lock-btn').style.display = '';
+
+  // Restrict panning/zooming to roughly this country's area.
+  if (bounds) {
+    map.setOptions({ restriction: { latLngBounds: bounds, strictBounds: false } });
+  }
+
+  const applyLockStyle = () => {
+    let matchedAny = false;
+    map.data.forEach((feature) => {
+      const featName = normalizeCountryName(feature.getProperty('name') || '');
+      const isMatch = featName === lockedCountryName ||
+        COUNTRY_NAME_ALIASES[lockedCountryName] === featName ||
+        COUNTRY_NAME_ALIASES[featName] === lockedCountryName;
+      if (isMatch) matchedAny = true;
+    });
+
+    map.data.setStyle((feature) => {
+      const featName = normalizeCountryName(feature.getProperty('name') || '');
+      const isMatch = featName === lockedCountryName ||
+        COUNTRY_NAME_ALIASES[lockedCountryName] === featName ||
+        COUNTRY_NAME_ALIASES[featName] === lockedCountryName;
+      // Safety: if we never found a match for the locked country at all,
+      // don't mask anything — better to show everything than risk hiding
+      // the one country the person is actually looking for.
+      const shouldMask = matchedAny && !isMatch;
+      return {
+        fillColor: '#000000',
+        fillOpacity: shouldMask ? 0.6 : 0,
+        strokeWeight: 0,
+        clickable: false,
+      };
+    });
+  };
+
+  if (boundariesLoaded) {
+    applyLockStyle();
+  } else {
+    map.data.loadGeoJson(COUNTRY_BOUNDARIES_URL, null, () => {
+      boundariesLoaded = true;
+      applyLockStyle();
+    });
+  }
+}
+
+function resetCountryLock(){
+  lockedCountryName = null;
+  document.getElementById('reset-lock-btn').style.display = 'none';
+  map.setOptions({ restriction: null });
+  if (boundariesLoaded) {
+    map.data.setStyle({ fillOpacity: 0, strokeWeight: 0, clickable: false });
+  }
+  map.setZoom(3);
+  map.setCenter({ lat: 20, lng: 0 });
 }
 
 function jumpToSearch(){
