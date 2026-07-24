@@ -136,6 +136,7 @@
       <div id="pano-status"></div>
       <div id="pano-footer" style="display:none;">
         <button class="btn" onclick="removeMarker()">✕ Remove marker</button>
+        <a class="btn primary" id="open-in-maps-btn" href="#" target="_blank" rel="noopener" style="text-decoration:none;text-align:center;">🗺️ Open in Google Maps</a>
       </div>
     </div>
   </div>
@@ -193,6 +194,8 @@ function handleMapClick(latLng){
       panorama.setPov({ heading: 0, pitch: 0 });
       showPano();
       statusEl.textContent = data.location.description || '';
+      document.getElementById('open-in-maps-btn').href =
+        `https://www.google.com/maps/@?api=1&map_action=pano&pano=${data.location.pano}`;
     } else {
       statusEl.textContent = 'No Street View coverage within ~50m of that click — try clicking closer to a blue line.';
     }
