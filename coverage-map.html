@@ -119,6 +119,7 @@
     <button class="btn primary" onclick="jumpToSearch()">Search</button>
     <button class="btn active" id="coverage-toggle-btn" onclick="toggleCoverage()">🔵 Coverage: On</button>
     <button class="btn active" id="labels-toggle-btn" onclick="toggleLabels()">🏷️ Labels: On</button>
+    <button class="btn active" id="contrast-toggle-btn" onclick="toggleContrast()">🎨 High Contrast: On</button>
   </div>
 
   <div class="map-layout">
@@ -146,6 +147,24 @@ let labelsOn = true;
 
 const LABELS_OFF_STYLE = [{ elementType: 'labels', stylers: [{ visibility: 'off' }] }];
 
+// Flatter, higher-contrast base style so Google's fixed-color coverage
+// lines read as distinct lines rather than blending into the default
+// map's muted grays/teals. Coverage layer color itself can't be changed —
+// this just gives it a cleaner backdrop to sit on top of.
+const HIGH_CONTRAST_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#f2efe4' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#6b6b5a' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#f2efe4' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#a9d1e0' }] },
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#e4e8d8' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#f7d774' }, { visibility: 'simplified' }] },
+  { featureType: 'road', elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#8a8a78' }] },
+];
+let highContrastOn = true;
+
 function initCoverageMap(){
   geocoder = new google.maps.Geocoder();
   streetViewService = new google.maps.StreetViewService();
@@ -155,6 +174,7 @@ function initCoverageMap(){
     zoom: 3,
     streetViewControl: false,
     fullscreenControl: false,
+    styles: HIGH_CONTRAST_STYLE,
   });
 
   coverageLayer = new google.maps.StreetViewCoverageLayer();
@@ -227,12 +247,26 @@ function toggleCoverage(){
   btn.classList.toggle('active', coverageOn);
 }
 
+function applyMapStyle(){
+  let style = highContrastOn ? HIGH_CONTRAST_STYLE.slice() : [];
+  if (!labelsOn) style = style.concat(LABELS_OFF_STYLE);
+  map.setOptions({ styles: style });
+}
+
 function toggleLabels(){
   labelsOn = !labelsOn;
-  map.setOptions({ styles: labelsOn ? [] : LABELS_OFF_STYLE });
+  applyMapStyle();
   const btn = document.getElementById('labels-toggle-btn');
   btn.textContent = labelsOn ? '🏷️ Labels: On' : '🏷️ Labels: Off';
   btn.classList.toggle('active', labelsOn);
+}
+
+function toggleContrast(){
+  highContrastOn = !highContrastOn;
+  applyMapStyle();
+  const btn = document.getElementById('contrast-toggle-btn');
+  btn.textContent = highContrastOn ? '🎨 High Contrast: On' : '🎨 High Contrast: Off';
+  btn.classList.toggle('active', highContrastOn);
 }
 
 function jumpToSearch(){
