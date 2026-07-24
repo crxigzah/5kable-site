@@ -119,7 +119,6 @@
     <button class="btn primary" onclick="jumpToSearch()">Search</button>
     <button class="btn active" id="coverage-toggle-btn" onclick="toggleCoverage()">🔵 Coverage: On</button>
     <button class="btn active" id="labels-toggle-btn" onclick="toggleLabels()">🏷️ Labels: On</button>
-    <button class="btn" id="reset-lock-btn" onclick="resetCountryLock()" style="display:none;">🔓 Show all countries</button>
   </div>
 
   <div class="map-layout">
@@ -147,30 +146,6 @@ let labelsOn = true;
 
 const LABELS_OFF_STYLE = [{ elementType: 'labels', stylers: [{ visibility: 'off' }] }];
 
-// Used for the "lock to one country" feature: dims out every country
-// except the one searched for, and restricts panning to its bounds.
-const COUNTRY_BOUNDARIES_URL = 'https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/countries.geojson';
-// Handles a few common name mismatches between what Autocomplete returns
-// and this boundary file's naming (e.g. official vs common name). Best
-// effort — if a country isn't in here and doesn't match exactly, the mask
-// step is skipped for safety (see lockToCountry) rather than risk hiding
-// the wrong country.
-const COUNTRY_NAME_ALIASES = {
-  'czechia': 'czech republic',
-  'south korea': 'republic of korea',
-  'united states': 'united states of america',
-  'russia': 'russian federation',
-  'ivory coast': "cote d'ivoire",
-  'the bahamas': 'bahamas',
-  'the gambia': 'gambia',
-  'myanmar': 'burma',
-  'laos': "lao people's democratic republic",
-  'vietnam': 'viet nam',
-  'syria': 'syrian arab republic',
-};
-let boundariesLoaded = false;
-let lockedCountryName = null;
-
 function initCoverageMap(){
   geocoder = new google.maps.Geocoder();
   streetViewService = new google.maps.StreetViewService();
@@ -193,19 +168,13 @@ function initCoverageMap(){
 
   // Autocomplete dropdown on the search box
   autocomplete = new google.maps.places.Autocomplete(document.getElementById('search-box'), {
-    fields: ['geometry', 'name', 'types'],
+    fields: ['geometry', 'name'],
   });
   autocomplete.addListener('place_changed', () => {
     const place = autocomplete.getPlace();
     if (!place.geometry) return;
     const bounds = place.geometry.viewport || place.geometry.bounds;
     if (bounds) map.fitBounds(bounds); else { map.setCenter(place.geometry.location); map.setZoom(12); }
-
-    if (place.types && place.types.includes('country')) {
-      lockToCountry(place.name, bounds);
-    } else {
-      resetCountryLock();
-    }
   });
 }
 
@@ -264,68 +233,6 @@ function toggleLabels(){
   const btn = document.getElementById('labels-toggle-btn');
   btn.textContent = labelsOn ? '🏷️ Labels: On' : '🏷️ Labels: Off';
   btn.classList.toggle('active', labelsOn);
-}
-
-function normalizeCountryName(name){
-  return name.toLowerCase().trim();
-}
-
-function lockToCountry(countryName, bounds){
-  lockedCountryName = normalizeCountryName(countryName);
-  document.getElementById('reset-lock-btn').style.display = '';
-
-  // Restrict panning/zooming to roughly this country's area.
-  if (bounds) {
-    map.setOptions({ restriction: { latLngBounds: bounds, strictBounds: false } });
-  }
-
-  const applyLockStyle = () => {
-    let matchedAny = false;
-    map.data.forEach((feature) => {
-      const featName = normalizeCountryName(feature.getProperty('name') || '');
-      const isMatch = featName === lockedCountryName ||
-        COUNTRY_NAME_ALIASES[lockedCountryName] === featName ||
-        COUNTRY_NAME_ALIASES[featName] === lockedCountryName;
-      if (isMatch) matchedAny = true;
-    });
-
-    map.data.setStyle((feature) => {
-      const featName = normalizeCountryName(feature.getProperty('name') || '');
-      const isMatch = featName === lockedCountryName ||
-        COUNTRY_NAME_ALIASES[lockedCountryName] === featName ||
-        COUNTRY_NAME_ALIASES[featName] === lockedCountryName;
-      // Safety: if we never found a match for the locked country at all,
-      // don't mask anything — better to show everything than risk hiding
-      // the one country the person is actually looking for.
-      const shouldMask = matchedAny && !isMatch;
-      return {
-        fillColor: '#000000',
-        fillOpacity: shouldMask ? 0.6 : 0,
-        strokeWeight: 0,
-        clickable: false,
-      };
-    });
-  };
-
-  if (boundariesLoaded) {
-    applyLockStyle();
-  } else {
-    map.data.loadGeoJson(COUNTRY_BOUNDARIES_URL, null, () => {
-      boundariesLoaded = true;
-      applyLockStyle();
-    });
-  }
-}
-
-function resetCountryLock(){
-  lockedCountryName = null;
-  document.getElementById('reset-lock-btn').style.display = 'none';
-  map.setOptions({ restriction: null });
-  if (boundariesLoaded) {
-    map.data.setStyle({ fillOpacity: 0, strokeWeight: 0, clickable: false });
-  }
-  map.setZoom(3);
-  map.setCenter({ lat: 20, lng: 0 });
 }
 
 function jumpToSearch(){
