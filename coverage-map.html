@@ -54,6 +54,7 @@
   #pano-panel{
     width:340px; flex-shrink:0; height:65vh; min-height:420px; background:var(--panel);
     border:1px solid var(--border); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;
+    position:relative;
   }
   #pano-view{ width:100%; flex:1; background:var(--panel2); }
   #pano-placeholder{
@@ -63,6 +64,18 @@
   #pano-footer{ padding:12px; border-top:1px solid var(--border); display:flex; gap:8px; }
   #pano-footer .btn{ flex:1; font-size:12px; padding:9px 10px; }
   #pano-status{ font-size:11px; color:var(--muted); padding:0 12px 10px; text-align:center; }
+
+  .fs-btn{
+    position:absolute; top:10px; right:10px; z-index:20;
+    background:rgba(16,16,30,0.85); border:1px solid var(--border); color:var(--text);
+    width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:15px;
+    display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);
+  }
+  .fs-btn:hover{ border-color:var(--teal); color:var(--teal); }
+
+  #map-wrap:fullscreen, #pano-panel:fullscreen{ border-radius:0; height:100%; width:100%; }
+  #map-wrap:fullscreen #map{ height:100%; }
+  #pano-panel:fullscreen #pano-view{ flex:1; }
 
   @media (max-width:900px){
     .map-layout{ flex-direction:column; align-items:center; }
@@ -84,7 +97,7 @@
 
 <header>
   <a href="/" class="brand">🌍 5kable</a>
-  <a href="/">← Back home</a>
+  <a href="/" title="Home" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;background:var(--panel2);border:1px solid var(--border);font-size:15px;">🏠</a>
 </header>
 
 <main>
@@ -110,10 +123,12 @@
 
   <div class="map-layout">
     <div id="map-wrap">
+      <button class="fs-btn" id="map-fs-btn" onclick="toggleFullscreen('map-wrap','map-fs-btn')" title="Fullscreen map">⛶</button>
       <div id="map"></div>
     </div>
 
     <div id="pano-panel">
+      <button class="fs-btn" id="pano-fs-btn" onclick="toggleFullscreen('pano-panel','pano-fs-btn')" title="Fullscreen preview">⛶</button>
       <div id="pano-placeholder">Click anywhere on a blue coverage line to preview that spot here.</div>
       <div id="pano-view" style="display:none;"></div>
       <div id="pano-status"></div>
@@ -233,6 +248,32 @@ function jumpToSearch(){
 }
 document.getElementById('search-box').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') jumpToSearch();
+});
+
+function toggleFullscreen(elId, btnId){
+  const el = document.getElementById(elId);
+  if (document.fullscreenElement === el) {
+    document.exitFullscreen();
+  } else {
+    el.requestFullscreen().catch(() => {
+      alert('Fullscreen isn\'t available for this element in your browser.');
+    });
+  }
+}
+
+// Whichever element is fullscreen (or neither), keep icons in sync and make
+// sure Maps/Street View redraw correctly at their new size either way —
+// this fires on Esc-key exits too, not just our own button.
+document.addEventListener('fullscreenchange', () => {
+  const mapFsBtn = document.getElementById('map-fs-btn');
+  const panoFsBtn = document.getElementById('pano-fs-btn');
+  const fsEl = document.fullscreenElement;
+  mapFsBtn.textContent = fsEl && fsEl.id === 'map-wrap' ? '✕' : '⛶';
+  panoFsBtn.textContent = fsEl && fsEl.id === 'pano-panel' ? '✕' : '⛶';
+  setTimeout(() => {
+    if (map) google.maps.event.trigger(map, 'resize');
+    if (panorama) google.maps.event.trigger(panorama, 'resize');
+  }, 100);
 });
 
 function handleMapsAuthFailure(){
