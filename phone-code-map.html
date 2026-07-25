@@ -993,7 +993,7 @@ panelToggle.addEventListener('click', () => {
 });
 scrim.addEventListener('click', closePanel);
 
-const API = 'https://geoanalyzerx.onrender.com';
+const API = 'https://api.5kable.net';
 fetch(`${API}/dial_region_maps/list`)
   .then(res => res.json())
   .then(d => { dialRegionMaps = d.maps || {}; })
