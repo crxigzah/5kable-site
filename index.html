@@ -1374,7 +1374,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
       <div class="form-group">
         <label>Phone Number</label>
         <div style="display:flex;gap:8px;">
-          <select id="reg-phone-code" style="flex:0 0 110px;background:#0d0d18;border:1px solid #1e1e35;color:#e0e0f0;padding:11px 8px;border-radius:10px;font-size:14px;"></select>
+          <select id="reg-phone-code" style="flex:0 0 150px;background:#0d0d18;border:1px solid #1e1e35;color:#e0e0f0;padding:11px 8px;border-radius:10px;font-size:14px;"></select>
           <input id="reg-phone" type="tel" placeholder="412 345 678" autocomplete="tel" style="flex:1;"/>
         </div>
       </div>
@@ -1653,10 +1653,16 @@ const PHONE_COUNTRY_CODES = [
 ];
 PHONE_COUNTRY_CODES.sort((a,b) => a.name.localeCompare(b.name));
 
+function isoToFlagEmoji(iso) {
+  return iso.toUpperCase().replace(/./g, c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65));
+}
+
 function initPhoneCodeDropdown() {
   const sel = document.getElementById('reg-phone-code');
   if (!sel) return;
-  sel.innerHTML = PHONE_COUNTRY_CODES.map(c => `<option value="${c.dial}">${c.iso} ${c.dial}</option>`).join('');
+  sel.innerHTML = PHONE_COUNTRY_CODES.map(c =>
+    `<option value="${c.dial}">${isoToFlagEmoji(c.iso)} ${c.name} (${c.dial})</option>`
+  ).join('');
   // Best-effort default based on the browser's locale, falls back to +1
   const locale = (navigator.language || 'en-US').split('-')[1];
   const match = PHONE_COUNTRY_CODES.find(c => c.iso === locale);
