@@ -1374,7 +1374,15 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
       <div class="form-group">
         <label>Phone Number</label>
         <div style="display:flex;gap:8px;">
-          <select id="reg-phone-code" style="flex:0 0 150px;background:#0d0d18;border:1px solid #1e1e35;color:#e0e0f0;padding:11px 8px;border-radius:10px;font-size:14px;"></select>
+          <div id="phone-code-wrap" style="flex:0 0 110px;position:relative;">
+            <button type="button" id="phone-code-btn" onclick="togglePhoneCodeList(event)" style="width:100%;background:#0d0d18;border:1px solid #1e1e35;color:#e0e0f0;padding:11px 8px;border-radius:10px;font-size:14px;display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <img id="phone-code-flag" src="" style="width:20px;height:14px;border-radius:2px;object-fit:cover;flex-shrink:0;">
+              <span id="phone-code-label" style="flex:1;text-align:left;">+1</span>
+              <span style="color:#8888aa;font-size:10px;">▾</span>
+            </button>
+            <div id="phone-code-list" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;width:260px;max-height:260px;overflow-y:auto;background:#14141f;border:1px solid #2a2a3e;border-radius:10px;z-index:50;box-shadow:0 12px 32px rgba(0,0,0,0.45);"></div>
+            <input type="hidden" id="reg-phone-code" value="+1">
+          </div>
           <input id="reg-phone" type="tel" placeholder="412 345 678" autocomplete="tel" style="flex:1;"/>
         </div>
       </div>
@@ -1653,20 +1661,47 @@ const PHONE_COUNTRY_CODES = [
 ];
 PHONE_COUNTRY_CODES.sort((a,b) => a.name.localeCompare(b.name));
 
-function isoToFlagEmoji(iso) {
-  return iso.toUpperCase().replace(/./g, c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65));
+function flagUrl(iso) {
+  return `https://flagcdn.com/24x18/${iso.toLowerCase()}.png`;
 }
 
+function selectPhoneCode(dial, iso) {
+  document.getElementById('reg-phone-code').value = dial;
+  document.getElementById('phone-code-label').textContent = dial;
+  document.getElementById('phone-code-flag').src = flagUrl(iso);
+  document.getElementById('phone-code-list').style.display = 'none';
+}
+
+function togglePhoneCodeList(e) {
+  e.stopPropagation();
+  const list = document.getElementById('phone-code-list');
+  list.style.display = (list.style.display === 'none' || !list.style.display) ? 'block' : 'none';
+}
+
+// Close the dropdown if the user clicks anywhere outside it
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('phone-code-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    const list = document.getElementById('phone-code-list');
+    if (list) list.style.display = 'none';
+  }
+});
+
 function initPhoneCodeDropdown() {
-  const sel = document.getElementById('reg-phone-code');
-  if (!sel) return;
-  sel.innerHTML = PHONE_COUNTRY_CODES.map(c =>
-    `<option value="${c.dial}">${isoToFlagEmoji(c.iso)} ${c.name} (${c.dial})</option>`
-  ).join('');
-  // Best-effort default based on the browser's locale, falls back to +1
+  const list = document.getElementById('phone-code-list');
+  if (!list) return;
+  list.innerHTML = PHONE_COUNTRY_CODES.map(c => `
+    <div class="phone-code-option" onclick="selectPhoneCode('${c.dial}','${c.iso}')"
+         style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:13px;color:#e0e0f0;"
+         onmouseover="this.style.background='#1e1e2e'" onmouseout="this.style.background='transparent'">
+      <img src="${flagUrl(c.iso)}" style="width:20px;height:14px;border-radius:2px;object-fit:cover;flex-shrink:0;">
+      <span style="flex:1;">${c.name}</span>
+      <span style="color:#8888aa;">${c.dial}</span>
+    </div>`).join('');
+  // Best-effort default based on the browser's locale, falls back to +1 (US)
   const locale = (navigator.language || 'en-US').split('-')[1];
-  const match = PHONE_COUNTRY_CODES.find(c => c.iso === locale);
-  if (match) sel.value = match.dial;
+  const match = PHONE_COUNTRY_CODES.find(c => c.iso === locale) || PHONE_COUNTRY_CODES.find(c => c.dial === '+1');
+  if (match) selectPhoneCode(match.dial, match.iso);
 }
 initPhoneCodeDropdown();
 
