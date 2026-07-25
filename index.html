@@ -930,7 +930,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
           <li class="no">Geography-enhanced AI</li>
           <li class="no">Pro badge</li>
         </ul>
-        <button class="btn btn-outline" onclick="getStarted()" style="margin-top:auto;">Get Started Free</button>
+        <button class="btn btn-outline" id="pricing-free-btn" onclick="getStarted()" style="margin-top:auto;">Get Started Free</button>
       </div>
       <div class="price-card featured">
         <div class="price-badge">Most Popular</div>
@@ -948,7 +948,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
           <li>Priority support via Discord</li>
           <li>Pro badge on your account</li>
         </ul>
-        <button class="btn btn-primary" onclick="upgradeToPro()" style="margin-top:auto;">Upgrade to Pro</button>
+        <button class="btn btn-primary" id="pricing-pro-btn" onclick="upgradeToPro()" style="margin-top:auto;">Upgrade to Pro</button>
       </div>
     </div>
 
@@ -1472,7 +1472,7 @@ function getUser()  { try { return JSON.parse(localStorage.getItem('kbl_user'));
 
 async function checkAuth() {
   const token = getToken();
-  if (!token) return;
+  if (!token) { updatePricingButtons(); return; }
   try {
     const res  = await fetch(API + '/auth/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
     const data = await res.json();
@@ -1485,6 +1485,44 @@ async function checkAuth() {
     // API offline show cached user if available
     const user = getUser();
     if (user) showDashboard(user, token);
+  }
+  updatePricingButtons();
+}
+
+// Keeps the landing-page pricing cards honest for logged-in users: a Pro
+// user who navigates back to Home (goHome()) would otherwise still see a
+// generic "Upgrade to Pro" button, which re-triggers checkout and can create
+// a duplicate subscription. This reflects their real tier instead.
+function updatePricingButtons() {
+  const freeBtn = document.getElementById('pricing-free-btn');
+  const proBtn  = document.getElementById('pricing-pro-btn');
+  if (!freeBtn || !proBtn) return;
+  const user = getUser();
+  const token = getToken();
+  if (!user || !token) {
+    // Logged out — restore defaults
+    freeBtn.textContent = 'Get Started Free';
+    freeBtn.disabled = false;
+    freeBtn.onclick = getStarted;
+    proBtn.textContent = 'Upgrade to Pro';
+    proBtn.disabled = false;
+    proBtn.onclick = upgradeToPro;
+    return;
+  }
+  if (user.tier === 'pro') {
+    proBtn.textContent = "You're on Pro ⭐";
+    proBtn.disabled = true;
+    proBtn.onclick = null;
+    freeBtn.textContent = 'Current Plan: Pro';
+    freeBtn.disabled = true;
+    freeBtn.onclick = null;
+  } else {
+    freeBtn.textContent = 'Current Plan';
+    freeBtn.disabled = true;
+    freeBtn.onclick = null;
+    proBtn.textContent = 'Upgrade to Pro';
+    proBtn.disabled = false;
+    proBtn.onclick = upgradeToPro;
   }
 }
 
@@ -1739,6 +1777,7 @@ function goHome() {
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'none';
   window.scrollTo(0, 0);
+  updatePricingButtons();
 }
 
 function goToDashboard() {
