@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://geoanalyzerx.net/sitemap.xml
+Sitemap: https://5kable.net/sitemap.xml
