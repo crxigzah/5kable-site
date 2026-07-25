@@ -2867,10 +2867,20 @@ if (urlParams.get('upgrade') === 'success') {
   });
 }
 
-// Close modal on overlay click
-document.getElementById('auth-modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('auth-modal')) closeModal();
-});
+// Close modal on overlay click — but only if the click genuinely started
+// AND ended on the backdrop itself. A single 'click' listener closes the
+// modal whenever a drag-to-select-text (e.g. selecting an email/username
+// to copy it) ends slightly outside the input, since the mouseup can land
+// on the backdrop even though the selection started inside the field.
+(function() {
+  const authModal = document.getElementById('auth-modal');
+  let mouseDownOnBackdrop = false;
+  authModal.addEventListener('mousedown', e => { mouseDownOnBackdrop = (e.target === authModal); });
+  authModal.addEventListener('mouseup', e => {
+    if (mouseDownOnBackdrop && e.target === authModal) closeModal();
+    mouseDownOnBackdrop = false;
+  });
+})();
 
 // Enter key in forms
 document.addEventListener('keydown', e => {
@@ -3609,22 +3619,21 @@ function closePolicy() {
   document.getElementById('policy-modal').classList.remove('active');
 }
 
-document.getElementById('policy-modal').addEventListener('click', e => {
-  if (e.target === document.getElementById('policy-modal')) closePolicy();
-});
+(function() {
+  const policyModal = document.getElementById('policy-modal');
+  let mouseDownOnBackdrop = false;
+  policyModal.addEventListener('mousedown', e => { mouseDownOnBackdrop = (e.target === policyModal); });
+  policyModal.addEventListener('mouseup', e => {
+    if (mouseDownOnBackdrop && e.target === policyModal) closePolicy();
+    mouseDownOnBackdrop = false;
+  });
+})();
 
 // Init currency
 // Init on load
 window.addEventListener('load', () => {
   updateNavAvatar();
   setCurrency(currentCurrency);
-  // Ensure auth modal works
-  const modal = document.getElementById('auth-modal');
-  if (modal) {
-    modal.addEventListener('click', e => {
-      if (e.target === modal) closeModal();
-    });
-  }
   // Hero globe — loads its own libraries independently of everything
   // else on the page, so a slow/failed load here never blocks or
   // breaks the rest of the site.
