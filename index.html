@@ -1371,7 +1371,13 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
     <div id="form-register">
       <div class="form-group"><label>Username</label><input id="reg-username" type="text" placeholder="GeoMaster99"/></div>
       <div class="form-group"><label>Email</label><input id="reg-email" type="email" placeholder="you@example.com"/></div>
-      <div class="form-group"><label>Phone Number</label><input id="reg-phone" type="tel" placeholder="+61412345678" autocomplete="tel"/></div>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <div style="display:flex;gap:8px;">
+          <select id="reg-phone-code" style="flex:0 0 110px;background:#0d0d18;border:1px solid #1e1e35;color:#e0e0f0;padding:11px 8px;border-radius:10px;font-size:14px;"></select>
+          <input id="reg-phone" type="tel" placeholder="412 345 678" autocomplete="tel" style="flex:1;"/>
+        </div>
+      </div>
       <div class="form-group"><label>Password</label><input id="reg-password" type="password" placeholder="Min 6 characters"/></div>
       <button class="btn btn-primary form-btn" onclick="register()">Create Account</button>
       <div class="form-error" id="reg-error"></div>
@@ -1600,11 +1606,71 @@ function switchTab(tab) {
   document.getElementById('modal-sub').textContent   = tab === 'register' ? 'Join 5kable for free' : tab === 'verify' ? 'Almost there!' : tab === 'verify-phone' ? 'One last step!' : 'Sign in to your account';
 }
 
+// ── Phone country codes ────────────────────────────────────
+const PHONE_COUNTRY_CODES = [
+  {name:"United States", iso:"US", dial:"+1"}, {name:"Canada", iso:"CA", dial:"+1"},
+  {name:"United Kingdom", iso:"GB", dial:"+44"}, {name:"Ireland", iso:"IE", dial:"+353"},
+  {name:"Australia", iso:"AU", dial:"+61"}, {name:"New Zealand", iso:"NZ", dial:"+64"},
+  {name:"Germany", iso:"DE", dial:"+49"}, {name:"France", iso:"FR", dial:"+33"},
+  {name:"Spain", iso:"ES", dial:"+34"}, {name:"Portugal", iso:"PT", dial:"+351"},
+  {name:"Italy", iso:"IT", dial:"+39"}, {name:"Netherlands", iso:"NL", dial:"+31"},
+  {name:"Belgium", iso:"BE", dial:"+32"}, {name:"Switzerland", iso:"CH", dial:"+41"},
+  {name:"Austria", iso:"AT", dial:"+43"}, {name:"Sweden", iso:"SE", dial:"+46"},
+  {name:"Norway", iso:"NO", dial:"+47"}, {name:"Denmark", iso:"DK", dial:"+45"},
+  {name:"Finland", iso:"FI", dial:"+358"}, {name:"Iceland", iso:"IS", dial:"+354"},
+  {name:"Poland", iso:"PL", dial:"+48"}, {name:"Czechia", iso:"CZ", dial:"+420"},
+  {name:"Slovakia", iso:"SK", dial:"+421"}, {name:"Hungary", iso:"HU", dial:"+36"},
+  {name:"Romania", iso:"RO", dial:"+40"}, {name:"Bulgaria", iso:"BG", dial:"+359"},
+  {name:"Greece", iso:"GR", dial:"+30"}, {name:"Turkey", iso:"TR", dial:"+90"},
+  {name:"Croatia", iso:"HR", dial:"+385"}, {name:"Slovenia", iso:"SI", dial:"+386"},
+  {name:"Serbia", iso:"RS", dial:"+381"}, {name:"Ukraine", iso:"UA", dial:"+380"},
+  {name:"Russia", iso:"RU", dial:"+7"}, {name:"Estonia", iso:"EE", dial:"+372"},
+  {name:"Latvia", iso:"LV", dial:"+371"}, {name:"Lithuania", iso:"LT", dial:"+370"},
+  {name:"Luxembourg", iso:"LU", dial:"+352"}, {name:"Malta", iso:"MT", dial:"+356"},
+  {name:"Cyprus", iso:"CY", dial:"+357"},
+  {name:"Japan", iso:"JP", dial:"+81"}, {name:"South Korea", iso:"KR", dial:"+82"},
+  {name:"China", iso:"CN", dial:"+86"}, {name:"Taiwan", iso:"TW", dial:"+886"},
+  {name:"Hong Kong", iso:"HK", dial:"+852"}, {name:"Macau", iso:"MO", dial:"+853"},
+  {name:"Singapore", iso:"SG", dial:"+65"}, {name:"Malaysia", iso:"MY", dial:"+60"},
+  {name:"Indonesia", iso:"ID", dial:"+62"}, {name:"Philippines", iso:"PH", dial:"+63"},
+  {name:"Thailand", iso:"TH", dial:"+66"}, {name:"Vietnam", iso:"VN", dial:"+84"},
+  {name:"India", iso:"IN", dial:"+91"}, {name:"Pakistan", iso:"PK", dial:"+92"},
+  {name:"Bangladesh", iso:"BD", dial:"+880"}, {name:"Sri Lanka", iso:"LK", dial:"+94"},
+  {name:"Nepal", iso:"NP", dial:"+977"},
+  {name:"Israel", iso:"IL", dial:"+972"}, {name:"United Arab Emirates", iso:"AE", dial:"+971"},
+  {name:"Saudi Arabia", iso:"SA", dial:"+966"}, {name:"Qatar", iso:"QA", dial:"+974"},
+  {name:"Kuwait", iso:"KW", dial:"+965"}, {name:"Bahrain", iso:"BH", dial:"+973"},
+  {name:"Oman", iso:"OM", dial:"+968"}, {name:"Jordan", iso:"JO", dial:"+962"},
+  {name:"Lebanon", iso:"LB", dial:"+961"}, {name:"Egypt", iso:"EG", dial:"+20"},
+  {name:"South Africa", iso:"ZA", dial:"+27"}, {name:"Nigeria", iso:"NG", dial:"+234"},
+  {name:"Kenya", iso:"KE", dial:"+254"}, {name:"Ghana", iso:"GH", dial:"+233"},
+  {name:"Morocco", iso:"MA", dial:"+212"},
+  {name:"Brazil", iso:"BR", dial:"+55"}, {name:"Mexico", iso:"MX", dial:"+52"},
+  {name:"Argentina", iso:"AR", dial:"+54"}, {name:"Chile", iso:"CL", dial:"+56"},
+  {name:"Colombia", iso:"CO", dial:"+57"}, {name:"Peru", iso:"PE", dial:"+51"},
+  {name:"Uruguay", iso:"UY", dial:"+598"}, {name:"Ecuador", iso:"EC", dial:"+593"},
+  {name:"Costa Rica", iso:"CR", dial:"+506"}, {name:"Panama", iso:"PA", dial:"+507"},
+];
+PHONE_COUNTRY_CODES.sort((a,b) => a.name.localeCompare(b.name));
+
+function initPhoneCodeDropdown() {
+  const sel = document.getElementById('reg-phone-code');
+  if (!sel) return;
+  sel.innerHTML = PHONE_COUNTRY_CODES.map(c => `<option value="${c.dial}">${c.iso} ${c.dial}</option>`).join('');
+  // Best-effort default based on the browser's locale, falls back to +1
+  const locale = (navigator.language || 'en-US').split('-')[1];
+  const match = PHONE_COUNTRY_CODES.find(c => c.iso === locale);
+  if (match) sel.value = match.dial;
+}
+initPhoneCodeDropdown();
+
 // ── Register ──────────────────────────────────────────────
 async function register() {
   const username = document.getElementById('reg-username').value.trim();
   const email    = document.getElementById('reg-email').value.trim();
-  const phone    = document.getElementById('reg-phone').value.trim();
+  const phoneCode  = document.getElementById('reg-phone-code').value;
+  const phoneLocal = document.getElementById('reg-phone').value.trim().replace(/[^\d]/g, '').replace(/^0+/, '');
+  const phone    = phoneLocal ? phoneCode + phoneLocal : '';
   const password = document.getElementById('reg-password').value;
   const errEl    = document.getElementById('reg-error');
   errEl.style.display = 'none';
