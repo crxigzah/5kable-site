@@ -77,15 +77,9 @@
   }
   .quiz-img-wrap{
     width:100%; border-radius:12px; overflow:hidden; background:var(--panel2);
-    height:min(75vh,760px); min-height:320px; position:relative;
+    min-height:320px; display:flex; align-items:center; justify-content:center;
   }
-  .quiz-img-wrap .quiz-img-bg{
-    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-    filter:blur(35px) brightness(0.55) saturate(1.1); transform:scale(1.15);
-  }
-  .quiz-img-wrap .quiz-img-fg{
-    position:relative; z-index:1; width:100%; height:100%; object-fit:contain; display:block;
-  }
+  .quiz-img-wrap img{ width:100%; display:block; }
 
   .options{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
   @media (max-width:520px){ .options{ grid-template-columns:1fr; } }
@@ -347,10 +341,7 @@ async function loadNext(){
     }
 
     document.getElementById('quiz-body').innerHTML = `
-      <div class="quiz-img-wrap">
-        <img class="quiz-img-bg" src="${data.image_url}" aria-hidden="true">
-        <img class="quiz-img-fg" src="${data.image_url}">
-      </div>
+      <div class="quiz-img-wrap"><img src="${data.image_url}"></div>
       <div class="options" id="options-wrap">
         ${opts.map(opt => `<button class="opt-btn" data-country="${opt}" onclick="submitAnswer('${opt.replace(/'/g,"\\'")}')">${opt}</button>`).join('')}
       </div>
