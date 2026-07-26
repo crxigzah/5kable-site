@@ -641,6 +641,13 @@ html { scroll-behavior: smooth; }
   .dash-header { flex-direction: column; align-items: flex-start; }
   .dash-welcome { font-size: 20px; }
 }
+
+#stats-world-map:fullscreen {
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  border-radius: 0 !important;
+}
 </style>
   <link rel="icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -1223,6 +1230,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
       <div style="color:var(--muted);font-size:13px;margin-top:4px;margin-bottom:16px;">Every supported country starts white. Reach 1000 correct region guesses in a country to light it up teal and earn Diamond status.</div>
       <div id="stats-world-map" style="position:relative;width:100%;min-height:320px;background:#080810;border-radius:10px;overflow:hidden;">
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;" id="stats-world-map-loading">Loading map...</div>
+        <button id="stats-world-map-fullscreen-btn" title="Fullscreen" style="position:absolute;top:8px;right:8px;z-index:5;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:rgba(13,13,18,0.75);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e0e0f0;font-size:14px;cursor:pointer;">⛶</button>
       </div>
       <div id="stats-world-map-tip" style="color:var(--muted);font-size:12px;margin-top:10px;text-align:center;min-height:16px;">Hover a country to see your progress.</div>
     </div>
@@ -2803,11 +2811,32 @@ function initHeroGlobe(){
 }
 
 let _gaxWorldFeatures = null; // cached parsed features, fetched once per session
+let _gaxWorldMapFullscreenWired = false; // guard so the listener/handler are only attached once across repeated loadWorldMap() calls
 async function loadWorldMap(token){
   const container = document.getElementById('stats-world-map');
   const loadingEl = document.getElementById('stats-world-map-loading');
   const tipEl = document.getElementById('stats-world-map-tip');
+  const fsBtn = document.getElementById('stats-world-map-fullscreen-btn');
   if (!container) return;
+
+  if (!_gaxWorldMapFullscreenWired) {
+    _gaxWorldMapFullscreenWired = true;
+    if (fsBtn) {
+      fsBtn.onclick = () => {
+        if (container.requestFullscreen) container.requestFullscreen();
+      };
+    }
+    // Redraw at the new size whenever fullscreen is entered or exited —
+    // the SVG's width/height are computed from the container's current
+    // clientWidth at render time, so without this the map would stay
+    // tiny in the middle of a large fullscreen frame instead of filling it.
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement === container || (!document.fullscreenElement)) {
+        loadWorldMap(getToken());
+      }
+    });
+  }
+
   try {
     const [statsRes] = await Promise.all([
       fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) }),
@@ -2820,7 +2849,13 @@ async function loadWorldMap(token){
     (statsData.stats || []).forEach(s => { correctByCountry[_gaxNormalizeCountry(s.country)] = s.correct; });
 
     if (!_gaxWorldFeatures) {
-      const world = await d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+      // 50m resolution rather than 110m — the coarser 110m simplification
+      // drops most small territories/islands entirely (Puerto Rico, Guam,
+      // Jersey, Faroe Islands, San Marino, etc. — they're too small to
+      // render as distinct shapes at that scale), even though they're
+      // already accounted for in WORLDMAP_COUNTRY_ID_NAME above. 50m is a
+      // meaningfully bigger download but keeps far more of them.
+      const world = await d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json');
       _gaxWorldFeatures = topojson.feature(world, world.objects.countries).features;
     }
 
@@ -2847,10 +2882,13 @@ async function loadWorldMap(token){
 
     // Pan + zoom — scoped to this container's own <g>, and scaleExtent
     // capped at a sane range so it can't be zoomed out past the whole
-    // map or in so far the shapes become meaningless.
+    // map or in so far the shapes become meaningless. translateExtent
+    // gives generous room to pan even at 1:1 zoom — previously it
+    // exactly matched the map's own bounds, which meant there was
+    // zero room to drag until already zoomed in past 1x.
     const zoom = d3.zoom()
       .scaleExtent([1, 8])
-      .translateExtent([[0, 0], [width, height]])
+      .translateExtent([[-width * 0.5, -height * 0.5], [width * 1.5, height * 1.5]])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
         g.attr('stroke-width', 0.5 / event.transform.k);
