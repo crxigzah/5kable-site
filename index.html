@@ -2608,10 +2608,54 @@ const WORLDMAP_ALIASES = {
   "Laos": ["Laos","Lao PDR"],
   "Eswatini": ["Eswatini","Swaziland"],
   "Palestine": ["Palestine","Palestinian Territory","West Bank"],
-  "Sao Tome and Principe": ["São Tomé and Principe","Sao Tome and Principe"],
+  "Sao Tome and Principe": ["São Tomé and Principe","Sao Tome and Principe","São Tomé and Príncipe"],
   "Vietnam": ["Vietnam","Viet Nam"],
+  "Bosnia and Herz.": ["Bosnia and Herz.","Bosnia and Herzegovina"],
+  "Turkey": ["Turkey","Türkiye"],
+  "Curacao": ["Curacao","Curaçao"],
 };
 function _gaxNormalizeCountry(name){ return (name||'').trim().toLowerCase(); }
+
+// The actual 114 countries 5kable supports — same canonical list used by
+// the extension's country picker. Everything else in the topojson dataset
+// (every other country on Earth, since the base map data isn't scoped to
+// us) previously rendered identically to a genuinely-supported country
+// that just hadn't been played yet, which is what made unsupported
+// countries like Venezuela show up looking the same as covered ones.
+const WORLDMAP_SUPPORTED_114 = [
+  "Albania","American Samoa","Andorra","Argentina","Australia","Austria","Bangladesh","Belgium",
+  "Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Bulgaria","Cambodia","Canada",
+  "Chile","Christmas Island","Colombia","Costa Rica","Croatia","Curaçao","Cyprus","Czech Republic",
+  "Denmark","Dominican Republic","Ecuador","Estonia","Eswatini","Faroe Islands","Finland","France",
+  "Georgia","Germany","Ghana","Gibraltar","Greece","Greenland","Guam","Guatemala","Hong Kong",
+  "Hungary","Iceland","India","Indonesia","Ireland","Isle of Man","Israel","Italy","Japan","Jersey",
+  "Jordan","Kazakhstan","Kenya","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liechtenstein",
+  "Lithuania","Luxembourg","Madagascar","Malaysia","Malta","Mexico","Monaco","Mongolia","Montenegro",
+  "Namibia","Nepal","Netherlands","New Zealand","Nigeria","North Macedonia","Northern Mariana Islands",
+  "Norway","Oman","Panama","Paraguay","Peru","Philippines","Poland","Portugal","Puerto Rico","Qatar",
+  "Romania","Russia","Rwanda","San Marino","Senegal","Serbia","Singapore","Slovakia","Slovenia",
+  "South Africa","South Korea","Spain","Sri Lanka","Sweden","Switzerland","São Tomé and Príncipe",
+  "Taiwan","Thailand","Tunisia","Türkiye","Uganda","Ukraine","United Arab Emirates","United Kingdom",
+  "United States","United States Virgin Islands","Uruguay","Vietnam"
+];
+// Every normalized name/alias variant that should count as "supported" —
+// built once from the canonical list plus WORLDMAP_ALIASES, so lookups
+// during render are a simple Set.has() rather than re-scanning arrays
+// per country on every draw.
+const WORLDMAP_SUPPORTED_NORM = new Set();
+WORLDMAP_SUPPORTED_114.forEach(name => {
+  WORLDMAP_SUPPORTED_NORM.add(_gaxNormalizeCountry(name));
+  Object.values(WORLDMAP_ALIASES).forEach(variants => {
+    if (variants.some(v => _gaxNormalizeCountry(v) === _gaxNormalizeCountry(name))) {
+      variants.forEach(v => WORLDMAP_SUPPORTED_NORM.add(_gaxNormalizeCountry(v)));
+    }
+  });
+});
+function _gaxIsSupportedCountry(topoName){
+  if (!topoName) return false;
+  const variants = WORLDMAP_ALIASES[topoName] || [topoName];
+  return variants.some(v => WORLDMAP_SUPPORTED_NORM.has(_gaxNormalizeCountry(v)));
+}
 
 let _gaxWorldLibsPromise = null;
 function loadWorldMapLibs(){
@@ -2792,13 +2836,34 @@ async function loadWorldMap(token){
       .attr('draggable', 'false')
       .style('display', 'block')
       .style('-webkit-user-drag', 'none')
-      .style('user-select', 'none');
+      .style('user-select', 'none')
+      .style('cursor', 'grab');
     const projection = d3.geoNaturalEarth1().fitSize([width, height], {type:'Sphere'});
     const path = d3.geoPath(projection);
 
     svg.append('path').attr('d', path({type:'Sphere'})).attr('fill', '#080810');
 
     const g = svg.append('g');
+
+    // Pan + zoom — scoped to this container's own <g>, and scaleExtent
+    // capped at a sane range so it can't be zoomed out past the whole
+    // map or in so far the shapes become meaningless.
+    const zoom = d3.zoom()
+      .scaleExtent([1, 8])
+      .translateExtent([[0, 0], [width, height]])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+        g.attr('stroke-width', 0.5 / event.transform.k);
+      })
+      .on('start', () => svg.style('cursor', 'grabbing'))
+      .on('end', () => svg.style('cursor', 'grab'));
+    svg.call(zoom);
+
+    function countryFill(name, correct){
+      if (!name || !_gaxIsSupportedCountry(name)) return '#0a0a12'; // unsupported — muted, distinct from covered-but-unplayed
+      return correct >= DIAMOND_THRESHOLD ? 'var(--teal)' : '#10101e';
+    }
+
     g.selectAll('path.country')
       .data(_gaxWorldFeatures)
       .join('path')
@@ -2806,18 +2871,21 @@ async function loadWorldMap(token){
       .attr('d', path)
       .attr('fill', d => {
         const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
-        if (!name) return '#10101e';
+        if (!name || !_gaxIsSupportedCountry(name)) return countryFill(name, 0);
         const variants = WORLDMAP_ALIASES[name] || [name];
         const correct = Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0));
-        return correct >= DIAMOND_THRESHOLD ? 'var(--teal)' : '#10101e';
+        return countryFill(name, correct);
       })
       .attr('stroke', '#080810')
       .attr('stroke-width', 0.5)
-      .style('cursor', 'default')
+      .style('cursor', d => {
+        const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
+        return _gaxIsSupportedCountry(name) ? 'default' : 'grab';
+      })
       .style('transition', 'fill .2s')
       .on('mouseenter', function(event, d){
         const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
-        if (!name) return;
+        if (!name || !_gaxIsSupportedCountry(name)) return; // unsupported countries aren't interactive
         d3.select(this).attr('fill', 'rgba(0,201,167,0.6)');
         const variants = WORLDMAP_ALIASES[name] || [name];
         const correct = Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0));
@@ -2831,9 +2899,10 @@ async function loadWorldMap(token){
       })
       .on('mouseleave', function(event, d){
         const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
-        const variants = name ? (WORLDMAP_ALIASES[name] || [name]) : [];
-        const correct = name ? Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0)) : 0;
-        d3.select(this).attr('fill', name ? (correct >= DIAMOND_THRESHOLD ? 'var(--teal)' : '#10101e') : '#10101e');
+        if (!name || !_gaxIsSupportedCountry(name)) return;
+        const variants = WORLDMAP_ALIASES[name] || [name];
+        const correct = Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0));
+        d3.select(this).attr('fill', countryFill(name, correct));
         if (tipEl) tipEl.textContent = 'Hover a country to see your progress.';
       });
   } catch(e) {
