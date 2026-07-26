@@ -929,13 +929,13 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
         <div class="price-desc">Get a taste of AI-powered training</div>
         <ul class="price-features">
           <li>114 Country Meta Guides</li>
+          <li>Unlimited F7 scene captures</li>
           <li class="no">5K live chat ask anything</li>
-          <li class="no">AI Analyse pulls exact GPS coordinates</li>
+          <li class="no">AI Analyse</li>
           <li class="no">Early access to new features</li>
           <li class="no">Geography-enhanced AI model</li>
           <li class="no">Priority support via Discord</li>
           <li class="no">Pro badge on your account</li>
-          <li>Unlimited F7 scene captures</li>
           <li class="no">Unlimited training guides</li>
         </ul>
         <button class="btn btn-outline" id="pricing-free-btn" onclick="getStarted()" style="margin-top:auto;">Get Started Free</button>
@@ -944,11 +944,11 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
         <div class="price-badge">Most Popular</div>
         <div class="price-name">Pro</div>
         <div class="price-amount"><span class="price-display" data-gbp="9.99">£9.99</span><span class="curr"> / month</span></div>
-        <div class="price-desc">Unlock the full power of AI geographic training</div>
+        <div class="price-desc">Unlock Full Region Specific Knowledge</div>
         <ul class="price-features">
           <li>114 Country Meta Guides</li>
           <li>5K live chat ask anything</li>
-          <li>AI Analyse pulls exact GPS coordinates</li>
+          <li>AI Analyse</li>
           <li>Early access to new features</li>
           <li>Geography-enhanced AI model</li>
           <li>Priority support via Discord</li>
@@ -1229,11 +1229,11 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:16px;">
       <div style="font-weight:700;">🌍 World Progress Map</div>
       <div style="color:var(--muted);font-size:13px;margin-top:4px;margin-bottom:16px;">Every supported country starts white. Reach 1000 correct region guesses in a country to light it up teal and earn Diamond status.</div>
-      <div id="stats-world-map" style="position:relative;width:100%;min-height:420px;background:#080810;border-radius:10px;overflow:hidden;">
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;" id="stats-world-map-loading">Loading globe...</div>
+      <div id="stats-world-map" style="position:relative;width:100%;min-height:320px;background:#080810;border-radius:10px;overflow:hidden;">
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;" id="stats-world-map-loading">Loading map...</div>
         <button id="stats-world-map-fullscreen-btn" title="Fullscreen" style="position:absolute;top:8px;right:8px;z-index:5;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:rgba(13,13,18,0.75);border:1px solid rgba(255,255,255,0.12);border-radius:6px;color:#e0e0f0;font-size:14px;cursor:pointer;">⛶</button>
       </div>
-      <div id="stats-world-map-tip" style="color:var(--muted);font-size:12px;margin-top:10px;text-align:center;min-height:16px;">Drag to rotate — hover a country to see your progress.</div>
+      <div id="stats-world-map-tip" style="color:var(--muted);font-size:12px;margin-top:10px;text-align:center;min-height:16px;">Hover a country to see your progress.</div>
     </div>
 
     <!-- Overview -->
@@ -2813,145 +2813,6 @@ function initHeroGlobe(){
 
 let _gaxWorldFeatures = null; // cached parsed features, fetched once per session
 let _gaxWorldMapFullscreenWired = false; // guard so the listener/handler are only attached once across repeated loadWorldMap() calls
-let _gaxStatsGlobe = null; // persistent Three.js scene/renderer state, built once and reused across repeated loadWorldMap() calls
-
-function createStatsGlobe(container) {
-  const TEX_W = 2048, TEX_H = 1024;
-  const canvas = document.createElement('canvas');
-  canvas.style.cssText = 'width:100%;height:100%;display:block;cursor:grab;touch-action:none;';
-  container.appendChild(canvas);
-
-  const texCanvas = document.createElement('canvas');
-  texCanvas.width = TEX_W; texCanvas.height = TEX_H;
-  const texCtx = texCanvas.getContext('2d');
-  const proj = d3.geoEquirectangular().scale(TEX_W / (2 * Math.PI)).translate([TEX_W / 2, TEX_H / 2]);
-  const pathGen = d3.geoPath(proj, texCtx);
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-  camera.position.set(0, 0, 2.6);
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-
-  scene.add(new THREE.AmbientLight(0x8894a8, 0.8));
-  const key = new THREE.DirectionalLight(0xffffff, 1.1);
-  key.position.set(3, 2, 4);
-  scene.add(key);
-  const rim = new THREE.DirectionalLight(0x7c3aed, 0.5);
-  rim.position.set(-3, -1, -3);
-  scene.add(rim);
-
-  const group = new THREE.Group();
-  scene.add(group);
-
-  const texture = new THREE.CanvasTexture(texCanvas);
-  texture.minFilter = THREE.LinearMipmapLinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.anisotropy = 4;
-
-  const globeGeo = new THREE.SphereGeometry(1, 96, 96);
-  const globeMat = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.65, metalness: 0.1 });
-  const globe = new THREE.Mesh(globeGeo, globeMat);
-  group.add(globe);
-
-  function resize() {
-    const w = container.clientWidth;
-    const h = container.clientHeight || Math.round((w || 800) * 0.65);
-    if (!w || !h) return;
-    canvas.style.width = w + 'px';
-    canvas.style.height = h + 'px';
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-  }
-
-  // Drag-to-rotate (mouse + touch via pointer events) plus a slow idle
-  // auto-rotate that pauses while the user is actively dragging or
-  // shortly after they let go, rather than fighting their input.
-  let dragging = false, lastX = 0, lastY = 0, idleSince = 0;
-  canvas.addEventListener('pointerdown', (e) => {
-    dragging = true;
-    lastX = e.clientX; lastY = e.clientY;
-    canvas.style.cursor = 'grabbing';
-    canvas.setPointerCapture(e.pointerId);
-  });
-  canvas.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
-    const dx = e.clientX - lastX, dy = e.clientY - lastY;
-    lastX = e.clientX; lastY = e.clientY;
-    group.rotation.y += dx * 0.005;
-    group.rotation.x = Math.max(-1.2, Math.min(1.2, group.rotation.x + dy * 0.005));
-  });
-  function endDrag() { dragging = false; idleSince = performance.now(); canvas.style.cursor = 'grab'; }
-  canvas.addEventListener('pointerup', endDrag);
-  canvas.addEventListener('pointercancel', endDrag);
-
-  // Scroll-to-zoom via camera distance, clamped to a sane range.
-  canvas.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    camera.position.z = Math.max(1.4, Math.min(4, camera.position.z + e.deltaY * 0.0015));
-  }, { passive: false });
-
-  function animate() {
-    requestAnimationFrame(animate);
-    if (!dragging && performance.now() - idleSince > 600) {
-      group.rotation.y += 0.0018;
-    }
-    renderer.render(scene, camera);
-  }
-
-  // Converts a raycast hit point (in the globe's own unrotated local
-  // space) to [lng, lat], using the same UV convention Three.js's
-  // SphereGeometry generates by default — this is the standard mapping
-  // for equirectangular textures on a THREE sphere.
-  function pointToLngLat(p) {
-    const u = 0.5 + Math.atan2(p.z, p.x) / (2 * Math.PI);
-    const v = 0.5 - Math.asin(p.y) / Math.PI;
-    return [u * 360 - 180, 90 - v * 180];
-  }
-
-  const raycaster = new THREE.Raycaster();
-  const mouse = new THREE.Vector2();
-  function raycastCountry(clientX, clientY) {
-    const rect = canvas.getBoundingClientRect();
-    mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-    mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-    raycaster.setFromCamera(mouse, camera);
-    const hits = raycaster.intersectObject(globe);
-    if (!hits.length) return null;
-    const localPoint = globe.worldToLocal(hits[0].point.clone());
-    const [lng, lat] = pointToLngLat(localPoint);
-    if (!_gaxWorldFeatures) return null;
-    const feature = _gaxWorldFeatures.find(f => d3.geoContains(f, [lng, lat]));
-    if (!feature) return null;
-    return WORLDMAP_COUNTRY_ID_NAME[String(feature.id)] || null;
-  }
-
-  return { canvas, texCanvas, texCtx, pathGen, texture, resize, animate, raycastCountry, animating: false };
-}
-
-function paintStatsTexture(g, features, correctByCountry, DIAMOND_THRESHOLD) {
-  const ctx = g.texCtx, TEX_W = g.texCanvas.width, TEX_H = g.texCanvas.height;
-  ctx.fillStyle = '#080810';
-  ctx.fillRect(0, 0, TEX_W, TEX_H);
-  function countryFill(name, correct) {
-    if (!name || !_gaxIsSupportedCountry(name)) return '#080810';
-    return correct >= DIAMOND_THRESHOLD ? '#00c9a7' : '#ffffff';
-  }
-  features.forEach(f => {
-    const name = WORLDMAP_COUNTRY_ID_NAME[String(f.id)];
-    const variants = name ? (WORLDMAP_ALIASES[name] || [name]) : [];
-    const correct = Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0));
-    ctx.beginPath();
-    g.pathGen(f);
-    ctx.fillStyle = countryFill(name, correct);
-    ctx.lineWidth = 0.7;
-    ctx.strokeStyle = '#080810';
-    ctx.fill();
-    ctx.stroke();
-  });
-}
-
 async function loadWorldMap(token){
   const container = document.getElementById('stats-world-map');
   const loadingEl = document.getElementById('stats-world-map-loading');
@@ -2959,11 +2820,24 @@ async function loadWorldMap(token){
   const fsBtn = document.getElementById('stats-world-map-fullscreen-btn');
   if (!container) return;
 
+  if (!_gaxWorldMapFullscreenWired) {
+    _gaxWorldMapFullscreenWired = true;
+    if (fsBtn) {
+      fsBtn.onclick = () => {
+        if (container.requestFullscreen) container.requestFullscreen();
+      };
+    }
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement === container || (!document.fullscreenElement)) {
+        loadWorldMap(getToken());
+      }
+    });
+  }
+
   try {
     const [statsRes] = await Promise.all([
       fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) }),
       loadWorldMapLibs(),
-      loadThreeJs(),
     ]);
     const statsData = await statsRes.json();
     const DIAMOND_THRESHOLD = 1000;
@@ -2971,64 +2845,90 @@ async function loadWorldMap(token){
     (statsData.stats || []).forEach(s => { correctByCountry[_gaxNormalizeCountry(s.country)] = s.correct; });
 
     if (!_gaxWorldFeatures) {
-      // 50m resolution rather than 110m — the coarser 110m simplification
-      // drops most small territories/islands entirely (Puerto Rico, Guam,
-      // Jersey, Faroe Islands, San Marino, etc. — they're too small to
-      // render as distinct shapes at that scale), even though they're
-      // already accounted for in WORLDMAP_COUNTRY_ID_NAME above. 50m is a
-      // meaningfully bigger download but keeps far more of them.
       const world = await d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json');
       _gaxWorldFeatures = topojson.feature(world, world.objects.countries).features;
     }
 
     if (loadingEl) loadingEl.remove();
+    container.querySelectorAll('svg').forEach(el => el.remove());
 
-    if (!_gaxStatsGlobe) {
-      _gaxStatsGlobe = createStatsGlobe(container);
+    const width = container.clientWidth || 800;
+    const height = Math.max(340, Math.round(width * 0.5));
+    const svg = d3.select(container).append('svg')
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('width', '100%')
+      .attr('height', height)
+      .attr('draggable', 'false')
+      .style('display', 'block')
+      .style('-webkit-user-drag', 'none')
+      .style('user-select', 'none')
+      .style('cursor', 'grab');
+    const projection = d3.geoNaturalEarth1().fitSize([width, height], {type:'Sphere'});
+    const path = d3.geoPath(projection);
+
+    svg.append('path').attr('d', path({type:'Sphere'})).attr('fill', '#080810');
+
+    const g = svg.append('g');
+
+    const zoom = d3.zoom()
+      .scaleExtent([1, 8])
+      .translateExtent([[-width * 0.5, -height * 0.5], [width * 1.5, height * 1.5]])
+      .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+        g.attr('stroke-width', 0.5 / event.transform.k);
+      })
+      .on('start', () => svg.style('cursor', 'grabbing'))
+      .on('end', () => svg.style('cursor', 'grab'));
+    svg.call(zoom);
+
+    function countryFill(name, correct){
+      if (!name || !_gaxIsSupportedCountry(name)) return '#080810';
+      return correct >= DIAMOND_THRESHOLD ? 'var(--teal)' : '#ffffff';
     }
-    const g = _gaxStatsGlobe;
 
-    paintStatsTexture(g, _gaxWorldFeatures, correctByCountry, DIAMOND_THRESHOLD);
-    g.texture.needsUpdate = true;
-    g.resize();
-    if (!g.animating) { g.animating = true; g.animate(); }
-
-    if (!g.hoverWired) {
-      g.hoverWired = true;
-      g.canvas.addEventListener('pointermove', (e) => {
-        const name = g.raycastCountry(e.clientX, e.clientY);
-        if (!tipEl) return;
-        if (!name || !_gaxIsSupportedCountry(name)) {
-          tipEl.textContent = 'Drag to rotate — hover a country to see your progress.';
-          return;
-        }
+    g.selectAll('path.country')
+      .data(_gaxWorldFeatures)
+      .join('path')
+      .attr('class', 'country')
+      .attr('d', path)
+      .attr('fill', d => {
+        const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
+        if (!name || !_gaxIsSupportedCountry(name)) return countryFill(name, 0);
         const variants = WORLDMAP_ALIASES[name] || [name];
         const correct = Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0));
-        tipEl.textContent = correct >= DIAMOND_THRESHOLD
-          ? `💎 ${name} — Diamond status! (${correct} correct)`
-          : correct > 0
-            ? `${name} — ${correct}/${DIAMOND_THRESHOLD} correct guesses`
-            : `${name} — not attempted yet`;
+        return countryFill(name, correct);
+      })
+      .attr('stroke', '#080810')
+      .attr('stroke-width', 0.5)
+      .style('cursor', d => {
+        const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
+        return _gaxIsSupportedCountry(name) ? 'default' : 'grab';
+      })
+      .style('transition', 'fill .2s')
+      .on('mouseenter', function(event, d){
+        const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
+        if (!name || !_gaxIsSupportedCountry(name)) return;
+        d3.select(this).attr('fill', 'rgba(0,201,167,0.6)');
+        const variants = WORLDMAP_ALIASES[name] || [name];
+        const correct = Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0));
+        if (tipEl) {
+          tipEl.textContent = correct >= DIAMOND_THRESHOLD
+            ? `\ud83d\udc8e ${name} — Diamond status! (${correct} correct)`
+            : correct > 0
+              ? `${name} — ${correct}/${DIAMOND_THRESHOLD} correct guesses`
+              : `${name} — not attempted yet`;
+        }
+      })
+      .on('mouseleave', function(event, d){
+        const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
+        if (!name || !_gaxIsSupportedCountry(name)) return;
+        const variants = WORLDMAP_ALIASES[name] || [name];
+        const correct = Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0));
+        d3.select(this).attr('fill', countryFill(name, correct));
+        if (tipEl) tipEl.textContent = 'Hover a country to see your progress.';
       });
-      g.canvas.addEventListener('pointerleave', () => {
-        if (tipEl) tipEl.textContent = 'Drag to rotate — hover a country to see your progress.';
-      });
-    }
-
-    if (!_gaxWorldMapFullscreenWired) {
-      _gaxWorldMapFullscreenWired = true;
-      if (fsBtn) {
-        fsBtn.onclick = () => {
-          if (container.requestFullscreen) container.requestFullscreen();
-        };
-      }
-      document.addEventListener('fullscreenchange', () => { g.resize(); });
-      window.addEventListener('resize', () => g.resize());
-    }
-
-    if (tipEl) tipEl.textContent = 'Drag to rotate — hover a country to see your progress.';
   } catch(e) {
-    if (loadingEl) loadingEl.textContent = "Couldn't load the globe right now.";
+    if (loadingEl) loadingEl.textContent = "Couldn't load the map right now.";
   }
 }
 
