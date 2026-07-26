@@ -1,10 +1,11 @@
 // 5kable — panorama.js
-// Runs inside panorama.html, which is loaded as an <iframe src="chrome-extension://...">
-// embedded in the GeoGuessr page. Because this page's own origin is
-// chrome-extension://<id>, its Content-Security-Policy comes from our
-// manifest, not from GeoGuessr's page — so loading maps.googleapis.com
-// here is never blocked, unlike injecting the script directly into the
-// host page.
+// Runs inside panorama.html, which is embedded as an
+// <iframe src="https://5kable.net/panorama.html?..."> in the GeoGuessr
+// page. This is hosted on our own domain rather than packaged into the
+// extension because Manifest V3 extension pages (chrome-extension://...)
+// enforce a fixed script-src 'self' CSP that can't be relaxed, so they can
+// never load Google's remote maps.googleapis.com script. A normal
+// externally-hosted page isn't bound by that restriction.
 
 const params = new URLSearchParams(window.location.search);
 const panoId = params.get('pano_id');
@@ -25,8 +26,8 @@ window._gaxInitPanorama = function () {
       pano: panoId,
       clickToGo: false,
       linksControl: false,
-      panControl: true,
-      zoomControl: true,
+      panControl: false,
+      zoomControl: false,
       addressControl: false,
       fullscreenControl: true,
       motionTracking: false,
