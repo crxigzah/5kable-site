@@ -835,7 +835,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
       <div class="step"><div class="step-num">1</div><h3>Install the Extension</h3><p>Download 5kable, load it as an unpacked extension in Opera or Chrome. Takes 2 minutes no  needed.</p></div>
       <div class="step"><div class="step-num">2</div><h3>Play Normally</h3><p>Open your map game and play as you normally would. Press F7 to capture the scene before you guess.</p></div>
       <div class="step"><div class="step-num">3</div><h3>Get a Lesson</h3><p>After a wrong guess, a teaching popup explains exactly what you missed dead giveaway, visual clues, reference photo.</p></div>
-      <div class="step"><div class="step-num">4</div><h3>Contribute to the Community Library</h3><p>Press F7 on any scene to upload it to the shared community database. Everyone's captures make the reference library smarter for all players.</p></div>
+      <div class="step"><div class="step-num">4</div><h3>Contribute to the Community Library</h3><p>Press F7 on any scene to add it to the shared community map. Everyone's captures make the reference library smarter for all players — live Street View, not stored screenshots.</p></div>
     </div>
   </div>
 
@@ -853,12 +853,12 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
       <div class="feature-card">
         <div class="feature-icon">📖</div>
         <h3>Post-Round Teaching</h3>
-        <p>After a wrong guess, a detailed lesson appears with your scene, a reference photo from the correct region, a dead giveaway clue, and 3 visual teaching points tailored to exactly what you missed.</p>
+        <p>After a wrong guess, a detailed lesson appears with your scene, a live Street View panorama from the correct region, a dead giveaway clue, and 3 visual teaching points tailored to exactly what you missed.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🗺️</div>
         <h3>Community Scene Library</h3>
-        <p>Every F7 capture is uploaded to a shared cloud database organised by country and region. Teaching popups pull the most relevant reference scenes from thousands of community contributions.</p>
+        <p>Every F7 capture adds a real location to a shared community map, organised by country and region. Teaching popups pull the closest match and show it live via Google Street View — never a stored copy.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">💬</div>
@@ -1113,7 +1113,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span>What is the community scene library?</span><span class="faq-arrow">+</span></div>
-        <div class="faq-a">Every time any user presses F7 during a game, the scene is uploaded to a shared cloud library tagged by country and region. When a training guide fires, it pulls reference images from this library to compare your scene with real examples from the correct location. The more players use F7, the better the library gets for everyone.</div>
+        <div class="faq-a">Every time any user presses F7 during a game, that location is added to a shared community library tagged by country and region. When a training guide fires, it finds the closest matching location and shows it live via Google Street View — we never store or serve a copy of the imagery ourselves. The more players use F7, the better the library's coverage gets for everyone.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span>Can I use 5kable on mobile?</span><span class="faq-arrow">+</span></div>
@@ -1121,7 +1121,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span>What happens to my data?</span><span class="faq-arrow">+</span></div>
-        <div class="faq-a">Scene images uploaded via F7 are stored in our community library and may be seen by other users as reference images. Your account details (email, username) are stored securely and never sold or shared. See our Privacy Policy for full details.</div>
+        <div class="faq-a">F7 captures add a location (not an image) to our community library, which other users' training guides can reference — shown live via Google Street View, never a stored screenshot. Your account details (email, username) are stored securely and never sold or shared. See our Privacy Policy for full details.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span>How do I cancel my Pro subscription?</span><span class="faq-arrow">+</span></div>
@@ -3546,7 +3546,7 @@ const POLICIES = {
     body: `
       <h3>1. What We Collect</h3>
       <p>When you create an account, we collect your username, email address, and a hashed version of your password. We do not store plain-text passwords. We also store session tokens and your subscription tier.</p>
-      <p>We do not collect, store, or transmit your Street View screenshots, scene library files, or gameplay data. These remain on your local machine.</p>
+      <p>When you press F7, we store the location (coordinates and a Google-provided Street View panorama reference) so other users' training guides can look up that panorama live, directly from Google. We do not collect, store, or transmit the actual screenshot or scene image itself — that exists only temporarily in your own browser, to show your post-round teaching popup, and is never uploaded to our servers.</p>
 
       <h3>2. How We Use Your Data</h3>
       <ul>
@@ -3564,6 +3564,7 @@ const POLICIES = {
         <li><strong>Stripe</strong> payment processing. Stripe handles all card data under their own PCI-DSS compliance.</li>
         <li><strong>Supabase</strong> database hosting for user accounts and sessions, hosted in eu-west-1 (Ireland).</li>
         <li><strong>Render</strong> API server hosting.</li>
+        <li><strong>Google</strong> Street View panoramas shown in training guides are embedded live from Google Maps Platform; viewing them is subject to Google's own Privacy Policy.</li>
       </ul>
 
       <h3>5. Data Retention</h3>
