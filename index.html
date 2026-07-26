@@ -1078,10 +1078,10 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
           <iframe width="100%" height="100%" src="https://www.youtube.com/embed/XWjrXicKWc4" title="5kable Installation Guide" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="display:block;"></iframe>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;">
-          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:498/727;cursor:zoom-in;" onclick="openScreenshotLightbox('screenshot-analysis.png','5kable Analysis Panel')">
+          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:498/727;cursor:pointer;" onclick="openScreenshotLightbox('screenshot-analysis.png','5kable Analysis Panel')">
             <img src="screenshot-analysis.png" alt="5kable Analysis Panel" style="width:100%;height:100%;object-fit:cover;display:block;">
           </div>
-          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:498/727;cursor:zoom-in;" onclick="openScreenshotLightbox('screenshot-training.png','5kable Training Guide')">
+          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:498/727;cursor:pointer;" onclick="openScreenshotLightbox('screenshot-training.png','5kable Training Guide')">
             <img src="screenshot-training.png" alt="5kable Training Guide" style="width:100%;height:100%;object-fit:cover;display:block;">
           </div>
         </div>
@@ -2565,10 +2565,10 @@ function toggleRecentExpand(){ _gaxRecentExpanded = !_gaxRecentExpanded; renderR
 // (same approach as region-map.html) so this never breaks due to an
 // external file being slow, rate-limited, or moved.
 const WORLDMAP_COUNTRY_ID_NAME = {
-  "4":"Afghanistan","8":"Albania","12":"Algeria","24":"Angola","10":"Antarctica","32":"Argentina",
-  "51":"Armenia","36":"Australia","40":"Austria","31":"Azerbaijan","44":"Bahamas","50":"Bangladesh",
-  "112":"Belarus","56":"Belgium","84":"Belize","204":"Benin","64":"Bhutan","68":"Bolivia",
-  "70":"Bosnia and Herz.","72":"Botswana","76":"Brazil","96":"Brunei","100":"Bulgaria","854":"Burkina Faso",
+  "004":"Afghanistan","008":"Albania","012":"Algeria","024":"Angola","010":"Antarctica","032":"Argentina",
+  "051":"Armenia","036":"Australia","040":"Austria","031":"Azerbaijan","044":"Bahamas","050":"Bangladesh",
+  "112":"Belarus","056":"Belgium","084":"Belize","204":"Benin","064":"Bhutan","068":"Bolivia",
+  "070":"Bosnia and Herz.","072":"Botswana","076":"Brazil","096":"Brunei","100":"Bulgaria","854":"Burkina Faso",
   "108":"Burundi","116":"Cambodia","120":"Cameroon","124":"Canada","140":"Central African Rep.","148":"Chad",
   "152":"Chile","156":"China","170":"Colombia","178":"Congo","180":"Dem. Rep. Congo","188":"Costa Rica",
   "384":"Ivory Coast","191":"Croatia","192":"Cuba","196":"Cyprus","203":"Czechia","208":"Denmark",
@@ -2588,24 +2588,24 @@ const WORLDMAP_COUNTRY_ID_NAME = {
   "598":"Papua New Guinea","600":"Paraguay","604":"Peru","608":"Philippines","616":"Poland","620":"Portugal",
   "630":"Puerto Rico","634":"Qatar","642":"Romania","643":"Russia","646":"Rwanda","682":"Saudi Arabia",
   "686":"Senegal","688":"Serbia","694":"Sierra Leone","702":"Singapore","703":"Slovakia","705":"Slovenia",
-  "90":"Solomon Islands","706":"Somalia","710":"South Africa","728":"South Sudan","724":"Spain",
+  "090":"Solomon Islands","706":"Somalia","710":"South Africa","728":"South Sudan","724":"Spain",
   "144":"Sri Lanka","729":"Sudan","740":"Suriname","752":"Sweden","756":"Switzerland","760":"Syria",
   "158":"Taiwan","762":"Tajikistan","834":"Tanzania","764":"Thailand","626":"East Timor","768":"Togo",
   "780":"Trinidad and Tobago","788":"Tunisia","792":"Turkey","795":"Turkmenistan","800":"Uganda",
   "804":"Ukraine","784":"United Arab Emirates","826":"United Kingdom","840":"United States of America",
   "858":"Uruguay","860":"Uzbekistan","548":"Vanuatu","862":"Venezuela","704":"Vietnam","732":"W. Sahara",
-  "887":"Yemen","894":"Zambia","716":"Zimbabwe","20":"Andorra","48":"Bahrain","132":"Cabo Verde",
+  "887":"Yemen","894":"Zambia","716":"Zimbabwe","020":"Andorra","048":"Bahrain","132":"Cabo Verde",
   "174":"Comoros","212":"Dominica","678":"Sao Tome and Principe","674":"San Marino",
   "690":"Seychelles","662":"Saint Lucia","584":"Marshall Islands","583":"Micronesia","520":"Nauru",
   "570":"Niue","585":"Palau","882":"Samoa","798":"Tuvalu","533":"Aruba",
   "658":"Saint Kitts and Nevis","670":"Saint Vincent and the Grenadines",
-  "60":"Bermuda","136":"Cayman Islands","260":"French Southern and Antarctic Lands","292":"Gibraltar",
+  "060":"Bermuda","136":"Cayman Islands","260":"French Southern and Antarctic Lands","292":"Gibraltar",
   "833":"Isle of Man","832":"Jersey","831":"Guernsey","663":"Saint Martin",
   "666":"Saint Pierre and Miquelon","162":"Christmas Island","166":"Cocos Islands",
   "234":"Faroe Islands","254":"French Guiana","258":"French Polynesia","312":"Guadeloupe","316":"Guam",
   "474":"Martinique","175":"Mayotte","580":"Northern Mariana Islands","581":"United States Minor Outlying Islands",
   "638":"Reunion","652":"Saint Barthelemy","654":"Saint Helena","796":"Turks and Caicos Islands",
-  "850":"United States Virgin Islands","16":"American Samoa","531":"Curacao",
+  "850":"United States Virgin Islands","016":"American Samoa","531":"Curacao",
   "999":"N. Cyprus"
 };
 const WORLDMAP_ALIASES = {
@@ -3527,7 +3527,7 @@ function showPaymentHistory() {
 
 function openScreenshotLightbox(src, alt) {
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:24px;box-sizing:border-box;';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:24px;box-sizing:border-box;';
   overlay.innerHTML = `
     <img src="${src}" alt="${alt}" style="max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
     <button style="position:absolute;top:20px;right:24px;background:rgba(13,13,18,0.75);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e0e0f0;font-size:20px;width:36px;height:36px;cursor:pointer;">✕</button>
