@@ -22,6 +22,10 @@
 <body>
   <div id="pano"></div>
   <div id="pano-error">Panorama unavailable</div>
-  <script src="panorama.js"></script>
+  <!-- Cache-busting query param: bump this (v=2, v=3, ...) any time
+       panorama.js is edited, so browsers/CDNs that have already cached the
+       old file are forced to fetch the new one instead of silently reusing
+       a stale copy. -->
+  <script src="panorama.js?v=1"></script>
 </body>
 </html>
