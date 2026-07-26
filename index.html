@@ -3436,6 +3436,8 @@ function showPaymentHistory() {
 
 function showPaymentMethods() {
   closeUserMenu();
+  const token = getToken();
+  if (!token) { showModal('login'); return; }
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:center;justify-content:center;';
   overlay.innerHTML = `<div style="background:#10101e;border:1px solid #1e1e35;border-radius:16px;padding:36px;width:420px;max-width:95vw;">
@@ -3443,13 +3445,40 @@ function showPaymentMethods() {
       <div style="font-size:18px;font-weight:700;">Payment Methods</div>
       <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:#6a6a9a;font-size:20px;cursor:pointer;">✕</button>
     </div>
-    <div style="color:#6a6a9a;font-size:13px;text-align:center;padding:32px 0;">
+    <div id="payment-methods-body" style="color:#6a6a9a;font-size:13px;text-align:center;padding:32px 0;">
       <div style="font-size:32px;margin-bottom:12px;">💳</div>
-      Manage your payment methods through the Stripe customer portal coming soon.
+      <div id="payment-methods-status">Opening Stripe's secure payment portal...</div>
     </div>
   </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+
+  const statusEl = overlay.querySelector('#payment-methods-status');
+  (async () => {
+    try {
+      const res = await fetch(API + '/stripe/create-portal-session', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      if (data.url) {
+        // Redirect to Stripe's own hosted portal — adding, removing, or
+        // changing the default card there is all Stripe needs; it
+        // automatically charges whichever is marked default on each
+        // subscription renewal, no extra logic required on our end.
+        window.location.href = data.url;
+      } else {
+        statusEl.style.color = 'var(--red)';
+        statusEl.textContent = '✗ ' + (data.error || 'Could not open payment portal');
+        console.error('Stripe portal error:', data);
+      }
+    } catch(e) {
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = 'Could not connect to server — is Render awake?';
+      console.error('Stripe portal fetch error:', e);
+    }
+  })();
 }
 
 
