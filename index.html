@@ -1078,10 +1078,10 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
           <iframe width="100%" height="100%" src="https://www.youtube.com/embed/XWjrXicKWc4" title="5kable Installation Guide" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="display:block;"></iframe>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;">
-          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:498/727;">
+          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:498/727;cursor:zoom-in;" onclick="openScreenshotLightbox('screenshot-analysis.png','5kable Analysis Panel')">
             <img src="screenshot-analysis.png" alt="5kable Analysis Panel" style="width:100%;height:100%;object-fit:cover;display:block;">
           </div>
-          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:498/727;">
+          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:498/727;cursor:zoom-in;" onclick="openScreenshotLightbox('screenshot-training.png','5kable Training Guide')">
             <img src="screenshot-training.png" alt="5kable Training Guide" style="width:100%;height:100%;object-fit:cover;display:block;">
           </div>
         </div>
@@ -3523,6 +3523,22 @@ function showPaymentHistory() {
   </div>`;
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
+}
+
+function openScreenshotLightbox(src, alt) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:24px;box-sizing:border-box;';
+  overlay.innerHTML = `
+    <img src="${src}" alt="${alt}" style="max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+    <button style="position:absolute;top:20px;right:24px;background:rgba(13,13,18,0.75);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e0e0f0;font-size:20px;width:36px;height:36px;cursor:pointer;">✕</button>
+  `;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', close);
+  overlay.querySelector('img').addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('keydown', function escClose(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', escClose); }
+  });
 }
 
 function showPaymentMethods() {
