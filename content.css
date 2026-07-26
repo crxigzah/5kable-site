@@ -43,6 +43,11 @@
   margin-right: auto !important;
   display: block !important;
   cursor: pointer !important;
+  transition: transform 0.15s, box-shadow 0.15s !important;
+}
+#gax-title-logo:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 0 0 3px rgba(0,201,167,0.3) !important;
 }
 
 /* Minimized state — click the logo to collapse the whole panel down to
@@ -70,6 +75,7 @@
   width: 26px !important;
   height: 26px !important;
   margin: 0 !important;
+  border: 2px solid rgba(0,201,167,0.4) !important;
 }
 
 #gax-tier-badge {

@@ -16,6 +16,15 @@ const STREETVIEW_EMBED_KEY = 'AIzaSyAV0LW7v8Ych7rMQz560rm7SEj31juUV7I';
 let isAnalysing = false;
 let wasInGame = false;
 let userExpandedThisGame = false;
+// Set via a CustomEvent from drag.js (which runs in the page's MAIN
+// world, so it can't share plain globals with this isolated-world
+// script) — tells us whether the mouseup about to trigger a click was
+// the end of a real drag, so dragging the minimized logo to reposition
+// it doesn't also toggle minimize state.
+let gaxWasDragged = false;
+window.addEventListener('gax_drag_end', (e) => {
+  gaxWasDragged = !!(e.detail && e.detail.moved);
+});
 let roundActive = false;
 let lastImageB64 = null;
 let gaxToken = null;
@@ -231,7 +240,7 @@ function injectPanel() {
   panel.id = 'gax-panel';
   panel.innerHTML = `
     <div id="gax-header">
-      <img id="gax-title-logo" src="${chrome.runtime.getURL('icons/icon48.png')}" alt="5kable">
+      <img id="gax-title-logo" src="${chrome.runtime.getURL('icons/icon48.png')}" alt="5kable" title="Click to minimize">
       <span id="gax-tier-badge">Free</span>
       <button id="gax-disable-btn" title="Hide 5kable">⏻</button>
     </div>
@@ -479,6 +488,7 @@ function injectPanel() {
   document.getElementById('gax-disable-btn').onclick = disableScript;
   document.getElementById('gax-title-logo').onclick = (e) => {
     e.stopPropagation();
+    if (gaxWasDragged) { gaxWasDragged = false; return; }
     toggleMinimize();
   };
   const autoGuideBtn = document.getElementById('gax-autoguide-btn');
@@ -629,8 +639,12 @@ function showLoginPrompt() {
 
 function toggleMinimize() {
   const panel = document.getElementById('gax-panel');
+  const logo  = document.getElementById('gax-title-logo');
   if (!panel) return;
   panel.classList.toggle('gax-minimized');
+  if (logo) {
+    logo.title = panel.classList.contains('gax-minimized') ? 'Click to restore' : 'Click to minimize';
+  }
 }
 
 function updateAutoGuideBtn(btn){
