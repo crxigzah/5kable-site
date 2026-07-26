@@ -29,7 +29,7 @@ window._gaxInitPanorama = function () {
       panControl: false,
       zoomControl: false,
       addressControl: false,
-      fullscreenControl: true,
+      fullscreenControl: false,
       motionTracking: false,
       motionTrackingControl: false
     });
