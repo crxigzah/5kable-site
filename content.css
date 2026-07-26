@@ -1,0 +1,718 @@
+/* 5kable Extension — Panel Styles */
+
+#gax-panel {
+  position: fixed !important;
+  top: 80px;
+  right: 16px;
+  width: 340px !important;
+  background: #0d0d12 !important;
+  border: 1px solid #1e1e2e !important;
+  border-radius: 14px !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7) !important;
+  z-index: 2147483646 !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-size: 13px !important;
+  color: #e0e0f0 !important;
+  user-select: none !important;
+  overflow: visible !important;
+  transition: width 0.2s, height 0.2s, border-radius 0.2s !important;
+}
+
+#gax-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 10px 12px !important;
+  background: linear-gradient(90deg, #0d1a15, #12101e) !important;
+  border-bottom: 1px solid #1e1e2e !important;
+  cursor: grab !important;
+  border-radius: 14px 14px 0 0 !important;
+  touch-action: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  overflow: hidden !important;
+}
+
+#gax-header:active { cursor: grabbing !important; }
+
+#gax-title-logo {
+  width: 22px !important;
+  height: 22px !important;
+  border-radius: 6px !important;
+  flex: 0 0 auto !important;
+  margin-right: auto !important;
+  display: block !important;
+  cursor: pointer !important;
+}
+
+/* Minimized state — click the logo to collapse the whole panel down to
+   just itself (very small, non-distracting), click it again to restore. */
+#gax-panel.gax-minimized {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+}
+#gax-panel.gax-minimized #gax-header {
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  border-bottom: none !important;
+  justify-content: center !important;
+}
+#gax-panel.gax-minimized #gax-tier-badge,
+#gax-panel.gax-minimized #gax-disable-btn,
+#gax-panel.gax-minimized #gax-body {
+  display: none !important;
+}
+#gax-panel.gax-minimized #gax-title-logo {
+  width: 26px !important;
+  height: 26px !important;
+  margin: 0 !important;
+}
+
+#gax-tier-badge {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  background: #1e1e2e !important;
+  color: #8888aa !important;
+  padding: 2px 6px !important;
+  border-radius: 8px !important;
+}
+
+#gax-disable-btn {
+  background: #1e1e32 !important;
+  border: 1px solid #2a2a3e !important;
+  color: #8888aa !important;
+  cursor: pointer !important;
+  border-radius: 6px !important;
+  width: 24px !important;
+  height: 24px !important;
+  font-size: 11px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+}
+
+#gax-disable-btn:hover {
+  background: rgba(255,107,107,0.12) !important;
+  border-color: #ff6b6b !important;
+  color: #ff6b6b !important;
+}
+
+#gax-disabled-nub {
+  position: fixed !important;
+  top: 80px;
+  right: 16px;
+  z-index: 2147483646 !important;
+  background: #0d0d12 !important;
+  border: 1px solid #2a2a3e !important;
+  color: #8888aa !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 8px 12px !important;
+  border-radius: 20px !important;
+  cursor: grab !important;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5) !important;
+  user-select: none !important;
+  touch-action: none !important;
+  transition: background 0.15s, border-color 0.15s, color 0.15s !important;
+}
+
+#gax-disabled-nub:active { cursor: grabbing !important; }
+
+#gax-disabled-nub:hover {
+  background: rgba(0,201,167,0.1) !important;
+  border-color: #00c9a7 !important;
+  color: #00c9a7 !important;
+}
+
+#gax-body { padding: 10px !important; }
+
+#gax-status {
+  font-size: 11px !important;
+  color: #8888aa !important;
+  text-align: center !important;
+  padding: 4px 0 6px !important;
+}
+
+#gax-result {
+  background: #1a1a2e !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  margin-bottom: 8px !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+  min-height: 36px !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+.gax-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: #00c9a7 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+
+.gax-line { margin-bottom: 4px !important; }
+.gax-loading { color: #8888aa !important; text-align: center !important; padding: 8px !important; }
+
+.gax-limit {
+  text-align: center !important;
+  padding: 8px !important;
+  color: #ff6b6b !important;
+}
+
+#gax-country-select {
+  width: 100% !important;
+  background: #1a1a2e !important;
+  border: 1px solid #2a2a3e !important;
+  border-radius: 8px !important;
+  padding: 7px 10px !important;
+  color: #e0e0f0 !important;
+  font-size: 12px !important;
+  margin-bottom: 8px !important;
+  outline: none !important;
+  cursor: pointer !important;
+}
+
+#gax-action-row {
+  display: flex !important;
+  gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+#gax-analyse-btn {
+  flex: 1 1 60% !important;
+  padding: 8px !important;
+  background: linear-gradient(135deg, #00c9a7, #00a87d) !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  cursor: pointer !important;
+  letter-spacing: 0.5px !important;
+  transition: all 0.2s !important;
+}
+
+#gax-analyse-btn:hover { opacity: 0.9 !important; transform: translateY(-1px) !important; }
+#gax-analyse-btn:disabled { opacity: 0.5 !important; cursor: not-allowed !important; transform: none !important; }
+
+#gax-view-lesson-btn {
+  flex: 1 1 40% !important;
+  padding: 8px !important;
+  background: #1a1a2e !important;
+  border: 1px solid #2a2a3e !important;
+  border-radius: 8px !important;
+  color: #00c9a7 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+#gax-view-lesson-btn:hover { border-color: #00c9a7 !important; }
+
+.gax-section-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: #5a5a7a !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  margin-bottom: 4px !important;
+}
+
+#gax-autoguide-btn {
+  display: block !important;
+  width: 100% !important;
+  margin: 6px 0 8px !important;
+  padding: 7px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  text-align: center !important;
+  transition: background .15s, border-color .15s, color .15s !important;
+}
+.gax-autoguide-on {
+  background: rgba(0,201,167,0.12) !important;
+  border: 1px solid rgba(0,201,167,0.4) !important;
+  color: #00c9a7 !important;
+}
+.gax-autoguide-on:hover { background: rgba(0,201,167,0.2) !important; }
+.gax-autoguide-off {
+  background: rgba(255,107,107,0.12) !important;
+  border: 1px solid rgba(255,107,107,0.4) !important;
+  color: #ff6b6b !important;
+}
+.gax-autoguide-off:hover { background: rgba(255,107,107,0.2) !important; }
+
+#gax-last-lesson-wrap {
+  background: #1a1a2e !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+#gax-last-lesson {
+  font-size: 11px !important;
+  color: #8888aa !important;
+  line-height: 1.5 !important;
+}
+
+#gax-usage-wrap {
+  background: #1a1a2e !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  margin-bottom: 8px !important;
+  display: none !important;
+}
+
+#gax-usage-text {
+  font-size: 11px !important;
+  color: #8888aa !important;
+  margin-bottom: 4px !important;
+}
+
+#gax-usage-bar-wrap {
+  height: 4px !important;
+  background: #0d0d12 !important;
+  border-radius: 2px !important;
+  overflow: hidden !important;
+}
+
+#gax-usage-bar {
+  height: 100% !important;
+  background: #00c9a7 !important;
+  border-radius: 2px !important;
+  width: 0% !important;
+  transition: width 0.3s !important;
+}
+
+#gax-chat-section { margin-top: 4px !important; }
+
+#gax-chat-log {
+  background: #1a1a2e !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  max-height: 150px !important;
+  overflow-y: auto !important;
+  margin-bottom: 6px !important;
+}
+
+.gax-msg { margin-bottom: 6px !important; font-size: 12px !important; line-height: 1.5 !important; }
+.gax-msg-you { color: #00c9a7 !important; }
+.gax-msg-you::before { content: 'You: ' !important; font-weight: 700 !important; }
+.gax-msg-ai { color: #e0e0f0 !important; }
+.gax-msg-ai::before { content: 'GeoX: ' !important; font-weight: 700 !important; color: #7c3aed !important; }
+.gax-msg-sys { color: #5a5a7a !important; font-style: italic !important; font-size: 11px !important; }
+
+#gax-chat-input-row {
+  display: flex !important;
+  gap: 6px !important;
+}
+
+#gax-chat-input {
+  flex: 1 !important;
+  background: #1a1a2e !important;
+  border: 1px solid #2a2a3e !important;
+  border-radius: 8px !important;
+  padding: 7px 10px !important;
+  color: #e0e0f0 !important;
+  font-size: 12px !important;
+  outline: none !important;
+}
+
+#gax-chat-input:focus { border-color: #00c9a7 !important; }
+
+#gax-chat-send {
+  background: #1e1e2e !important;
+  border: 1px solid #2a2a3e !important;
+  color: #00c9a7 !important;
+  border-radius: 8px !important;
+  padding: 0 12px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+}
+
+#gax-chat-send:hover { background: rgba(0,201,167,0.1) !important; }
+
+/* ── Teaching Popup ── */
+#gax-teach-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0,0,0,0.88) !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  padding: 40px 16px !important;
+  overflow-y: auto !important;
+}
+
+#gax-teach-box {
+  background: #0d0d12 !important;
+  border: 1px solid #1e1e2e !important;
+  border-radius: 18px !important;
+  width: 580px !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  margin: auto !important;
+}
+
+#gax-teach-header {
+  background: linear-gradient(135deg, #0d1a15, #12101e) !important;
+  padding: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  border-bottom: 1px solid #1e1e2e !important;
+}
+
+#gax-teach-location {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  color: #00c9a7 !important;
+}
+
+#gax-teach-subtitle {
+  font-size: 12px !important;
+  color: #8888aa !important;
+  margin-top: 2px !important;
+}
+
+#gax-teach-close {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid #2a2a3e !important;
+  color: #8888aa !important;
+  cursor: pointer !important;
+  border-radius: 8px !important;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 14px !important;
+}
+
+#gax-teach-body {
+  padding: 20px !important;
+  max-height: 70vh !important;
+  overflow-y: auto !important;
+}
+
+.gax-ts {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #5a5a7a !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  margin-bottom: 8px !important;
+}
+
+.gax-img-wrap {
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  margin-bottom: 12px !important;
+  border: 1px solid #1e1e2e !important;
+}
+
+.gax-pano-wrap {
+  position: relative !important;
+}
+
+.gax-pano-controls {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  display: flex !important;
+  gap: 6px !important;
+  z-index: 5 !important;
+}
+
+.gax-pano-btn {
+  width: 26px !important;
+  height: 26px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: rgba(13,13,18,0.75) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-radius: 6px !important;
+  color: #e0e0f0 !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  line-height: 1 !important;
+}
+
+.gax-pano-btn:hover {
+  background: rgba(0,201,167,0.18) !important;
+  border-color: rgba(0,201,167,0.4) !important;
+}
+
+.gax-main-img {
+  width: 100% !important;
+  display: block !important;
+  max-height: 220px !important;
+  object-fit: cover !important;
+}
+
+.gax-key-clue {
+  background: linear-gradient(135deg, rgba(0,201,167,0.08), rgba(124,58,237,0.06)) !important;
+  border: 1px solid rgba(0,201,167,0.2) !important;
+  border-radius: 10px !important;
+  padding: 12px !important;
+  margin-bottom: 14px !important;
+  display: flex !important;
+  gap: 10px !important;
+  align-items: flex-start !important;
+}
+
+.gax-key-icon { font-size: 20px !important; flex-shrink: 0 !important; }
+.gax-key-label { font-size: 9px !important; font-weight: 700 !important; color: #00c9a7 !important; letter-spacing: 2px !important; margin-bottom: 4px !important; }
+.gax-key-text { font-size: 13px !important; font-weight: 600 !important; line-height: 1.5 !important; color: #e0e0f0 !important; }
+
+.gax-tc {
+  display: flex !important;
+  gap: 10px !important;
+  align-items: flex-start !important;
+  padding: 8px !important;
+  background: #1a1a2e !important;
+  border-radius: 8px !important;
+  margin-bottom: 6px !important;
+}
+
+.gax-tc-icon { font-size: 16px !important; flex-shrink: 0 !important; }
+.gax-tc-text { font-size: 12px !important; color: #c0c0d8 !important; line-height: 1.5 !important; }
+
+.gax-trick {
+  background: rgba(255,165,0,0.06) !important;
+  border: 1px solid rgba(255,165,0,0.15) !important;
+  border-radius: 8px !important;
+  padding: 10px 12px !important;
+  font-size: 12px !important;
+  color: #f0a500 !important;
+  line-height: 1.5 !important;
+}
+
+#gax-teach-chat-section { margin-top: 16px !important; }
+#gax-teach-chat-log {
+  background: #1a1a2e !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  max-height: 100px !important;
+  overflow-y: auto !important;
+  margin-bottom: 6px !important;
+  min-height: 32px !important;
+}
+#gax-teach-chat-input-row {
+  display: flex !important;
+  gap: 6px !important;
+  margin-top: 6px !important;
+}
+#gax-teach-chat-input {
+  flex: 1 !important;
+  background: #1a1a2e !important;
+  border: 1px solid #2a2a3e !important;
+  border-radius: 8px !important;
+  padding: 8px 10px !important;
+  color: #e0e0f0 !important;
+  font-size: 12px !important;
+  outline: none !important;
+  min-width: 0 !important;
+}
+#gax-teach-chat-input:focus { border-color: #00c9a7 !important; }
+#gax-teach-chat-send {
+  background: #00c9a7 !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0 14px !important;
+  cursor: pointer !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  flex-shrink: 0 !important;
+}
+
+/* Left drag handle */
+#gax-drag-handle {
+  position: absolute !important;
+  left: -22px !important;
+  top: 0 !important;
+  width: 20px !important;
+  height: 100% !important;
+  background: rgba(0,201,167,0.15) !important;
+  border: 1px solid rgba(0,201,167,0.3) !important;
+  border-right: none !important;
+  border-radius: 8px 0 0 8px !important;
+  cursor: grab !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: rgba(0,201,167,0.6) !important;
+  font-size: 14px !important;
+  user-select: none !important;
+}
+#gax-drag-handle:hover { background: rgba(0,201,167,0.25) !important; color: #00c9a7 !important; }
+#gax-drag-handle:active { cursor: grabbing !important; }
+
+/* ── Popup polish ── */
+#gax-teach-box {
+  background: #0d0d12 !important;
+  border: 1px solid #1e1e2e !important;
+  border-radius: 20px !important;
+  width: 620px !important;
+  max-width: 96vw !important;
+  overflow: hidden !important;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.8) !important;
+}
+
+#gax-teach-header {
+  background: linear-gradient(135deg, #0d1a15, #12101e) !important;
+  padding: 22px 24px !important;
+  border-bottom: 1px solid #1e1e2e !important;
+}
+
+#gax-teach-location {
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  color: #00c9a7 !important;
+  letter-spacing: -0.3px !important;
+}
+
+#gax-teach-subtitle {
+  font-size: 12px !important;
+  color: #5a5a7a !important;
+  margin-top: 3px !important;
+}
+
+#gax-teach-body {
+  padding: 20px !important;
+  max-height: 72vh !important;
+  overflow-y: auto !important;
+}
+
+.gax-img-wrap {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  margin-bottom: 10px !important;
+  border: 1px solid #1e1e2e !important;
+  position: relative !important;
+}
+
+.gax-main-img {
+  width: 100% !important;
+  display: block !important;
+  max-height: 200px !important;
+  object-fit: cover !important;
+}
+
+.gax-ts {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: #5a5a7a !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase !important;
+  margin-bottom: 8px !important;
+  margin-top: 4px !important;
+}
+
+.gax-key-clue {
+  background: linear-gradient(135deg, rgba(0,201,167,0.1), rgba(124,58,237,0.06)) !important;
+  border: 1px solid rgba(0,201,167,0.25) !important;
+  border-radius: 12px !important;
+  padding: 14px !important;
+  margin: 12px 0 !important;
+  display: flex !important;
+  gap: 12px !important;
+  align-items: flex-start !important;
+}
+
+.gax-key-label {
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  color: #00c9a7 !important;
+  letter-spacing: 2px !important;
+  margin-bottom: 5px !important;
+}
+
+.gax-key-text {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  line-height: 1.5 !important;
+  color: #e0e0f0 !important;
+}
+
+.gax-tc {
+  display: flex !important;
+  gap: 12px !important;
+  align-items: flex-start !important;
+  padding: 10px 12px !important;
+  background: #1a1a2e !important;
+  border-radius: 10px !important;
+  margin-bottom: 8px !important;
+  border: 1px solid #2a2a3e !important;
+}
+
+.gax-tc-text {
+  font-size: 12px !important;
+  color: #c0c0d8 !important;
+  line-height: 1.6 !important;
+}
+
+.gax-trick {
+  background: rgba(240,165,0,0.07) !important;
+  border: 1px solid rgba(240,165,0,0.2) !important;
+  border-radius: 10px !important;
+  padding: 12px 14px !important;
+  font-size: 12px !important;
+  color: #f0a500 !important;
+  line-height: 1.6 !important;
+  margin-top: 4px !important;
+}
+
+/* Custom country dropdown */
+#gax-country-wrap {
+  position: relative !important;
+  margin-bottom: 8px !important;
+}
+#gax-country-btn {
+  width: 100% !important;
+  background: #1a1a2e !important;
+  border: 1px solid #2a2a3e !important;
+  border-radius: 8px !important;
+  padding: 7px 10px !important;
+  color: #e0e0f0 !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+#gax-country-btn:hover { border-color: #00c9a7 !important; }
+#gax-country-list {
+  position: absolute !important;
+  top: calc(100% + 4px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  background: #1a1a2e !important;
+  border: 1px solid #2a2a3e !important;
+  border-radius: 8px !important;
+  z-index: 1000 !important;
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+.gax-country-opt {
+  padding: 8px 10px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  color: #c0c0d8 !important;
+}
+.gax-country-opt:hover { background: rgba(0,201,167,0.1) !important; color: #e0e0f0 !important; }
