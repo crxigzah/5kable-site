@@ -2847,13 +2847,20 @@ async function loadWorldMap(token){
 
     // Zoom (wheel/dblclick) only — filtered out mousedown/touchstart so
     // this can't be dragged to pan around, just zoomed in and out.
+    // Always zooms around the map's own center point rather than
+    // wherever the cursor happens to be (d3's default), which was
+    // shifting the map off-center and making it look like it
+    // "disappeared" when scrolling near an edge.
+    const centerX = width / 2, centerY = height / 2;
     const zoom = d3.zoom()
       .filter((event) => event.type === 'wheel' || event.type === 'dblclick')
       .scaleExtent([1, 8])
-      .translateExtent([[-width * 0.5, -height * 0.5], [width * 1.5, height * 1.5]])
       .on('zoom', (event) => {
-        g.attr('transform', event.transform);
-        g.attr('stroke-width', 0.5 / event.transform.k);
+        const k = event.transform.k;
+        const tx = centerX * (1 - k);
+        const ty = centerY * (1 - k);
+        g.attr('transform', `translate(${tx},${ty}) scale(${k})`);
+        g.attr('stroke-width', 0.5 / k);
       });
     svg.call(zoom);
 
