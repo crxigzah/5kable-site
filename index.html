@@ -1203,7 +1203,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
     <!-- Level / XP -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
       <div id="dash-level-ring" style="width:56px;height:56px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--teal) 0deg, var(--border) 0deg);position:relative;">
-        <div style="width:46px;height:46px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;" id="dash-level-num">1</div>
+        <div style="width:46px;height:46px;border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:14px;" id="dash-level-num">1</div>
       </div>
       <div style="flex:1;min-width:180px;">
         <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
@@ -2310,7 +2310,7 @@ function showDashboard(user, token) {
 function _gaxLevelInfo(xp) {
   // Quadratic curve: level n's cumulative threshold is 50*n^2, so each
   // level takes progressively more XP than the last (RPG-style pacing)
-  // \u2014 50 XP for level 2, 200 cumulative for level 3, 450 for level 4...
+  // — 50 XP for level 2, 200 cumulative for level 3, 450 for level 4...
   let level = 1;
   while (50 * level * level <= xp) level++;
   const xpForCurrentLevel = 50 * (level - 1) * (level - 1);
@@ -2321,20 +2321,20 @@ function _gaxLevelInfo(xp) {
   return { level, xpIntoLevel, xpNeededForLevel, pct };
 }
 
-// Rank tiers \u2014 each is both a title AND a real visual reward (ring
-// color, badge color). Climbing tiers changes your rank ring/badge
+// Rank tiers — each is both a title AND a real visual reward (ring
+// color, badge color, icon). Climbing tiers changes your rank ring/badge
 // color everywhere it's shown, so leveling up has a visible payoff
 // beyond just a number going up.
 const _gaxLevelTiers = [
-  { level: 1,  title: 'Rookie',            color: '#8888aa' },
-  { level: 2,  title: 'Explorer',          color: '#00c9a7' },
-  { level: 3,  title: 'Navigator',         color: '#00c9a7' },
-  { level: 5,  title: 'Scout',             color: '#5eb3ff' },
-  { level: 8,  title: 'Cartographer',      color: '#5eb3ff' },
-  { level: 12, title: 'Globetrotter',      color: '#f0a500' },
-  { level: 16, title: 'Geo Master',        color: '#f0a500' },
-  { level: 20, title: 'Master Geographer', color: '#b388ff' },
-  { level: 25, title: 'Legend',            color: 'linear-gradient(90deg,#00c9a7,#b388ff,#f0a500)' },
+  { level: 1,  title: 'Rookie',            color: '#8888aa', icon: '🌱' },
+  { level: 2,  title: 'Explorer',          color: '#00c9a7', icon: '🧭' },
+  { level: 3,  title: 'Navigator',         color: '#00c9a7', icon: '🗺️' },
+  { level: 5,  title: 'Scout',             color: '#5eb3ff', icon: '🔭' },
+  { level: 8,  title: 'Cartographer',      color: '#5eb3ff', icon: '📐' },
+  { level: 12, title: 'Globetrotter',      color: '#f0a500', icon: '🌍' },
+  { level: 16, title: 'Geo Master',        color: '#f0a500', icon: '🏅' },
+  { level: 20, title: 'Master Geographer', color: '#b388ff', icon: '👑' },
+  { level: 25, title: 'Legend',            color: 'linear-gradient(90deg,#00c9a7,#b388ff,#f0a500)', icon: '⭐' },
 ];
 
 function _gaxTierForLevel(level) {
@@ -2347,19 +2347,14 @@ function renderRewardsRoadmap(level) {
   const el = document.getElementById('dash-rewards-roadmap');
   if (!el) return;
   const currentTier = _gaxTierForLevel(level);
+  el.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;';
   el.innerHTML = _gaxLevelTiers.map(t => {
     const unlocked = level >= t.level;
     const isCurrent = currentTier.level === t.level;
-    const swatch = unlocked
-      ? `background:${t.color};`
-      : `background:var(--bg2);`;
-    return `<div style="display:flex;align-items:center;gap:12px;padding:8px 6px;border-radius:8px;${isCurrent ? 'background:rgba(0,201,167,0.08);' : ''}">
-      <div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;${swatch}color:${unlocked ? '#000' : 'var(--muted)'};">${unlocked ? '\u2713' : '\ud83d\udd12'}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:700;color:${unlocked ? 'var(--text)' : 'var(--muted)'};">${t.title}</div>
-        <div style="font-size:11px;color:var(--muted);">Level ${t.level}${unlocked ? ' \u2014 Unlocked' : ' required'}</div>
-      </div>
-      ${isCurrent ? '<span style="font-size:10px;font-weight:700;color:var(--teal);background:rgba(0,201,167,0.12);padding:2px 8px;border-radius:10px;flex-shrink:0;">CURRENT</span>' : ''}
+    return `<div style="text-align:center;padding:10px 6px;border-radius:10px;background:${isCurrent ? 'rgba(0,201,167,0.1)' : 'var(--bg2)'};border:1px solid ${isCurrent ? 'var(--teal)' : 'transparent'};opacity:${unlocked ? '1' : '.45'};">
+      <div style="font-size:20px;line-height:1;margin-bottom:6px;filter:${unlocked ? 'none' : 'grayscale(1)'};">${t.icon}</div>
+      <div style="font-size:11px;font-weight:700;color:${unlocked ? 'var(--text)' : 'var(--muted)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:2px;">Lv.${t.level}${unlocked ? '' : ' 🔒'}</div>
     </div>`;
   }).join('');
 }
@@ -2383,8 +2378,8 @@ async function loadDashboardExtras(token){
     const { level, xpIntoLevel, xpNeededForLevel, pct } = _gaxLevelInfo(totalXP);
     const tier = _gaxTierForLevel(level);
 
-    if (numEl) numEl.textContent = level;
-    if (titleEl) titleEl.textContent = `Level ${level} \u2014 ${tier.title}`;
+    if (numEl) numEl.innerHTML = `<div style="font-size:15px;line-height:1;">${tier.icon}</div><div style="font-size:10px;line-height:1;margin-top:2px;">${level}</div>`;
+    if (titleEl) titleEl.textContent = `Level ${level} — ${tier.title}`;
     if (xpTextEl) xpTextEl.textContent = `${xpIntoLevel.toLocaleString()} / ${xpNeededForLevel.toLocaleString()} XP`;
     if (fillEl) { fillEl.style.width = pct + '%'; fillEl.style.background = tier.color; }
     if (ring) ring.style.background = `conic-gradient(${tier.color} ${pct}%, var(--border) ${pct}%)`;
@@ -2903,7 +2898,7 @@ function renderCountryProgressGrid() {
   if (_gaxCountryProgressFilter === 'played') rows = rows.filter(r => r.correct > 0);
 
   if (!rows.length) {
-    grid.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;grid-column:1/-1;">No countries played yet \u2014 get out there and start guessing!</div>`;
+    grid.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;grid-column:1/-1;">No countries played yet — get out there and start guessing!</div>`;
     return;
   }
 
@@ -2919,7 +2914,7 @@ function renderCountryProgressGrid() {
           <span class="cpc-name">${escapeHtmlLocal(r.name)}</span>
         </div>
         <div class="cpc-bar-track"><div class="cpc-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
-        <div class="cpc-count${isDiamond ? ' diamond' : ''}">${isDiamond ? '\ud83d\udc8e Diamond status' : `${r.correct.toLocaleString()} / ${DIAMOND_THRESHOLD.toLocaleString()}`}</div>
+        <div class="cpc-count${isDiamond ? ' diamond' : ''}">${isDiamond ? '💎 Diamond status' : `${r.correct.toLocaleString()} / ${DIAMOND_THRESHOLD.toLocaleString()}`}</div>
       </div>`;
   }).join('');
 }
@@ -3162,6 +3157,14 @@ function showAccountSettings() {
         <div style="font-size:10px;color:#5a5a7a;margin-top:6px;">Or pick a colour</div>
       </div>
 
+      <!-- Level -->
+      <div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #1e1e35;">
+        <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">🎖️ RANK</label>
+        <div id="settings-level-display" style="display:flex;align-items:center;gap:10px;">
+          <div style="color:#7a7a9a;font-size:12px;">Loading...</div>
+        </div>
+      </div>
+
       <!-- Display Name -->
       <div style="margin-bottom:16px;">
         <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">DISPLAY NAME</label>
@@ -3246,6 +3249,29 @@ function showAccountSettings() {
   document.body.appendChild(overlay);
   overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
   loadBadgesIntoSettings();
+  loadLevelIntoSettings();
+}
+
+async function loadLevelIntoSettings(){
+  const el = document.getElementById('settings-level-display');
+  if (!el) return;
+  const token = getToken();
+  if (!token) { el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">Sign in to see your rank.</div>'; return; }
+  try {
+    const res = await fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const data = await res.json();
+    const totalXP = (data.stats || []).reduce((sum, s) => sum + (s.correct || 0), 0);
+    const { level, xpIntoLevel, xpNeededForLevel } = _gaxLevelInfo(totalXP);
+    const tier = _gaxTierForLevel(level);
+    el.innerHTML = `
+      <div style="width:38px;height:38px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;background:${tier.color};">${tier.icon}</div>
+      <div>
+        <div style="font-size:13px;font-weight:700;color:#eee;">Level ${level} — ${tier.title}</div>
+        <div style="font-size:11px;color:#7a7a9a;margin-top:2px;">${xpIntoLevel.toLocaleString()} / ${xpNeededForLevel.toLocaleString()} XP to next level</div>
+      </div>`;
+  } catch(e) {
+    el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">Couldn\'t load rank right now.</div>';
+  }
 }
 
 function previewAvatar(input) {
