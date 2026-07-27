@@ -29,13 +29,13 @@
   }
   .home-btn:hover{ color:var(--teal); border-color:var(--teal); background:rgba(0,201,167,0.08); }
 
-  main{ width:100%; max-width:1400px; padding:32px 20px; display:flex; flex-direction:column; align-items:center; }
-  h1{ font-size:26px; margin:0 0 4px; text-align:center; }
-  .sub{ color:var(--muted); font-size:14px; margin-bottom:24px; text-align:center; max-width:520px; }
+  main{ width:100%; max-width:1400px; padding:20px 20px 16px; display:flex; flex-direction:column; align-items:center; }
+  h1{ font-size:24px; margin:0 0 4px; text-align:center; }
+  .sub{ color:var(--muted); font-size:14px; margin-bottom:14px; text-align:center; max-width:520px; }
 
   .scoreboard{
-    display:flex; gap:24px; margin-bottom:24px; background:var(--panel); border:1px solid var(--border);
-    border-radius:12px; padding:14px 24px;
+    display:flex; gap:24px; margin-bottom:16px; background:var(--panel); border:1px solid var(--border);
+    border-radius:12px; padding:10px 24px;
   }
   .score-item{ text-align:center; }
   .score-num{ font-size:20px; font-weight:800; color:var(--teal); }
@@ -73,14 +73,26 @@
 
   .quiz-card{
     width:100%; background:var(--panel); border:1px solid var(--border); border-radius:16px;
-    padding:20px; box-shadow:0 20px 50px rgba(0,0,0,0.35);
+    padding:16px; box-shadow:0 20px 50px rgba(0,0,0,0.35);
   }
   .quiz-img-wrap{
-    width:100%; aspect-ratio:4/3; border-radius:12px; overflow:hidden; background:var(--panel2);
+    width:100%; aspect-ratio:4/3; max-height:48vh; border-radius:12px; overflow:hidden; background:var(--panel2);
   }
-  .quiz-img-wrap img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .quiz-img-wrap img{ width:100%; height:100%; object-fit:contain; display:block; cursor:zoom-in; }
 
-  .options{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:18px; }
+  .img-modal{
+    display:none; position:fixed; inset:0; background:rgba(4,4,10,0.92); z-index:1000;
+    align-items:center; justify-content:center; padding:24px; cursor:zoom-out;
+  }
+  .img-modal.active{ display:flex; }
+  .img-modal img{ max-width:95vw; max-height:95vh; border-radius:10px; object-fit:contain; box-shadow:0 20px 60px rgba(0,0,0,0.6); }
+  .img-modal-close{
+    position:fixed; top:20px; right:24px; width:40px; height:40px; border-radius:50%;
+    background:var(--panel); border:1px solid var(--border); color:var(--text);
+    display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer;
+  }
+
+  .options{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px; }
   @media (max-width:520px){ .options{ grid-template-columns:1fr; } }
   .opt-btn{
     background:var(--panel2); border:1px solid var(--border); color:var(--text);
@@ -92,9 +104,9 @@
   .opt-btn.correct{ background:rgba(0,201,167,0.18); border-color:var(--teal); color:var(--teal); }
   .opt-btn.wrong{ background:rgba(255,107,107,0.18); border-color:var(--red); color:var(--red); }
 
-  .feedback{ margin-top:16px; text-align:center; font-size:14px; min-height:20px; }
+  .feedback{ margin-top:10px; text-align:center; font-size:14px; min-height:20px; }
   .next-btn{
-    margin-top:14px; width:100%; padding:13px; background:linear-gradient(135deg,#00c9a7,#7c3aed);
+    margin-top:10px; width:100%; padding:12px; background:linear-gradient(135deg,#00c9a7,#7c3aed);
     border:none; border-radius:10px; color:#080810; font-weight:800; font-size:14px; cursor:pointer; display:none;
   }
   .empty-state{ color:var(--muted); text-align:center; padding:60px 20px; }
@@ -137,6 +149,11 @@
     </div>
   </div>
 </main>
+
+<div class="img-modal" id="img-modal" onclick="closeImgModal()">
+  <div class="img-modal-close" onclick="closeImgModal()">✕</div>
+  <img id="img-modal-img" src="" onclick="event.stopPropagation()">
+</div>
 
 <script>
 const API = 'https://api.5kable.net';
@@ -341,7 +358,7 @@ async function loadNext(){
     }
 
     document.getElementById('quiz-body').innerHTML = `
-      <div class="quiz-img-wrap"><img src="${data.image_url}"></div>
+      <div class="quiz-img-wrap"><img src="${data.image_url}" onclick="openImgModal('${data.image_url}')"></div>
       <div class="options" id="options-wrap">
         ${opts.map(opt => `<button class="opt-btn" data-country="${opt}" onclick="submitAnswer('${opt.replace(/'/g,"\\'")}')">${opt}</button>`).join('')}
       </div>
@@ -383,6 +400,15 @@ function submitAnswer(picked){
     : `<span style="color:var(--red);font-weight:700;">✗ Not quite — this was ${current.correct_country}.</span>`;
   document.getElementById('next-btn').style.display = 'block';
 }
+
+function openImgModal(src){
+  document.getElementById('img-modal-img').src = src;
+  document.getElementById('img-modal').classList.add('active');
+}
+function closeImgModal(){
+  document.getElementById('img-modal').classList.remove('active');
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImgModal(); });
 
 loadNext();
 </script>
