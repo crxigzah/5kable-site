@@ -227,6 +227,38 @@ nav {
 .price-amount .curr { font-size:16px;color:var(--muted);font-weight:400; }
 .price-desc { font-size:13px;color:var(--muted);margin-bottom:24px; }
 .price-features { list-style:none;margin-bottom:28px;flex:1; }
+
+.cp-filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.cp-filter-btn:hover { color: var(--text); }
+.cp-filter-btn.active { background: var(--teal); color: #000; }
+
+.country-progress-card {
+  background: #0d0d18;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  transition: border-color .15s;
+}
+.country-progress-card:hover { border-color: var(--teal); }
+.country-progress-card.diamond { border-color: rgba(0,201,167,0.4); background: rgba(0,201,167,0.06); }
+.cpc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cpc-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cpc-name { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpc-bar-track { background: #1e1e35; border-radius: 4px; height: 6px; overflow: hidden; }
+.cpc-bar-fill { height: 100%; border-radius: 4px; background: var(--teal); transition: width .3s; }
+.cpc-count { font-size: 11px; color: var(--muted); margin-top: 8px; }
+.cpc-count.diamond { color: var(--teal); font-weight: 700; }
+
 .price-features li { font-size:13px;padding:7px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start; }
 .price-features li::before { content:'✓';color:var(--teal);font-weight:700;flex-shrink:0; }
 .price-features li.no::before { content:'✗';color:var(--muted); }
@@ -961,49 +993,49 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
           <tr>
             <th style="text-align:left;padding:12px 16px;color:var(--muted);font-weight:600;border-bottom:1px solid #1e1e35;">Feature</th>
             <th style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;border-bottom:1px solid #1e1e35;">Free</th>
-            <th style="text-align:center;padding:12px 16px;color:#f0a500;font-weight:700;border-bottom:1px solid #1e1e35;">⭐ Pro</th>
+            <th style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;border-bottom:1px solid #1e1e35;">⭐ Pro</th>
           </tr>
         </thead>
         <tbody>
           <tr style="border-bottom:1px solid #1e1e35;">
             <td style="padding:12px 16px;">F7 Scene Captures</td>
-            <td style="text-align:center;padding:12px 16px;color:#f0a500;font-weight:700;">Unlimited</td>
-            <td style="text-align:center;padding:12px 16px;color:#f0a500;font-weight:700;">Unlimited</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">Unlimited</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">Unlimited</td>
           </tr>
           <tr style="border-bottom:1px solid #1e1e35;background:rgba(255,255,255,0.02);">
             <td style="padding:12px 16px;">Training Guides</td>
             <td style="text-align:center;padding:12px 16px;color:var(--muted);">5 / day</td>
-            <td style="text-align:center;padding:12px 16px;color:#f0a500;font-weight:700;">Unlimited</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;">Unlimited</td>
           </tr>
           <tr style="border-bottom:1px solid #1e1e35;">
             <td style="padding:12px 16px;">Country Meta Guides</td>
-            <td style="text-align:center;padding:12px 16px;">114</td>
-            <td style="text-align:center;padding:12px 16px;">114</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">114</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">114</td>
           </tr>
           <tr style="border-bottom:1px solid #1e1e35;background:rgba(255,255,255,0.02);">
             <td style="padding:12px 16px;">AI Analyse Button</td>
             <td style="text-align:center;padding:12px 16px;color:var(--muted);">✗</td>
-            <td style="text-align:center;padding:12px 16px;">✓</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">✓</td>
           </tr>
           <tr style="border-bottom:1px solid #1e1e35;">
             <td style="padding:12px 16px;">5K Live Chat</td>
             <td style="text-align:center;padding:12px 16px;color:var(--muted);">✗</td>
-            <td style="text-align:center;padding:12px 16px;">✓</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">✓</td>
           </tr>
           <tr style="border-bottom:1px solid #1e1e35;background:rgba(255,255,255,0.02);">
             <td style="padding:12px 16px;">Geography-Enhanced AI</td>
             <td style="text-align:center;padding:12px 16px;color:var(--muted);">✗</td>
-            <td style="text-align:center;padding:12px 16px;">✓</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">✓</td>
           </tr>
           <tr style="border-bottom:1px solid #1e1e35;">
             <td style="padding:12px 16px;">Early Access Features</td>
             <td style="text-align:center;padding:12px 16px;color:var(--muted);">✗</td>
-            <td style="text-align:center;padding:12px 16px;">✓</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">✓</td>
           </tr>
           <tr style="background:rgba(255,255,255,0.02);">
             <td style="padding:12px 16px;">Pro Badge</td>
             <td style="text-align:center;padding:12px 16px;color:var(--muted);">✗</td>
-            <td style="text-align:center;padding:12px 16px;">✓</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">✓</td>
           </tr>
         </tbody>
         <tfoot>
@@ -1218,14 +1250,21 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
       <div id="stats-badges"><div style="color:var(--muted);font-size:13px;text-align:center;padding:10px 0;">Loading...</div></div>
     </div>
 
-    <!-- World Diamond Map -->
+    <!-- Country Progress -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:16px;">
-      <div style="font-weight:700;">🌍 World Progress Map</div>
-      <div style="color:var(--muted);font-size:13px;margin-top:4px;margin-bottom:16px;">Every supported country starts white. Reach 1000 correct region guesses in a country to light it up teal and earn Diamond status.</div>
-      <div id="stats-world-map" style="position:relative;width:100%;min-height:320px;background:#080810;border-radius:10px;overflow:hidden;">
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;" id="stats-world-map-loading">Loading map...</div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-weight:700;">🌍 Country Progress</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px;">Reach 1000 correct region guesses in a country to earn Diamond status.</div>
+        </div>
+        <div style="display:flex;background:#0d0d18;border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px;flex-shrink:0;">
+          <button id="country-progress-filter-all" class="cp-filter-btn active" onclick="setCountryProgressFilter('all')">All 114</button>
+          <button id="country-progress-filter-played" class="cp-filter-btn" onclick="setCountryProgressFilter('played')">Played</button>
+        </div>
       </div>
-      <div id="stats-world-map-tip" style="color:var(--muted);font-size:12px;margin-top:10px;text-align:center;min-height:16px;">Hover a country to see your progress.</div>
+      <div id="country-progress-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:20px;">
+        <div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;grid-column:1/-1;">Loading...</div>
+      </div>
     </div>
 
     <!-- Overview -->
@@ -1932,7 +1971,7 @@ function goToStats() {
     loadGuessInsights(token);
     loadFullStats(token);
     loadStatsBadges(token);
-    loadWorldMap(token);
+    loadCountryProgress(token);
   }
 }
 
@@ -2551,78 +2590,14 @@ function renderRecentActivity(){
 }
 function toggleRecentExpand(){ _gaxRecentExpanded = !_gaxRecentExpanded; renderRecentActivity(); }
 
-// ── World Progress Map ───────────────────────────────────────
-// Embedded ISO 3166-1 numeric ID -> country name table, matching the IDs
-// used by the world-atlas TopoJSON country shapes. Embedded directly
-// (same approach as region-map.html) so this never breaks due to an
-// external file being slow, rate-limited, or moved.
-const WORLDMAP_COUNTRY_ID_NAME = {
-  "004":"Afghanistan","008":"Albania","012":"Algeria","024":"Angola","010":"Antarctica","032":"Argentina",
-  "051":"Armenia","036":"Australia","040":"Austria","031":"Azerbaijan","044":"Bahamas","050":"Bangladesh",
-  "112":"Belarus","056":"Belgium","084":"Belize","204":"Benin","064":"Bhutan","068":"Bolivia",
-  "070":"Bosnia and Herz.","072":"Botswana","076":"Brazil","096":"Brunei","100":"Bulgaria","854":"Burkina Faso",
-  "108":"Burundi","116":"Cambodia","120":"Cameroon","124":"Canada","140":"Central African Rep.","148":"Chad",
-  "152":"Chile","156":"China","170":"Colombia","178":"Congo","180":"Dem. Rep. Congo","188":"Costa Rica",
-  "384":"Ivory Coast","191":"Croatia","192":"Cuba","196":"Cyprus","203":"Czechia","208":"Denmark",
-  "262":"Djibouti","214":"Dominican Republic","218":"Ecuador","818":"Egypt","222":"El Salvador",
-  "226":"Equatorial Guinea","232":"Eritrea","233":"Estonia","748":"Eswatini","231":"Ethiopia","242":"Fiji",
-  "246":"Finland","250":"France","266":"Gabon","270":"Gambia","268":"Georgia","276":"Germany","288":"Ghana",
-  "300":"Greece","304":"Greenland","320":"Guatemala","324":"Guinea","624":"Guinea-Bissau","328":"Guyana",
-  "332":"Haiti","340":"Honduras","348":"Hungary","352":"Iceland","356":"India","360":"Indonesia","364":"Iran",
-  "368":"Iraq","372":"Ireland","376":"Israel","380":"Italy","388":"Jamaica","392":"Japan","400":"Jordan",
-  "398":"Kazakhstan","404":"Kenya","408":"North Korea","410":"South Korea","414":"Kuwait","417":"Kyrgyzstan",
-  "418":"Laos","428":"Latvia","422":"Lebanon","426":"Lesotho","430":"Liberia","434":"Libya",
-  "438":"Liechtenstein","440":"Lithuania","442":"Luxembourg","450":"Madagascar","454":"Malawi",
-  "458":"Malaysia","466":"Mali","470":"Malta","478":"Mauritania","480":"Mauritius","484":"Mexico",
-  "498":"Moldova","496":"Mongolia","499":"Montenegro","504":"Morocco","508":"Mozambique","104":"Myanmar",
-  "516":"Namibia","524":"Nepal","528":"Netherlands","540":"New Caledonia","554":"New Zealand","558":"Nicaragua",
-  "562":"Niger","566":"Nigeria","578":"Norway","512":"Oman","586":"Pakistan","591":"Panama",
-  "598":"Papua New Guinea","600":"Paraguay","604":"Peru","608":"Philippines","616":"Poland","620":"Portugal",
-  "630":"Puerto Rico","634":"Qatar","642":"Romania","643":"Russia","646":"Rwanda","682":"Saudi Arabia",
-  "686":"Senegal","688":"Serbia","694":"Sierra Leone","702":"Singapore","703":"Slovakia","705":"Slovenia",
-  "090":"Solomon Islands","706":"Somalia","710":"South Africa","728":"South Sudan","724":"Spain",
-  "144":"Sri Lanka","729":"Sudan","740":"Suriname","752":"Sweden","756":"Switzerland","760":"Syria",
-  "158":"Taiwan","762":"Tajikistan","834":"Tanzania","764":"Thailand","626":"East Timor","768":"Togo",
-  "780":"Trinidad and Tobago","788":"Tunisia","792":"Turkey","795":"Turkmenistan","800":"Uganda",
-  "804":"Ukraine","784":"United Arab Emirates","826":"United Kingdom","840":"United States of America",
-  "858":"Uruguay","860":"Uzbekistan","548":"Vanuatu","862":"Venezuela","704":"Vietnam","732":"W. Sahara",
-  "887":"Yemen","894":"Zambia","716":"Zimbabwe","020":"Andorra","048":"Bahrain","132":"Cabo Verde",
-  "174":"Comoros","212":"Dominica","678":"Sao Tome and Principe","674":"San Marino",
-  "690":"Seychelles","662":"Saint Lucia","584":"Marshall Islands","583":"Micronesia","520":"Nauru",
-  "570":"Niue","585":"Palau","882":"Samoa","798":"Tuvalu","533":"Aruba",
-  "658":"Saint Kitts and Nevis","670":"Saint Vincent and the Grenadines",
-  "060":"Bermuda","136":"Cayman Islands","260":"French Southern and Antarctic Lands","292":"Gibraltar",
-  "833":"Isle of Man","832":"Jersey","831":"Guernsey","663":"Saint Martin",
-  "666":"Saint Pierre and Miquelon","162":"Christmas Island","166":"Cocos Islands",
-  "234":"Faroe Islands","254":"French Guiana","258":"French Polynesia","312":"Guadeloupe","316":"Guam",
-  "474":"Martinique","175":"Mayotte","580":"Northern Mariana Islands","581":"United States Minor Outlying Islands",
-  "638":"Reunion","652":"Saint Barthelemy","654":"Saint Helena","796":"Turks and Caicos Islands",
-  "850":"United States Virgin Islands","016":"American Samoa","531":"Curacao",
-  "999":"N. Cyprus"
-};
-const WORLDMAP_ALIASES = {
-  "United States of America": ["United States of America","United States"],
-  "Czechia": ["Czechia","Czech Republic"],
-  "North Macedonia": ["North Macedonia","Macedonia"],
-  "Russia": ["Russia","Russian Federation"],
-  "South Korea": ["South Korea","Republic of Korea","Korea, Rep."],
-  "Laos": ["Laos","Lao PDR"],
-  "Eswatini": ["Eswatini","Swaziland"],
-  "Palestine": ["Palestine","Palestinian Territory","West Bank"],
-  "Sao Tome and Principe": ["São Tomé and Principe","Sao Tome and Principe","São Tomé and Príncipe"],
-  "Vietnam": ["Vietnam","Viet Nam"],
-  "Bosnia and Herz.": ["Bosnia and Herz.","Bosnia and Herzegovina"],
-  "Turkey": ["Turkey","Türkiye"],
-  "Curacao": ["Curacao","Curaçao"],
-};
+// ── Country Progress ──────────────────────────────────────────
 function _gaxNormalizeCountry(name){ return (name||'').trim().toLowerCase(); }
 
-// The actual 114 countries 5kable supports — same canonical list used by
-// the extension's country picker. Everything else in the topojson dataset
-// (every other country on Earth, since the base map data isn't scoped to
-// us) previously rendered identically to a genuinely-supported country
-// that just hadn't been played yet, which is what made unsupported
-// countries like Venezuela show up looking the same as covered ones.
+// The 114 countries 5kable supports — same canonical list used by the
+// extension's country picker, which is also what gets sent as `country`
+// on every /guess/log call. Matching against backend data directly by
+// this exact list (no alias/ID bridging needed) since both sides already
+// share the same source of truth.
 const WORLDMAP_SUPPORTED_114 = [
   "Albania","American Samoa","Andorra","Argentina","Australia","Austria","Bangladesh","Belgium",
   "Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Bulgaria","Cambodia","Canada",
@@ -2639,24 +2614,6 @@ const WORLDMAP_SUPPORTED_114 = [
   "Taiwan","Thailand","Tunisia","Türkiye","Uganda","Ukraine","United Arab Emirates","United Kingdom",
   "United States","United States Virgin Islands","Uruguay","Vietnam"
 ];
-// Every normalized name/alias variant that should count as "supported" —
-// built once from the canonical list plus WORLDMAP_ALIASES, so lookups
-// during render are a simple Set.has() rather than re-scanning arrays
-// per country on every draw.
-const WORLDMAP_SUPPORTED_NORM = new Set();
-WORLDMAP_SUPPORTED_114.forEach(name => {
-  WORLDMAP_SUPPORTED_NORM.add(_gaxNormalizeCountry(name));
-  Object.values(WORLDMAP_ALIASES).forEach(variants => {
-    if (variants.some(v => _gaxNormalizeCountry(v) === _gaxNormalizeCountry(name))) {
-      variants.forEach(v => WORLDMAP_SUPPORTED_NORM.add(_gaxNormalizeCountry(v)));
-    }
-  });
-});
-function _gaxIsSupportedCountry(topoName){
-  if (!topoName) return false;
-  const variants = WORLDMAP_ALIASES[topoName] || [topoName];
-  return variants.some(v => WORLDMAP_SUPPORTED_NORM.has(_gaxNormalizeCountry(v)));
-}
 
 let _gaxWorldLibsPromise = null;
 function loadWorldMapLibs(){
@@ -2804,111 +2761,63 @@ function initHeroGlobe(){
 }
 
 let _gaxWorldFeatures = null; // cached parsed features, fetched once per session
-async function loadWorldMap(token){
-  const container = document.getElementById('stats-world-map');
-  const loadingEl = document.getElementById('stats-world-map-loading');
-  const tipEl = document.getElementById('stats-world-map-tip');
-  if (!container) return;
+let _gaxCountryProgressData = null; // cached [{name, correct}] after last fetch
+let _gaxCountryProgressFilter = 'all'; // 'all' | 'played'
 
+function setCountryProgressFilter(filter) {
+  _gaxCountryProgressFilter = filter;
+  const allBtn = document.getElementById('country-progress-filter-all');
+  const playedBtn = document.getElementById('country-progress-filter-played');
+  if (allBtn) allBtn.classList.toggle('active', filter === 'all');
+  if (playedBtn) playedBtn.classList.toggle('active', filter === 'played');
+  renderCountryProgressGrid();
+}
+
+function renderCountryProgressGrid() {
+  const grid = document.getElementById('country-progress-grid');
+  if (!grid || !_gaxCountryProgressData) return;
+  const DIAMOND_THRESHOLD = 1000;
+  let rows = _gaxCountryProgressData;
+  if (_gaxCountryProgressFilter === 'played') rows = rows.filter(r => r.correct > 0);
+
+  if (!rows.length) {
+    grid.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;grid-column:1/-1;">No countries played yet \u2014 get out there and start guessing!</div>`;
+    return;
+  }
+
+  grid.innerHTML = rows.map(r => {
+    const pct = Math.min(100, Math.round((r.correct / DIAMOND_THRESHOLD) * 100));
+    const isDiamond = r.correct >= DIAMOND_THRESHOLD;
+    const dotColor = isDiamond ? 'var(--teal)' : (r.correct > 0 ? '#8888aa' : '#2a2a3e');
+    const barColor = isDiamond ? 'var(--teal)' : '#8888aa';
+    return `
+      <div class="country-progress-card${isDiamond ? ' diamond' : ''}">
+        <div class="cpc-top">
+          <span class="cpc-status-dot" style="background:${dotColor}"></span>
+          <span class="cpc-name">${escapeHtmlLocal(r.name)}</span>
+        </div>
+        <div class="cpc-bar-track"><div class="cpc-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
+        <div class="cpc-count${isDiamond ? ' diamond' : ''}">${isDiamond ? '\ud83d\udc8e Diamond status' : `${r.correct.toLocaleString()} / ${DIAMOND_THRESHOLD.toLocaleString()}`}</div>
+      </div>`;
+  }).join('');
+}
+
+async function loadCountryProgress(token){
+  const grid = document.getElementById('country-progress-grid');
+  if (!grid) return;
   try {
-    const [statsRes] = await Promise.all([
-      fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) }),
-      loadWorldMapLibs(),
-    ]);
-    const statsData = await statsRes.json();
-    const DIAMOND_THRESHOLD = 1000;
+    const res = await fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const data = await res.json();
     const correctByCountry = {};
-    (statsData.stats || []).forEach(s => { correctByCountry[_gaxNormalizeCountry(s.country)] = s.correct; });
+    (data.stats || []).forEach(s => { correctByCountry[_gaxNormalizeCountry(s.country)] = s.correct; });
 
-    if (!_gaxWorldFeatures) {
-      const world = await d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json');
-      _gaxWorldFeatures = topojson.feature(world, world.objects.countries).features;
-    }
+    _gaxCountryProgressData = WORLDMAP_SUPPORTED_114
+      .map(name => ({ name, correct: correctByCountry[_gaxNormalizeCountry(name)] || 0 }))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
-    if (loadingEl) loadingEl.remove();
-    container.querySelectorAll('svg').forEach(el => el.remove());
-
-    const width = container.clientWidth || 800;
-    const height = Math.max(340, Math.round(width * 0.5));
-    const svg = d3.select(container).append('svg')
-      .attr('viewBox', `0 0 ${width} ${height}`)
-      .attr('width', '100%')
-      .attr('height', height)
-      .attr('draggable', 'false')
-      .style('display', 'block')
-      .style('-webkit-user-drag', 'none')
-      .style('user-select', 'none');
-    const projection = d3.geoNaturalEarth1().fitSize([width, height], {type:'Sphere'});
-    const path = d3.geoPath(projection);
-
-    svg.append('path').attr('d', path({type:'Sphere'})).attr('fill', '#080810');
-
-    const g = svg.append('g');
-
-    // Zoom (wheel/dblclick) only — filtered out mousedown/touchstart so
-    // this can't be dragged to pan around, just zoomed in and out.
-    // Always zooms around the map's own center point rather than
-    // wherever the cursor happens to be (d3's default), which was
-    // shifting the map off-center and making it look like it
-    // "disappeared" when scrolling near an edge.
-    const centerX = width / 2, centerY = height / 2;
-    const zoom = d3.zoom()
-      .filter((event) => event.type === 'wheel' || event.type === 'dblclick')
-      .scaleExtent([1, 8])
-      .on('zoom', (event) => {
-        const k = event.transform.k;
-        const tx = centerX * (1 - k);
-        const ty = centerY * (1 - k);
-        g.attr('transform', `translate(${tx},${ty}) scale(${k})`);
-        g.attr('stroke-width', 0.5 / k);
-      });
-    svg.call(zoom);
-
-    function countryFill(name, correct){
-      if (!name || !_gaxIsSupportedCountry(name)) return '#080810';
-      return correct >= DIAMOND_THRESHOLD ? 'var(--teal)' : '#ffffff';
-    }
-
-    g.selectAll('path.country')
-      .data(_gaxWorldFeatures)
-      .join('path')
-      .attr('class', 'country')
-      .attr('d', path)
-      .attr('fill', d => {
-        const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
-        if (!name || !_gaxIsSupportedCountry(name)) return countryFill(name, 0);
-        const variants = WORLDMAP_ALIASES[name] || [name];
-        const correct = Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0));
-        return countryFill(name, correct);
-      })
-      .attr('stroke', '#080810')
-      .attr('stroke-width', 0.5)
-      .style('cursor', 'default')
-      .style('transition', 'fill .2s')
-      .on('mouseenter', function(event, d){
-        const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
-        if (!name || !_gaxIsSupportedCountry(name)) return;
-        d3.select(this).attr('fill', 'rgba(0,201,167,0.6)');
-        const variants = WORLDMAP_ALIASES[name] || [name];
-        const correct = Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0));
-        if (tipEl) {
-          tipEl.textContent = correct >= DIAMOND_THRESHOLD
-            ? `\ud83d\udc8e ${name} — Diamond status! (${correct} correct)`
-            : correct > 0
-              ? `${name} — ${correct}/${DIAMOND_THRESHOLD} correct guesses`
-              : `${name} — not attempted yet`;
-        }
-      })
-      .on('mouseleave', function(event, d){
-        const name = WORLDMAP_COUNTRY_ID_NAME[String(d.id)];
-        if (!name || !_gaxIsSupportedCountry(name)) return;
-        const variants = WORLDMAP_ALIASES[name] || [name];
-        const correct = Math.max(0, ...variants.map(v => correctByCountry[_gaxNormalizeCountry(v)] || 0));
-        d3.select(this).attr('fill', countryFill(name, correct));
-        if (tipEl) tipEl.textContent = 'Hover a country to see your progress.';
-      });
+    renderCountryProgressGrid();
   } catch(e) {
-    if (loadingEl) loadingEl.textContent = "Couldn't load the map right now.";
+    grid.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;grid-column:1/-1;">Couldn't load progress right now.</div>`;
   }
 }
 
