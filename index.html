@@ -766,6 +766,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
       </div>
     </div>
     <a href="#rules" onclick="goHome();setTimeout(()=>document.getElementById('rules')?.scrollIntoView({behavior:'smooth'}),100);return false;">📋 Rules</a>
+    <a onclick="goToLeaderboard()" style="cursor:pointer;">🏆 Leaderboard</a>
     <a href="/metas" style="color:#00c9a7;font-weight:700;background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.25);padding:4px 12px;border-radius:20px;font-size:12px;text-decoration:none;transition:background .2s;" onmouseover="this.style.background='rgba(0,201,167,0.2)'" onmouseout="this.style.background='rgba(0,201,167,0.1)'">🗺️ Metas</a>
 
     <a href="https://discord.gg/YAmvxvXmw8" target="_blank" class="nav-discord" title="Discord">
@@ -1263,6 +1264,20 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
         <div style="color:var(--muted);font-size:13px;margin-bottom:16px;">Priority AI, advanced comparisons, export your library and more.</div>
         <button class="btn btn-primary" onclick="upgradeToPro()" style="width:100%;padding:11px;">Upgrade Now <span class="price-display" data-gbp="9.99">£9.99</span>/mo</button>
         <div id="upgrade-msg" style="font-size:12px;margin-top:8px;text-align:center;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="leaderboard-page" style="display:none;min-height:80vh;">
+  <div style="padding:40px;max-width:700px;margin:0 auto;position:relative;z-index:1;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:26px;font-weight:800;">🏆 Top Players</div>
+      <div style="color:var(--muted);font-size:13px;margin-top:6px;">Ranked by total XP across every game mode. Play rounds with the extension active to climb the board.</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;">
+      <div id="leaderboard-page-list">
+        <div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">Loading...</div>
       </div>
     </div>
   </div>
@@ -1966,6 +1981,7 @@ function goHome() {
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'none';
+  document.getElementById('leaderboard-page').style.display = 'none';
   window.scrollTo(0, 0);
   updatePricingButtons();
 }
@@ -1977,6 +1993,7 @@ function goToDashboard() {
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'none';
+  document.getElementById('leaderboard-page').style.display = 'none';
   window.scrollTo(0, 0);
   // Refresh stats every time the dashboard is opened, not just on
   // initial page load — previously only showDashboard() (called once
@@ -1998,6 +2015,7 @@ function goToStats() {
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('stats-page').style.display = 'block';
   document.getElementById('tickets-page').style.display = 'none';
+  document.getElementById('leaderboard-page').style.display = 'none';
   window.scrollTo(0, 0);
   const token = getToken();
   if (token) {
@@ -2014,12 +2032,59 @@ function goToTickets() {
   document.getElementById('landing').style.display = 'none';
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('stats-page').style.display = 'none';
+  document.getElementById('leaderboard-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'block';
   document.getElementById('ticket-thread-view').style.display = 'none';
   document.getElementById('tickets-list-view').style.display = 'block';
   window.scrollTo(0, 0);
   loadMyTickets();
 }
+
+function goToLeaderboard() {
+  clearInterval(ticketThreadPollInterval);
+  closeUserMenu();
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('stats-page').style.display = 'none';
+  document.getElementById('tickets-page').style.display = 'none';
+  document.getElementById('leaderboard-page').style.display = 'block';
+  window.scrollTo(0, 0);
+  loadTopPlayersLeaderboard();
+}
+
+async function loadTopPlayersLeaderboard(){
+  const el = document.getElementById('leaderboard-page-list');
+  if (!el) return;
+  try {
+    const res = await fetch(`${API}/leaderboard/levels?limit=50`);
+    const data = await res.json();
+    const rows = data.leaderboard || [];
+    if (!rows.length) {
+      el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No players yet — be the first on the board!</div>`;
+      return;
+    }
+    const me = getUser();
+    el.innerHTML = rows.map((row, i) => {
+      const isMe = me && row.user_id === me.id;
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;${isMe ? 'background:rgba(0,201,167,0.1);border:1px solid var(--teal);' : ''}">
+          <div style="width:32px;text-align:center;font-size:${i < 3 ? '18px' : '13px'};font-weight:700;color:${i < 3 ? '#fff' : 'var(--muted)'};flex-shrink:0;">${medal}</div>
+          ${renderBadgeImg(row.badge_country, 20)}
+          <div style="font-size:20px;flex-shrink:0;" title="${escapeHtmlLocal(row.tier_title)}">${row.tier_icon}</div>
+          <div style="flex:1;min-width:0;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlLocal(row.username)}${isMe ? ' <span style="color:var(--teal);font-weight:400;">(you)</span>' : ''}</div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:13px;font-weight:700;">Lv.${row.level}</div>
+            <div style="font-size:10px;color:var(--muted);">${row.total_xp.toLocaleString()} XP</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">Couldn't load the leaderboard right now.</div>`;
+  }
+}
+
+
 
 // ── Tickets ───────────────────────────────────────────────
 const TICKET_STATUS_STYLE = {
@@ -2299,6 +2364,7 @@ function showDashboard(user, token) {
   document.getElementById('dashboard').style.display = 'block';
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'none';
+  document.getElementById('leaderboard-page').style.display = 'none';
   window.scrollTo(0,0);
   updateNav(user);
   updateNavAvatar();
@@ -3047,6 +3113,7 @@ function logout() {
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'none';
+  document.getElementById('leaderboard-page').style.display = 'none';
   resetNav();
   closeUserMenu();
   if (token) {
