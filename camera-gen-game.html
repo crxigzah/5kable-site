@@ -67,6 +67,31 @@
   }
   .empty-state{ color:var(--muted); text-align:center; padding:60px 20px; }
   .loading{ color:var(--muted); text-align:center; padding:60px 20px; }
+
+  .game-layout{ width:100%; display:flex; gap:20px; align-items:flex-start; justify-content:center; }
+  .game-layout .quiz-card{ flex:1; min-width:0; max-width:1100px; }
+
+  .leaderboard-card{
+    width:280px; flex-shrink:0; background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:18px; box-shadow:0 20px 50px rgba(0,0,0,0.35);
+  }
+  .leaderboard-card h3{ margin:0 0 4px; font-size:15px; display:flex; align-items:center; gap:6px; }
+  .leaderboard-card .lb-sub{ color:var(--muted); font-size:11px; margin-bottom:14px; }
+  .lb-row{
+    display:flex; align-items:center; gap:10px; padding:8px 6px; border-radius:8px; font-size:13px;
+  }
+  .lb-row:nth-child(odd){ background:var(--panel2); }
+  .lb-rank{
+    width:22px; height:22px; border-radius:50%; background:var(--panel2); color:var(--muted);
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0;
+  }
+  .lb-row:nth-child(1) .lb-rank{ background:linear-gradient(135deg,#ffd76a,#ff9d3d); color:#3a2400; }
+  .lb-row:nth-child(2) .lb-rank{ background:linear-gradient(135deg,#dcdff0,#a9aec4); color:#22243a; }
+  .lb-row:nth-child(3) .lb-rank{ background:linear-gradient(135deg,#e3a165,#a9673a); color:#2a1400; }
+  .lb-name{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lb-streak{ font-weight:800; color:var(--teal); font-size:13px; }
+  .lb-empty, .lb-loading{ color:var(--muted); font-size:12px; text-align:center; padding:20px 0; }
+  .lb-you{ outline:1px solid var(--teal); }
 </style>
 </head>
 <body>
@@ -88,9 +113,19 @@
     <div class="score-item"><div class="score-num" id="score-best">0</div><div class="score-label">Best Streak</div></div>
   </div>
 
-  <div class="quiz-card">
-    <div id="quiz-body">
-      <div class="loading">Loading a scene...</div>
+  <div class="game-layout">
+    <div class="quiz-card">
+      <div id="quiz-body">
+        <div class="loading">Loading a scene...</div>
+      </div>
+    </div>
+
+    <div class="leaderboard-card">
+      <h3>🏆 Leaderboard</h3>
+      <div class="lb-sub">Highest best streak</div>
+      <div id="leaderboard-body">
+        <div class="lb-loading">Loading leaderboard...</div>
+      </div>
     </div>
   </div>
 </main>
@@ -112,6 +147,53 @@ function saveStats(){
   localStorage.setItem('kbl_camera_quiz_stats', JSON.stringify(stats));
 }
 renderStats();
+
+function getToken() { return localStorage.getItem('kbl_token'); }
+function getUser()  { try { return JSON.parse(localStorage.getItem('kbl_user')); } catch(e) { return null; } }
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadLeaderboard(){
+  const body = document.getElementById('leaderboard-body');
+  body.innerHTML = '<div class="lb-loading">Loading leaderboard...</div>';
+  try {
+    const res = await fetch(`${API}/camera_quiz/leaderboard?limit=10`);
+    if (!res.ok) throw new Error('unavailable');
+    const data = await res.json();
+    const rows = data.leaderboard || [];
+    if (!rows.length){
+      body.innerHTML = '<div class="lb-empty">No scores yet — be the first on the board!</div>';
+      return;
+    }
+    const me = getUser();
+    body.innerHTML = rows.map((row, i) => {
+      const isMe = me && row.user_id === me.id;
+      const tierIcon = row.tier_icon ? `<span title="Level ${row.level || '?'}" style="margin-left:4px;">${row.tier_icon}</span>` : '';
+      return `
+        <div class="lb-row${isMe ? ' lb-you' : ''}">
+          <div class="lb-rank">${i + 1}</div>
+          <div class="lb-name">${escapeHtml(row.username)}${tierIcon}${isMe ? ' (you)' : ''}</div>
+          <div class="lb-streak">${row.best_streak}</div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    body.innerHTML = '<div class="lb-empty">Leaderboard isn\'t available right now — check back soon.</div>';
+  }
+}
+loadLeaderboard();
+
+async function reportBestStreak(newBest){
+  const token = getToken();
+  if (!token) return; // only logged-in users appear on the leaderboard
+  try {
+    await fetch(`${API}/camera_quiz/streak`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ token, best_streak: newBest })
+    });
+    loadLeaderboard();
+  } catch(e) {}
+}
 
 async function loadNext(){
   answered = false;
@@ -150,7 +232,10 @@ function submitAnswer(picked){
   if (isCorrect){
     stats.correct++;
     stats.streak++;
-    if (stats.streak > stats.best) stats.best = stats.streak;
+    if (stats.streak > stats.best) {
+      stats.best = stats.streak;
+      reportBestStreak(stats.best);
+    }
   } else {
     stats.streak = 0;
   }
