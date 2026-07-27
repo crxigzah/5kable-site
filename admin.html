@@ -277,8 +277,8 @@
           </select>
         </div>
         <div>
-          <input type="file" id="camera-quiz-file-input" accept="image/*" style="display:none" onchange="uploadCameraQuizImage(this.files[0])">
-          <button class="btn btn-sm" style="background:rgba(0,201,167,0.15);border:1px solid rgba(0,201,167,0.3);color:#00c9a7;padding:9px 16px;" onclick="document.getElementById('camera-quiz-file-input').click()">📤 Upload Labeled Image</button>
+          <input type="file" id="camera-quiz-file-input" accept="image/*" multiple style="display:none" onchange="uploadCameraQuizImages(this.files)">
+          <button class="btn btn-sm" style="background:rgba(0,201,167,0.15);border:1px solid rgba(0,201,167,0.3);color:#00c9a7;padding:9px 16px;" onclick="document.getElementById('camera-quiz-file-input').click()">📤 Upload Labeled Image(s)</button>
         </div>
         <div id="camera-quiz-upload-status" style="font-size:12px;color:var(--muted);"></div>
       </div>
@@ -343,8 +343,8 @@
           </select>
         </div>
         <div>
-          <input type="file" id="photo-quiz-file-input" accept="image/*" style="display:none" onchange="uploadPhotoQuizImage(this.files[0])">
-          <button class="btn btn-sm" style="background:rgba(0,201,167,0.15);border:1px solid rgba(0,201,167,0.3);color:#00c9a7;padding:9px 16px;" onclick="document.getElementById('photo-quiz-file-input').click()">📤 Upload Labeled Image</button>
+          <input type="file" id="photo-quiz-file-input" accept="image/*" multiple style="display:none" onchange="uploadPhotoQuizImages(this.files)">
+          <button class="btn btn-sm" style="background:rgba(0,201,167,0.15);border:1px solid rgba(0,201,167,0.3);color:#00c9a7;padding:9px 16px;" onclick="document.getElementById('photo-quiz-file-input').click()">📤 Upload Labeled Image(s)</button>
         </div>
         <div id="photo-quiz-upload-status" style="font-size:12px;color:var(--muted);"></div>
       </div>
@@ -2082,28 +2082,44 @@ function loadCameraQuizList(){
     });
 }
 
-function uploadCameraQuizImage(file){
-  if (!file) return;
+async function uploadCameraQuizImages(fileList){
+  if (!fileList || !fileList.length) return;
+  const files = Array.from(fileList);
   const correctGen = document.getElementById('camera-quiz-gen-select').value;
   const statusEl = document.getElementById('camera-quiz-upload-status');
-  statusEl.textContent = 'Uploading...';
-  const reader = new FileReader();
-  reader.onload = async (e) => {
+  let uploaded = 0, failed = 0;
+
+  function readAsDataURL(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  for (let i = 0; i < files.length; i++) {
+    statusEl.textContent = `Uploading ${i + 1} of ${files.length}...`;
     try {
+      const dataUrl = await readAsDataURL(files[i]);
       const res = await fetch(`${API}/admin/camera_quiz/upload`, {
         method: 'POST', headers: adminHeaders(),
-        body: JSON.stringify({ image: e.target.result, correct_gen: correctGen })
+        body: JSON.stringify({ image: dataUrl, correct_gen: correctGen })
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error);
-      statusEl.textContent = `✓ Uploaded as ${correctGen}`;
-      document.getElementById('camera-quiz-file-input').value = '';
-      loadCameraQuizList();
+      uploaded++;
     } catch(err) {
-      statusEl.textContent = 'Upload failed: ' + err.message;
+      failed++;
+      console.error(`Upload failed for ${files[i].name}:`, err.message);
     }
-  };
-  reader.readAsDataURL(file);
+  }
+
+  statusEl.textContent = failed
+    ? `✓ Uploaded ${uploaded} as ${correctGen} (${failed} failed — see console)`
+    : `✓ Uploaded ${uploaded} image${uploaded === 1 ? '' : 's'} as ${correctGen}`;
+  document.getElementById('camera-quiz-file-input').value = '';
+  loadCameraQuizList();
 }
 
 async function deleteCameraQuizImage(id){
@@ -2253,35 +2269,51 @@ async function setConfuseWith(id, confuseWith){
   }
 }
 
-function uploadPhotoQuizImage(file){
-  if (!file) return;
+async function uploadPhotoQuizImages(fileList){
+  if (!fileList || !fileList.length) return;
+  const files = Array.from(fileList);
   const quizType = document.getElementById('photo-quiz-type-select').value;
   const correctCountry = document.getElementById('photo-quiz-country-select').value;
   const confuseWith = quizType === 'fifty_fifty'
     ? document.getElementById('photo-quiz-confuse-select').value
     : '';
   const statusEl = document.getElementById('photo-quiz-upload-status');
-  statusEl.textContent = 'Uploading...';
-  const reader = new FileReader();
-  reader.onload = async (e) => {
+  let uploaded = 0, failed = 0;
+
+  function readAsDataURL(file){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  for (let i = 0; i < files.length; i++) {
+    statusEl.textContent = `Uploading ${i + 1} of ${files.length}...`;
     try {
+      const dataUrl = await readAsDataURL(files[i]);
       const res = await fetch(`${API}/admin/photo_quiz/upload`, {
         method: 'POST', headers: adminHeaders(),
         body: JSON.stringify({
-          image: e.target.result, quiz_type: quizType, correct_country: correctCountry,
+          image: dataUrl, quiz_type: quizType, correct_country: correctCountry,
           confuse_with: confuseWith
         })
       });
       const d = await res.json();
       if (d.error) throw new Error(d.error);
-      statusEl.textContent = `✓ Uploaded as ${correctCountry}` + (confuseWith ? ` (vs ${confuseWith})` : '');
-      document.getElementById('photo-quiz-file-input').value = '';
-      loadPhotoQuizList();
+      uploaded++;
     } catch(err) {
-      statusEl.textContent = 'Upload failed: ' + err.message;
+      failed++;
+      console.error(`Upload failed for ${files[i].name}:`, err.message);
     }
-  };
-  reader.readAsDataURL(file);
+  }
+
+  statusEl.textContent = failed
+    ? `✓ Uploaded ${uploaded} as ${correctCountry}${confuseWith ? ` (vs ${confuseWith})` : ''} (${failed} failed — see console)`
+    : `✓ Uploaded ${uploaded} image${uploaded === 1 ? '' : 's'} as ${correctCountry}${confuseWith ? ` (vs ${confuseWith})` : ''}`;
+  document.getElementById('photo-quiz-file-input').value = '';
+  loadPhotoQuizList();
 }
 
 async function deletePhotoQuizImage(id){
