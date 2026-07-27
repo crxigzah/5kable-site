@@ -1388,7 +1388,7 @@ function setTier(userId, tier) {
 
 function setUserLevel(userId) {
   const username = usernameOf(userId);
-  const input = prompt(`Set ${username}'s level to (1-200), or type "reset" to clear any manual override and go back to their real earned level:`);
+  const input = prompt(`Set ${username}'s level to (1-25, 25 = Legend/max), or type "reset" to clear any manual override and go back to their real earned level:`);
   if (input === null) return; // cancelled
   const trimmed = input.trim().toLowerCase();
   if (!trimmed) return;
@@ -1398,8 +1398,8 @@ function setUserLevel(userId) {
     body.reset = true;
   } else {
     const level = parseInt(trimmed, 10);
-    if (!Number.isInteger(level) || level < 1 || level > 200) {
-      toast('Enter a whole number between 1 and 200, or "reset"', true);
+    if (!Number.isInteger(level) || level < 1 || level > 25) {
+      toast('Enter a whole number between 1 and 25, or "reset"', true);
       return;
     }
     body.level = level;
