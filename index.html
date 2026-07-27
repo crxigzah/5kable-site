@@ -1186,6 +1186,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
 </div>
 <div id="dashboard" style="min-height:80vh;">
   <div style="padding:40px;max-width:900px;margin:0 auto;position:relative;z-index:1;">
+    <div id="dash-seasonal-banner" style="display:none;text-align:center;font-size:12px;font-weight:700;letter-spacing:1px;padding:8px 16px;border-radius:8px;margin-bottom:16px;"></div>
     <div class="dash-header">
       <div>
         <div class="dash-welcome">Welcome back, <span id="dash-username">Player</span> 👋</div>
@@ -1196,6 +1197,32 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
         <button class="btn btn-outline" onclick="logout()" style="font-size:12px;padding:6px 14px;">Sign Out</button>
       </div>
     </div>
+
+    <!-- Level / XP -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+      <div id="dash-level-ring" style="width:56px;height:56px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--teal) 0deg, var(--border) 0deg);position:relative;">
+        <div style="width:46px;height:46px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;" id="dash-level-num">1</div>
+      </div>
+      <div style="flex:1;min-width:180px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+          <span style="font-weight:700;font-size:13px;" id="dash-level-title">Level 1 — Rookie</span>
+          <span style="font-size:11px;color:var(--muted);" id="dash-level-xp-text">0 / 50 XP</span>
+        </div>
+        <div style="height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;">
+          <div id="dash-level-fill" style="height:100%;width:0%;background:var(--teal);border-radius:3px;transition:width .6s ease;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GeoX mascot -->
+    <div id="dash-mascot-wrap" style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;">
+      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;color:#000;">5k</div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;border-top-left-radius:2px;padding:12px 16px;font-size:13px;flex:1;">
+        <span style="font-weight:700;color:var(--teal);">GeoX</span>
+        <div id="dash-mascot-message" style="color:var(--text);margin-top:2px;">Loading your stats...</div>
+      </div>
+    </div>
+
     <div class="dash-cards">
       <div class="dash-card"><div class="dash-card-num">✓</div><div class="dash-card-label">Account Active</div></div>
       <div class="dash-card"><div class="dash-card-num" id="dash-tier-display">Free</div><div class="dash-card-label">Current Plan</div></div>
@@ -2277,6 +2304,114 @@ function showDashboard(user, token) {
   loadRegionAccuracy(token);
   loadGuessInsights(token);
   loadDashboardUsage(token);
+  loadDashboardExtras(token);
+  applySeasonalBanner();
+}
+
+// ── Level / XP + GeoX mascot + seasonal banner ──────────────────
+function _gaxLevelInfo(xp) {
+  // Quadratic curve: level n's cumulative threshold is 50*n^2, so each
+  // level takes progressively more XP than the last (RPG-style pacing)
+  // — 50 XP for level 2, 200 cumulative for level 3, 450 for level 4...
+  let level = 1;
+  while (50 * level * level <= xp) level++;
+  const xpForCurrentLevel = 50 * (level - 1) * (level - 1);
+  const xpForNextLevel = 50 * level * level;
+  const xpIntoLevel = xp - xpForCurrentLevel;
+  const xpNeededForLevel = xpForNextLevel - xpForCurrentLevel;
+  const pct = xpNeededForLevel > 0 ? Math.min(100, Math.round((xpIntoLevel / xpNeededForLevel) * 100)) : 100;
+  return { level, xpIntoLevel, xpNeededForLevel, pct };
+}
+
+function _gaxLevelTitle(level) {
+  if (level >= 25) return 'Legend';
+  if (level >= 20) return 'Master Geographer';
+  if (level >= 16) return 'Geo Master';
+  if (level >= 12) return 'Globetrotter';
+  if (level >= 8)  return 'Cartographer';
+  if (level >= 5)  return 'Scout';
+  if (level >= 3)  return 'Navigator';
+  if (level >= 2)  return 'Explorer';
+  return 'Rookie';
+}
+
+async function loadDashboardExtras(token){
+  const ring = document.getElementById('dash-level-ring');
+  const numEl = document.getElementById('dash-level-num');
+  const titleEl = document.getElementById('dash-level-title');
+  const xpTextEl = document.getElementById('dash-level-xp-text');
+  const fillEl = document.getElementById('dash-level-fill');
+  const mascotEl = document.getElementById('dash-mascot-message');
+
+  try {
+    const [statsRes, fullStatsRes] = await Promise.all([
+      fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) }),
+      fetch(API + '/guess/full_stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) }),
+    ]);
+    const statsData = await statsRes.json();
+    const fullStats = await fullStatsRes.json();
+
+    // Total correct guesses across every country = XP. Grows every
+    // single round played, so it's always a positive, motivating number
+    // even on an off day.
+    const totalXP = (statsData.stats || []).reduce((sum, s) => sum + (s.correct || 0), 0);
+    const { level, xpIntoLevel, xpNeededForLevel, pct } = _gaxLevelInfo(totalXP);
+    const title = _gaxLevelTitle(level);
+
+    if (numEl) numEl.textContent = level;
+    if (titleEl) titleEl.textContent = `Level ${level} — ${title}`;
+    if (xpTextEl) xpTextEl.textContent = `${xpIntoLevel.toLocaleString()} / ${xpNeededForLevel.toLocaleString()} XP`;
+    if (fillEl) fillEl.style.width = pct + '%';
+    if (ring) ring.style.background = `conic-gradient(var(--teal) ${pct}%, var(--border) ${pct}%)`;
+
+    // GeoX mascot reaction — picks the single most relevant/motivating
+    // thing to say based on real stats, prioritized roughly by how
+    // actionable/exciting it is.
+    const overview = fullStats.overview || {};
+    const streak = overview.current_streak || 0;
+    let message;
+    if (overview.total_games === 0 || !overview.total_games) {
+      message = "Ready when you are! Fire up GeoGuessr with the extension active and I'll start tracking your progress right here. 🧭";
+    } else if (streak >= 10) {
+      message = `🔥🔥 ${streak}-round correct streak?! You're unstoppable right now.`;
+    } else if (streak >= 3) {
+      message = `🔥 ${streak} correct in a row — you're on fire, keep it going!`;
+    } else {
+      const best = fullStats.best_region;
+      const worst = fullStats.worst_region;
+      if (best && best.pct >= 90) {
+        message = `You're crushing ${escapeHtmlLocal(best.region)} at ${best.pct}%! 🏆`;
+      } else if (worst && worst.total >= 3 && worst.pct < 50) {
+        message = `${escapeHtmlLocal(worst.region)} is sitting at ${worst.pct}% — want to knock out a few rounds there?`;
+      } else {
+        message = `${overview.total_games.toLocaleString()} rounds played so far — nice work. Keep building that streak!`;
+      }
+    }
+    if (mascotEl) mascotEl.textContent = message;
+  } catch(e) {
+    if (mascotEl) mascotEl.textContent = "Couldn't load your stats right now — try refreshing.";
+  }
+}
+
+function applySeasonalBanner() {
+  const banner = document.getElementById('dash-seasonal-banner');
+  if (!banner) return;
+  const month = new Date().getMonth(); // 0=Jan .. 11=Dec
+  let theme;
+  if ([11,0,1].includes(month)) {
+    theme = { emoji: '❄️', text: 'Winter Training Season', bg: 'rgba(94,179,255,0.10)', border: 'rgba(94,179,255,0.3)', color: '#8ecbff' };
+  } else if ([2,3,4].includes(month)) {
+    theme = { emoji: '🌸', text: 'Spring Training Season', bg: 'rgba(255,138,222,0.10)', border: 'rgba(255,138,222,0.3)', color: '#ff9ee0' };
+  } else if ([5,6,7].includes(month)) {
+    theme = { emoji: '☀️', text: 'Summer Training Season', bg: 'rgba(255,193,7,0.10)', border: 'rgba(255,193,7,0.3)', color: '#ffd54f' };
+  } else {
+    theme = { emoji: '🍂', text: 'Autumn Training Season', bg: 'rgba(255,112,67,0.10)', border: 'rgba(255,112,67,0.3)', color: '#ff8a65' };
+  }
+  banner.textContent = `${theme.emoji}  ${theme.text}  ${theme.emoji}`;
+  banner.style.background = theme.bg;
+  banner.style.border = `1px solid ${theme.border}`;
+  banner.style.color = theme.color;
+  banner.style.display = 'block';
 }
 
 function escapeHtmlLocal(s){
