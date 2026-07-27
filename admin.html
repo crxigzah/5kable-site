@@ -1301,6 +1301,7 @@ function renderUsers(users) {
             : `<button class="btn btn-sm btn-danger" onclick="setTier(${u.id},'free')">↓ Free</button>`
           }
           <button class="btn btn-sm" style="background:#1c1712;border:1px solid #1e1e35;color:#8888aa;" onclick="resetUsage(${u.id})">Reset</button>
+          <button class="btn btn-sm" style="background:#1c1712;border:1px solid #1e1e35;color:#8888aa;" onclick="setUserLevel(${u.id})">🎖 Level</button>
           <button class="btn btn-sm" style="background:${u.disabled ? 'rgba(0,201,167,.15)' : '#1c1712'};border:1px solid ${u.disabled ? 'rgba(0,201,167,.3)' : '#1e1e35'};color:${u.disabled ? '#00c9a7' : '#8888aa'};" onclick="toggleDisabled(${u.id},${!u.disabled})">${u.disabled ? '▶ Enable' : '⏸ Disable'}</button>
           <div class="ban-menu">
             <button class="btn btn-sm" style="background:${isBanned ? 'rgba(255,100,100,.15)' : '#1c1712'};border:1px solid ${isBanned ? 'rgba(255,100,100,.3)' : '#1e1e35'};color:${isBanned ? '#ff6b6b' : '#8888aa'};" onclick="toggleBanMenu(event,${u.id})">${isBanned ? '🚫 Banned' : '🚫 Ban'}</button>
@@ -1381,6 +1382,36 @@ function setTier(userId, tier) {
         const q = document.getElementById('user-search').value.toLowerCase();
         return !q || u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
       }));
+    } else { toast('Error: ' + (d.error || 'failed'), true); }
+  });
+}
+
+function setUserLevel(userId) {
+  const username = usernameOf(userId);
+  const input = prompt(`Set ${username}'s level to (1-200), or type "reset" to clear any manual override and go back to their real earned level:`);
+  if (input === null) return; // cancelled
+  const trimmed = input.trim().toLowerCase();
+  if (!trimmed) return;
+
+  const body = { user_id: userId };
+  if (trimmed === 'reset') {
+    body.reset = true;
+  } else {
+    const level = parseInt(trimmed, 10);
+    if (!Number.isInteger(level) || level < 1 || level > 200) {
+      toast('Enter a whole number between 1 and 200, or "reset"', true);
+      return;
+    }
+    body.level = level;
+  }
+
+  fetch(`${API}/admin/set_user_level`, {
+    method: 'POST',
+    headers: adminHeaders(),
+    body: JSON.stringify(body)
+  }).then(r => r.json()).then(d => {
+    if (d.success) {
+      toast(body.reset ? `✓ ${username}'s level reset to their real earned level` : `✓ ${username} set to Level ${d.target_level}`);
     } else { toast('Error: ' + (d.error || 'failed'), true); }
   });
 }

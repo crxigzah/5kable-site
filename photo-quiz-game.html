@@ -250,10 +250,11 @@ async function loadLeaderboard(){
       const name = row.username || row.name || row.display_name || 'Anonymous';
       const streak = row.best_streak ?? row.streak ?? row.value ?? 0;
       const isMe = me && (row.user_id === me.id || name === me.username);
+      const tierIcon = row.tier_icon ? `<span title="Level ${row.level || '?'}" style="margin-left:4px;">${row.tier_icon}</span>` : '';
       return `
         <div class="lb-row${isMe ? ' lb-you' : ''}">
           <div class="lb-rank">${i + 1}</div>
-          <div class="lb-name">${escapeHtml(name)}${isMe ? ' (you)' : ''}</div>
+          <div class="lb-name">${escapeHtml(name)}${tierIcon}${isMe ? ' (you)' : ''}</div>
           <div class="lb-streak">${streak}</div>
         </div>`;
     }).join('');

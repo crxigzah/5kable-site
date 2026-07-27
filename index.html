@@ -673,6 +673,11 @@ html { scroll-behavior: smooth; }
   .dash-header { flex-direction: column; align-items: flex-start; }
   .dash-welcome { font-size: 20px; }
 }
+
+@keyframes gaxConfettiFall {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: .9; }
+  100% { transform: translate(var(--gax-drift), 100vh) rotate(var(--gax-rotate)); opacity: 0; }
+}
 </style>
   <link rel="icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -792,7 +797,10 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
       </button>
       <div id="user-dropdown" style="display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--card);border:1px solid var(--border);border-radius:12px;min-width:220px;box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:200;overflow:hidden;">
         <div style="padding:14px 16px;border-bottom:1px solid var(--border);">
-          <div id="dropdown-username" style="font-weight:700;color:var(--text);font-size:13px;"></div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div id="dropdown-username" style="font-weight:700;color:var(--text);font-size:13px;"></div>
+            <span id="nav-level-badge" style="display:none;font-size:16px;line-height:1;"></span>
+          </div>
           <div id="dropdown-email" style="color:var(--muted);font-size:11px;margin-top:2px;"></div>
           <div id="dropdown-tier" style="display:inline-block;margin-top:6px;padding:2px 10px;border-radius:10px;font-size:10px;font-weight:700;background:rgba(0,201,167,0.12);border:1px solid var(--teal);color:var(--teal);"></div>
         </div>
@@ -2273,6 +2281,12 @@ function updateNav(user) {
     dt.textContent = user.tier === 'pro' ? '⭐ Pro' : 'Free';
     if (user.tier === 'pro') { dt.style.background='rgba(240,165,0,0.15)'; dt.style.borderColor='#f0a500'; dt.style.color='#f0a500'; }
   }
+  // Runs on every page (not just the dashboard) so the level badge in
+  // the nav dropdown is populated everywhere, not just after visiting
+  // Dashboard once. loadDashboardExtras itself no-ops safely on any
+  // dashboard-only elements that aren't present on the current page.
+  const token = getToken();
+  if (token) loadDashboardExtras(token);
 }
 
 function resetNav() {
@@ -2303,7 +2317,6 @@ function showDashboard(user, token) {
   loadRegionAccuracy(token);
   loadGuessInsights(token);
   loadDashboardUsage(token);
-  loadDashboardExtras(token);
 }
 
 // ── Level / XP + GeoX mascot + seasonal banner ──────────────────
@@ -2371,10 +2384,11 @@ async function loadDashboardExtras(token){
     const statsRes = await fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
     const statsData = await statsRes.json();
 
-    // Total correct guesses across every country = XP. Grows every
-    // single round played, so it's always a positive, motivating number
-    // even on an off day.
-    const totalXP = (statsData.stats || []).reduce((sum, s) => sum + (s.correct || 0), 0);
+    // Total correct guesses across every country = XP, plus any
+    // admin-granted bonus XP (xp_bonus, set via the admin panel).
+    // Grows every single round played, so it's always a positive,
+    // motivating number even on an off day.
+    const totalXP = (statsData.stats || []).reduce((sum, s) => sum + (s.correct || 0), 0) + (statsData.xp_bonus || 0);
     const { level, xpIntoLevel, xpNeededForLevel, pct } = _gaxLevelInfo(totalXP);
     const tier = _gaxTierForLevel(level);
 
@@ -2388,10 +2402,93 @@ async function loadDashboardExtras(token){
       badgeEl.title = `Level ${level} — ${tier.title}`;
     }
     renderRewardsRoadmap(level);
+    updateNavLevelBadge(tier, level);
+
+    // Level-up celebration — fires only when the player's TIER (rank
+    // name) has actually gone up since the last time this loaded, not
+    // on every single level. First-ever load just silently records a
+    // baseline rather than celebrating (so everyone's first dashboard
+    // visit doesn't show a random "rank up" for a rank they've had for
+    // weeks).
+    const lastTierLevel = localStorage.getItem('kbl_last_tier_level');
+    if (lastTierLevel !== null && tier.level > parseInt(lastTierLevel, 10)) {
+      celebrateLevelUp(tier, level);
+    }
+    localStorage.setItem('kbl_last_tier_level', String(tier.level));
   } catch(e) {
     if (titleEl) titleEl.textContent = "Couldn't load level right now";
   }
 }
+
+function updateNavLevelBadge(tier, level) {
+  const el = document.getElementById('nav-level-badge');
+  if (!el) return;
+  el.textContent = tier.icon;
+  el.title = `Level ${level} — ${tier.title}`;
+  el.style.display = '';
+}
+
+// Confetti burst + toast — fires when the player's rank tier goes up.
+// Pure CSS/DOM, no external library, so it can't silently fail to load
+// the way a CDN confetti script could.
+function celebrateLevelUp(tier, level) {
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-20px);
+    background:#10101e;border:1px solid ${tier.color.startsWith('linear-gradient') ? '#b388ff' : tier.color};
+    border-radius:14px;padding:16px 24px;z-index:3000;display:flex;align-items:center;gap:14px;
+    box-shadow:0 20px 50px rgba(0,0,0,0.5);opacity:0;transition:opacity .35s ease,transform .35s ease;
+  `;
+  toast.innerHTML = `
+    <div style="font-size:32px;line-height:1;">${tier.icon}</div>
+    <div>
+      <div style="font-weight:800;font-size:14px;color:#eee;">Rank Up!</div>
+      <div style="font-size:12px;color:#9a9ac0;margin-top:2px;">You're now Level ${level} — ${tier.title}</div>
+    </div>`;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+  });
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(-20px)';
+    setTimeout(() => toast.remove(), 400);
+  }, 4200);
+
+  // Confetti particles — small colored squares that fall from the top
+  // of the screen with a bit of drift and spin, then get removed.
+  const colors = ['#00c9a7', '#f0a500', '#b388ff', '#5eb3ff', '#ff6b6b'];
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2999;overflow:hidden;';
+  document.body.appendChild(container);
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    const size = 6 + Math.random() * 6;
+    const left = Math.random() * 100;
+    const duration = 2.2 + Math.random() * 1.6;
+    const delay = Math.random() * 0.5;
+    const rotate = Math.random() * 720 - 360;
+    const drift = (Math.random() * 160 - 80);
+    p.style.cssText = `
+      position:absolute;top:-20px;left:${left}%;width:${size}px;height:${size}px;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      opacity:.9;border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+      animation:gaxConfettiFall ${duration}s ease-in ${delay}s forwards;
+      --gax-drift:${drift}px; --gax-rotate:${rotate}deg;
+    `;
+    container.appendChild(p);
+  }
+  setTimeout(() => container.remove(), 4500);
+}
+
+// Manual test trigger — run window.gaxTestLevelUp() in the browser
+// console to preview the celebration without needing to actually earn
+// real XP. Uses fake data, doesn't touch stored progress.
+window.gaxTestLevelUp = function() {
+  const fakeTier = _gaxLevelTiers[Math.floor(Math.random() * _gaxLevelTiers.length)];
+  celebrateLevelUp(fakeTier, fakeTier.level);
+};
 
 
 function escapeHtmlLocal(s){
@@ -3258,7 +3355,7 @@ async function loadLevelIntoSettings(){
   try {
     const res = await fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
     const data = await res.json();
-    const totalXP = (data.stats || []).reduce((sum, s) => sum + (s.correct || 0), 0);
+    const totalXP = (data.stats || []).reduce((sum, s) => sum + (s.correct || 0), 0) + (data.xp_bonus || 0);
     const { level, xpIntoLevel, xpNeededForLevel } = _gaxLevelInfo(totalXP);
     const tier = _gaxTierForLevel(level);
     el.innerHTML = `
