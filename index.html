@@ -1418,7 +1418,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
             <div id="ticket-reply-error" style="display:none;color:#ff6b6b;font-size:12px;margin-top:6px;"></div>
             <button id="ticket-reply-btn" class="btn btn-primary" style="margin-top:10px;padding:9px 20px;font-size:13px;" onclick="submitTicketReply()">Send Reply</button>
           </div>
-          <div id="ticket-reply-closed-msg" style="display:none;color:var(--muted);font-size:13px;">This ticket is closed. If you need further help, please open a new ticket.</div>
+          <div id="ticket-reply-closed-msg" style="display:none;color:var(--muted);font-size:13px;">This ticket has been resolved and closed. If you need further help, please open a new ticket.</div>
         </div>
       </div>
     </div>
@@ -2180,7 +2180,7 @@ async function openTicketThread(id){
     document.getElementById('ticket-thread-messages').innerHTML = renderTicketThreadMessages(data.messages);
     document.getElementById('ticket-thread-messages').style.display = 'flex';
     lastKnownTicketMessageCount = (data.messages || []).length;
-    setTicketReplyLocked(data.status === 'closed');
+    setTicketReplyLocked(data.status === 'closed' || data.status === 'resolved');
   } catch(e) {
     document.getElementById('ticket-thread-messages').innerHTML = `<div style="color:#ff6b6b;font-size:13px;">${e.message}</div>`;
   }
@@ -2204,7 +2204,7 @@ async function openTicketThread(id){
       statusEl.textContent = s.label;
       statusEl.style.background = s.bg;
       statusEl.style.color = s.color;
-      setTicketReplyLocked(data.status === 'closed');
+      setTicketReplyLocked(data.status === 'closed' || data.status === 'resolved');
     } catch(e) {}
   }, 4000);
 }
