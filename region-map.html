@@ -1976,12 +1976,17 @@ function renderCountryView(countryName, geojson){
   const useColumns = features.length >= 25 && (bboxH / bboxW) > 1.25;
 
   if (useColumns) {
-    // Sort north-to-south, then deal alternately into a left and right
-    // column so both stay roughly equal length regardless of how the
-    // landmass curves (Hokkaido in the NE, Kyushu in the SW, etc.).
-    const sorted = [...labelData].sort((a, b) => a.oy - b.oy);
-    const leftCol = [], rightCol = [];
-    sorted.forEach((l, i) => (i % 2 === 0 ? leftCol : rightCol).push(l));
+    // Split by which half of the landmass each region actually sits on —
+    // west of center goes to the left column, east of center to the
+    // right — then sort each column north-to-south. Earlier this simply
+    // alternated left/right by sorted latitude order, which ignored real
+    // geography entirely: an east-coast prefecture could land in the west
+    // column, forcing its leader line to cut diagonally across the whole
+    // landmass. Splitting by actual side keeps every leader line short and
+    // roughly parallel instead of criss-crossing the map.
+    const centerX = (bx0 + bx1) / 2;
+    const leftCol  = labelData.filter(l => l.ox <= centerX).sort((a, b) => a.oy - b.oy);
+    const rightCol = labelData.filter(l => l.ox >  centerX).sort((a, b) => a.oy - b.oy);
 
     const marginTop = 16, marginBottom = 14;
     const availableH = height - marginTop - marginBottom;
