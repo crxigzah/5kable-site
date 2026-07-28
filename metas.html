@@ -370,11 +370,10 @@ function flagImg(iso, size=20) {
 // Country grid removed — navigate via map only
 
 // ── 3D globe (world-level country picker) ─────────────────────
-// Same dual-canvas technique used by region-map.html and
-// phone-code-map.html: one canvas is the actual visible texture
-// painted onto the sphere, the other is never shown and encodes each
-// country's array index as a unique flat color, used to accurately
-// hit-test clicks/hovers via raycasting.
+// Same dual-canvas technique used by region-map.html: one canvas is
+// the actual visible texture painted onto the sphere, the other is
+// never shown and encodes each country's array index as a unique
+// flat color, used to accurately hit-test clicks/hovers via raycasting.
 
 // ISO 3166-1 numeric → Alpha-2 lookup (topojson country features are
 // keyed by numeric id, not the alpha-2 codes the rest of the site uses).

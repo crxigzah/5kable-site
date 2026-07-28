@@ -149,7 +149,6 @@
     <button class="section-nav-btn" data-section="section-guides" onclick="scrollToSection('section-guides', this)">🗺️ Guides</button>
     <button class="section-nav-btn" onclick="goToTicketsPage()">🎫 Tickets</button>
     <button class="section-nav-btn" data-section="section-camera-quiz" onclick="scrollToSection('section-camera-quiz', this)">🎥 Camera Quiz</button>
-    <button class="section-nav-btn" data-section="section-phone-code" onclick="scrollToSection('section-phone-code', this)">📞 Phone Code Maps</button>
     <button class="section-nav-btn" data-section="section-training-games" onclick="scrollToSection('section-training-games', this)">📸 Training Games</button>
     <button class="section-nav-btn" data-section="section-scene-library" onclick="scrollToSection('section-scene-library', this)">🖼️ Scene Library</button>
     <span style="flex:1;"></span>
@@ -289,33 +288,6 @@
         <table>
           <thead><tr><th>Preview</th><th>Correct Generation</th><th>Uploaded</th><th>Actions</th></tr></thead>
           <tbody id="camera-quiz-tbody"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Phone Code Map: per-country dialing-code region graphics,
-         shown on the public phone-code-map.html tool when a country
-         is clicked. One image per country — uploading again replaces
-         the previous one. -->
-    <div class="card" id="section-phone-code">
-      <div class="card-header">
-        <h2>📞 Phone Code Region Maps</h2>
-      </div>
-      <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
-        <div>
-          <label style="display:block;font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Country</label>
-          <select id="dial-map-country-select" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:8px;font-size:13px;max-width:240px;"></select>
-        </div>
-        <div>
-          <input type="file" id="dial-map-file-input" accept="image/*" style="display:none" onchange="uploadDialRegionMap(this.files[0])">
-          <button class="btn btn-sm" style="background:rgba(0,201,167,0.15);border:1px solid rgba(0,201,167,0.3);color:#00c9a7;padding:9px 16px;" onclick="document.getElementById('dial-map-file-input').click()">📤 Upload Region Map</button>
-        </div>
-        <div id="dial-map-upload-status" style="font-size:12px;color:var(--muted);"></div>
-      </div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead><tr><th>Preview</th><th>Country</th><th>Uploaded</th><th>Actions</th></tr></thead>
-          <tbody id="dial-map-tbody"><tr><td colspan="4" class="empty">Loading...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -939,7 +911,7 @@ function scrollToSection(id, btnEl){
 // the mouse wheel should still update which button looks active.
 (function initSectionScrollSpy(){
   const sectionIds = ['section-usage','section-users','section-logs','section-guides',
-    'section-camera-quiz','section-phone-code','section-training-games','section-scene-library'];
+    'section-camera-quiz','section-training-games','section-scene-library'];
   let ticking = false;
   window.addEventListener('scroll', () => {
     if (ticking) return;
@@ -1078,8 +1050,6 @@ function loadDashboard() {
       resetInactivityTimer();
       loadGuides();
       loadCameraQuizList();
-      populateDialMapCountrySelect();
-      loadDialRegionMapsList();
       populatePhotoQuizCountrySelect();
       updateConfuseWithVisibility();
       loadPhotoQuizList();
@@ -2132,73 +2102,6 @@ async function deleteCameraQuizImage(id){
     const d = await res.json();
     if (d.error) throw new Error(d.error);
     loadCameraQuizList();
-  } catch(e) {
-    toast('Delete failed: ' + e.message, true);
-  }
-}
-
-// ── Phone Code Map: per-country dialing-code region graphics ─────
-function populateDialMapCountrySelect(){
-  const sel = document.getElementById('dial-map-country-select');
-  sel.innerHTML = SUPPORTED_COUNTRIES.slice().sort((a,b)=>a.localeCompare(b))
-    .map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-}
-
-async function loadDialRegionMapsList(){
-  const tbody = document.getElementById('dial-map-tbody');
-  try {
-    const res = await fetch(`${API}/dial_region_maps/list`);
-    const d = await res.json();
-    const details = (d.details || []).slice().sort((a,b) => a.country.localeCompare(b.country));
-    if (!details.length){
-      tbody.innerHTML = '<tr><td colspan="4" class="empty">No region maps uploaded yet.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = details.map(row => `
-      <tr>
-        <td><img src="${row.image_url}" style="width:70px;height:50px;object-fit:cover;border-radius:6px;"></td>
-        <td style="font-weight:600">${escapeHtml(row.country)}</td>
-        <td style="color:var(--muted);font-size:12px">${formatDate(row.uploaded_at)}</td>
-        <td>
-          <button onclick="deleteDialRegionMap('${escapeHtml(row.country)}')" style="background:rgba(255,107,107,0.1);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;">Delete</button>
-        </td>
-      </tr>`).join('');
-  } catch(e) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">Failed to load.</td></tr>';
-  }
-}
-
-function uploadDialRegionMap(file){
-  if (!file) return;
-  const country = document.getElementById('dial-map-country-select').value;
-  const statusEl = document.getElementById('dial-map-upload-status');
-  statusEl.textContent = 'Uploading...';
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      const res = await fetch(`${API}/admin/dial_region_maps/upload`, {
-        method: 'POST', headers: adminHeaders(),
-        body: JSON.stringify({ image: e.target.result, country })
-      });
-      const d = await res.json();
-      if (d.error) throw new Error(d.error);
-      statusEl.textContent = `✓ Uploaded for ${country}`;
-      document.getElementById('dial-map-file-input').value = '';
-      loadDialRegionMapsList();
-    } catch(err) {
-      statusEl.textContent = 'Upload failed: ' + err.message;
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-async function deleteDialRegionMap(country){
-  if (!confirm(`Delete the region map for ${country}?`)) return;
-  try {
-    const res = await fetch(`${API}/admin/dial_region_maps/${encodeURIComponent(country)}`, { method:'DELETE', headers: adminHeaders() });
-    const d = await res.json();
-    if (d.error) throw new Error(d.error);
-    loadDialRegionMapsList();
   } catch(e) {
     toast('Delete failed: ' + e.message, true);
   }
