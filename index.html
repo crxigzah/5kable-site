@@ -1543,6 +1543,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
     <a onclick="showPolicy('privacy')" style="cursor:pointer;">Privacy Policy</a>
     <a onclick="showPolicy('fairuse')" style="cursor:pointer;">Fair Use</a>
     <a onclick="showPolicy('refund')" style="cursor:pointer;">Refunds</a>
+    <a onclick="showPolicy('credits')" style="cursor:pointer;">Credits</a>
     <a href="https://discord.gg/YAmvxvXmw8" target="_blank">Discord</a>
   </div>
   <div style="margin-bottom:8px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">5kable</div>
@@ -3966,6 +3967,26 @@ const POLICIES = {
 
       <h3>Cancellations</h3>
       <p>You may cancel your Pro subscription at any time via Account Settings → Payment Methods. Cancellation stops future charges; your Pro access continues until the end of the current billing period.</p>
+    `
+  },
+  credits: {
+    title: 'Credits & Attribution',
+    date: '',
+    body: `
+      <h3>Maps & Street View</h3>
+      <p>Map data, satellite imagery, and Street View panoramas are provided by <strong>Google</strong> via the Google Maps Platform, and are subject to <a href="https://cloud.google.com/maps-platform/terms" target="_blank" rel="noopener">Google's Maps Platform Terms of Service</a>. © Google.</p>
+
+      <h3>Wikipedia</h3>
+      <p>Some reference text on our country guides draws on or paraphrases <a href="https://www.wikipedia.org" target="_blank" rel="noopener">Wikipedia</a>, used under the <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a> license.</p>
+
+      <h3>Wikimedia Commons</h3>
+      <p>Select reference images and diagrams are sourced from <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a>. Individual file licenses vary (including CC0 and CC BY-SA); specific attributions are noted where required.</p>
+      <ul>
+        <li><strong>Japan telephone code areas.svg</strong> — by Pekachu, <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 / Public Domain</a>, via Wikimedia Commons.</li>
+      </ul>
+
+      <h3>Questions</h3>
+      <p>If you believe any content on 5kable is misattributed or used incorrectly, contact us on Discord or at support@5kable.net and we'll correct it promptly.</p>
     `
   }
 };
