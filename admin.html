@@ -1863,6 +1863,13 @@ function searchTicketByNumber(){
 }
 
 let allAdmins = [];
+// Cosmetic display labels for the "Assigned to" dropdown — falls back
+// to the raw account username for any admin not listed here. Doesn't
+// touch actual assignment (still keyed by admin id under the hood),
+// just how the name reads in the UI. Add more admins here as needed.
+const ADMIN_DISPLAY_NAMES = {
+  craigbeguessing: 'Craig (Owner)',
+};
 let ticketPollInterval = null;
 let lastKnownMessageCount = 0;
 
@@ -1875,7 +1882,7 @@ function loadAdminsList(){
 function populateAssignDropdown(assignedId){
   const sel = document.getElementById('ticket-modal-assign-select');
   sel.innerHTML = '<option value="">Unassigned</option>' +
-    allAdmins.map(a => `<option value="${a.id}">${escapeHtml(a.username)}</option>`).join('');
+    allAdmins.map(a => `<option value="${a.id}">${escapeHtml(ADMIN_DISPLAY_NAMES[a.username] || a.username)}</option>`).join('');
   sel.value = assignedId || '';
 }
 
@@ -2011,7 +2018,7 @@ function changeTicketAssignment(){
 }
 
 function openAssignToMe(){
-  document.getElementById('assign-to-me-name').value = currentAdminUsername || '';
+  document.getElementById('assign-to-me-name').value = ADMIN_DISPLAY_NAMES[currentAdminUsername] || currentAdminUsername || '';
   document.getElementById('assign-to-me-overlay').style.display = 'flex';
 }
 
