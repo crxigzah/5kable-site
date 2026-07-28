@@ -314,8 +314,13 @@
   }
 
   /* breadcrumb / back-to-world control */
+  /* Sits directly below the annotate toolbar (which occupies the same
+     left:16px/top:16px corner whenever a country's regions are shown —
+     exactly when this back button is needed) rather than on top of it;
+     they used to share identical coordinates, so the toolbar's higher
+     z-index and opaque background completely hid this button. */
   .breadcrumb{
-    position:absolute; left:16px; top:16px;
+    position:absolute; left:16px; top:70px;
     display:flex; align-items:center; gap:10px;
     z-index:4;
   }
