@@ -1534,17 +1534,16 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
 
 <footer>
   <div class="footer-links">
+    <a href="#contact" onclick="goHome();setTimeout(()=>document.getElementById('contact')?.scrollIntoView({behavior:'smooth'}),100);return false;">Contact</a>
+    <a onclick="showPolicy('credits')" style="cursor:pointer;">Credits</a>
+    <a onclick="showPolicy('fairuse')" style="cursor:pointer;">Fair Use</a>
+    <a href="#faq" onclick="goHome();setTimeout(()=>document.getElementById('faq')?.scrollIntoView({behavior:'smooth'}),100);return false;">FAQ</a>
     <a href="#features" onclick="goHome();setTimeout(()=>document.getElementById('features')?.scrollIntoView({behavior:'smooth'}),100);return false;">Features</a>
     <a href="#pricing" onclick="goHome();setTimeout(()=>document.getElementById('pricing')?.scrollIntoView({behavior:'smooth'}),100);return false;">Pricing</a>
-    <a href="#rules" onclick="goHome();setTimeout(()=>document.getElementById('rules')?.scrollIntoView({behavior:'smooth'}),100);return false;">Rules</a>
-    <a href="#faq" onclick="goHome();setTimeout(()=>document.getElementById('faq')?.scrollIntoView({behavior:'smooth'}),100);return false;">FAQ</a>
-    <a href="#contact" onclick="goHome();setTimeout(()=>document.getElementById('contact')?.scrollIntoView({behavior:'smooth'}),100);return false;">Contact</a>
-    <a onclick="showPolicy('tos')" style="cursor:pointer;">Terms of Service</a>
     <a onclick="showPolicy('privacy')" style="cursor:pointer;">Privacy Policy</a>
-    <a onclick="showPolicy('fairuse')" style="cursor:pointer;">Fair Use</a>
     <a onclick="showPolicy('refund')" style="cursor:pointer;">Refunds</a>
-    <a onclick="showPolicy('credits')" style="cursor:pointer;">Credits</a>
-    <a href="https://discord.gg/YAmvxvXmw8" target="_blank">Discord</a>
+    <a href="#rules" onclick="goHome();setTimeout(()=>document.getElementById('rules')?.scrollIntoView({behavior:'smooth'}),100);return false;">Rules</a>
+    <a onclick="showPolicy('tos')" style="cursor:pointer;">Terms of Service</a>
   </div>
   <div style="margin-bottom:8px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">5kable</div>
   <div>Learning · Accuracy · Training · Perfection</div>
@@ -3982,7 +3981,7 @@ const POLICIES = {
       <h3>Wikimedia Commons</h3>
       <p>Select reference images and diagrams are sourced from <a href="https://commons.wikimedia.org" target="_blank" rel="noopener">Wikimedia Commons</a>. Individual file licenses vary (including CC0 and CC BY-SA); specific attributions are noted where required.</p>
       <ul>
-        <li><strong>Japan telephone code areas.svg</strong> — by Pekachu, <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 / Public Domain</a>, via Wikimedia Commons.</li>
+        <li><strong>Japan telephone code areas</strong> — by Pekachu, <a href="https://creativecommons.org/publicdomain/zero/1.0/" target="_blank" rel="noopener">CC0 / Public Domain</a>, via Wikimedia Commons.</li>
       </ul>
 
       <h3>Questions</h3>
