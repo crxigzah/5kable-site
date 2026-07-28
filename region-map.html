@@ -1973,45 +1973,39 @@ function renderCountryView(countryName, geojson){
   const bx0 = Math.min(...labelData.map(l => l.ox)), bx1 = Math.max(...labelData.map(l => l.ox));
   const by0 = Math.min(...labelData.map(l => l.oy)), by1 = Math.max(...labelData.map(l => l.oy));
   const bboxW = Math.max(1, bx1 - bx0), bboxH = Math.max(1, by1 - by0);
-  const useColumns = features.length >= 25 && (bboxH / bboxW) > 1.25;
+  const useLegend = features.length >= 25 && (bboxH / bboxW) > 1.25;
+  let legendFontScale = 1;
 
-  if (useColumns) {
-    // Split by which half of the landmass each region actually sits on —
-    // west of center goes to the left column, east of center to the
-    // right — then sort each column north-to-south. Earlier this simply
-    // alternated left/right by sorted latitude order, which ignored real
-    // geography entirely: an east-coast prefecture could land in the west
-    // column, forcing its leader line to cut diagonally across the whole
-    // landmass. Splitting by actual side keeps every leader line short and
-    // roughly parallel instead of criss-crossing the map.
-    const centerX = (bx0 + bx1) / 2;
-    const leftCol  = labelData.filter(l => l.ox <= centerX).sort((a, b) => a.oy - b.oy);
-    const rightCol = labelData.filter(l => l.ox >  centerX).sort((a, b) => a.oy - b.oy);
+  if (useLegend) {
+    // At this density (Japan's 47 prefectures packed into a small central
+    // cluster is the extreme case), ANY leader-line layout ends up with
+    // dozens of lines converging on the same crowded spot — no column
+    // split avoids that, because the underlying geography is genuinely
+    // that dense. The standard cartographic answer at this point isn't a
+    // better line layout, it's to stop drawing lines altogether: small
+    // numbered markers on the map, matched to a plain numbered list in
+    // two legend columns. Nothing has to travel anywhere or cross
+    // anything, so it stays clean no matter how tightly packed the real
+    // regions are.
+    const sortedByLat = [...labelData].sort((a, b) => a.oy - b.oy);
+    sortedByLat.forEach((l, i) => { l.num = i + 1; });
 
     const marginTop = 16, marginBottom = 14;
     const availableH = height - marginTop - marginBottom;
-    const baseRowH = LABEL_H * fontScale + 3;
+    const half = Math.ceil(sortedByLat.length / 2);
+    const leftCol  = sortedByLat.slice(0, half);
+    const rightCol = sortedByLat.slice(half);
+    const maxColLen = Math.max(leftCol.length, rightCol.length, 1);
+    legendFontScale = Math.max(0.75, Math.min(1.4, availableH / (maxColLen * 12)));
+    const numW = String(sortedByLat.length).length * CHAR_W * legendFontScale + 4;
 
     [leftCol, rightCol].forEach(col => {
       if (!col.length) return;
-      const rowH = Math.min(baseRowH, availableH / col.length);
-      col.forEach((l, i) => { l.y = marginTop + rowH * (i + 0.5); l.rowH = rowH; });
+      const rowH = Math.min(LABEL_H * legendFontScale + 3, availableH / col.length);
+      col.forEach((l, i) => { l.y = marginTop + rowH * (i + 0.5); });
     });
-
-    // Columns hug just outside the landmass's own bounding box, so leader
-    // lines stay short — the wide unused margins on either side (this
-    // canvas is landscape; Japan's shape is portrait) simply become the
-    // space the two ladders of text grow into.
-    const leftX  = Math.max(bx0 - 14, 60);
-    const rightX = Math.min(bx1 + 14, width - 60);
-    leftCol.forEach(l  => { l.x = leftX;  l.align = 'end';   });
-    rightCol.forEach(l => { l.x = rightX; l.align = 'start'; });
-
-    // Clamp text so it never runs past the canvas edge even for a long name.
-    for (const l of labelData) {
-      if (l.align === 'end')   l.x = Math.max(l.x, l.w + 4);
-      else                      l.x = Math.min(l.x, width - l.w - 4);
-    }
+    leftCol.forEach(l  => { l.x = 14; l.align = 'legend-left'; });
+    rightCol.forEach(l => { l.x = width - 14; l.align = 'legend-right'; });
   } else {
     // Force-based decluttering: a weak spring pulls each label back toward
     // its true centroid, while overlapping labels repel each other. Tuned to
@@ -2052,6 +2046,31 @@ function renderCountryView(countryName, geojson){
 
   labelData.forEach(l => {
     const gLabel = labelLayer.append('g').attr('data-id', l.id);
+    if (l.align === 'legend-left' || l.align === 'legend-right') {
+      // Small numbered marker at the region's true location — big enough
+      // to read the number, nothing more.
+      gLabel.append('circle')
+        .attr('cx', l.ox).attr('cy', l.oy).attr('r', 6.5)
+        .attr('fill', 'var(--covered-hover)').attr('stroke', 'var(--map-label-halo)').attr('stroke-width', 1);
+      gLabel.append('text')
+        .attr('x', l.ox).attr('y', l.oy + 3)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 8).attr('font-weight', 700)
+        .attr('fill', 'var(--bg)').attr('stroke', 'none')
+        .text(l.num);
+      // Matching legend entry — plain "N  Name", no line back to the map.
+      const legendText = gLabel.append('text')
+        .attr('y', l.y + 3)
+        .attr('font-size', 9 * legendFontScale);
+      if (l.align === 'legend-left') {
+        legendText.attr('x', l.x).attr('text-anchor', 'start')
+          .text(`${l.num}. ${l.name}`);
+      } else {
+        legendText.attr('x', l.x).attr('text-anchor', 'end')
+          .text(`${l.name} .${l.num}`);
+      }
+      return;
+    }
     const moved = Math.hypot(l.x - l.ox, l.y - l.oy) > 6;
     if(moved){
       gLabel.append('line')
