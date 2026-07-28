@@ -1944,7 +1944,7 @@ function renderCountryView(countryName, geojson){
   const isGoogleTheme = document.body.classList.contains('google-theme');
   const labelFontPx = isGoogleTheme ? 14 : 9;
   const CHAR_W = 5.4 * (labelFontPx / 9), LABEL_H = 11 * (labelFontPx / 9);
-  const fontScale = features.length > 45 ? 0.68 : features.length > 30 ? 0.78 : features.length > 18 ? 0.9 : 1;
+  const fontScale = features.length > 45 ? 0.62 : features.length > 30 ? 0.78 : features.length > 18 ? 0.9 : 1;
 
   const labelData = features.map((d, i) => {
     const nm = subdivisionName(d.properties, i);
@@ -1960,11 +1960,19 @@ function renderCountryView(countryName, geojson){
   // plenty of iterations) since a slightly-displaced-but-readable label
   // beats an overlapping one — this applies to every country, not just
   // especially dense ones, so all region maps stay legible.
-  const iterations = Math.min(1400, 500 + features.length * 12);
+  // Very dense, geographically-clustered countries (Japan's 47 prefectures
+  // packed tightly along a narrow, curving archipelago is the extreme case)
+  // need a much weaker spring — a stiff spring keeps every label pinned
+  // near its true centroid, so labels in a crowded cluster just pile up on
+  // top of each other instead of migrating out into the wide open margins
+  // on either side of the landmass. Scaling the spring down as feature
+  // count rises lets dense clusters actually spread out to use that space.
+  const springK = Math.max(0.0025, 0.009 - features.length * 0.00013);
+  const iterations = Math.min(2200, 500 + features.length * 20);
   for(let iter = 0; iter < iterations; iter++){
     for(const a of labelData){
-      a.x += (a.ox - a.x) * 0.008;
-      a.y += (a.oy - a.y) * 0.008;
+      a.x += (a.ox - a.x) * springK;
+      a.y += (a.oy - a.y) * springK;
     }
     for(let i = 0; i < labelData.length; i++){
       for(let j = i + 1; j < labelData.length; j++){
@@ -1983,6 +1991,15 @@ function renderCountryView(countryName, geojson){
         }
       }
     }
+  }
+
+  // Keep every label's text fully inside the visible canvas — a weak
+  // spring can otherwise let a crowded cluster push labels right up to
+  // (or past) the SVG's edge, clipping them instead of just displacing
+  // them further from their true centroid.
+  for(const l of labelData){
+    l.x = Math.max(l.w / 2 + 4, Math.min(width - l.w / 2 - 4, l.x));
+    l.y = Math.max(10, Math.min(height - 10, l.y));
   }
 
   labelData.forEach(l => {
