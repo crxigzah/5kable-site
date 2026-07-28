@@ -1710,6 +1710,30 @@ function worldCountryName(d){
   return nameById.get(String(d.id)) || (d.properties && d.properties.name) || '';
 }
 
+// Dense, tall-shaped countries (Japan's 47 prefectures is the extreme
+// case) don't have room for readable labels in the same fixed-size box
+// every other country gets — cramming more text into the same space just
+// makes it smaller and more crowded. The actual fix is to give these
+// countries a genuinely taller map area with real extra pixels (not just
+// a rescaled viewBox, which the SVG's width:100%/height:100% CSS would
+// otherwise squeeze right back down to the same visible size) and let the
+// panel scroll to reveal it. resetMapCanvasSize() returns to the normal
+// single-screen layout; applyTallCanvasSize(h) switches into scrollable
+// tall mode at internal height h.
+function resetMapCanvasSize(){
+  const stage = document.getElementById('mapStage');
+  stage.style.overflowY = '';
+  stage.style.overflowX = '';
+  svg.style('height', null).style('width', null);
+}
+function applyTallCanvasSize(tallHeight){
+  const stage = document.getElementById('mapStage');
+  stage.style.overflowY = 'auto';
+  stage.style.overflowX = 'hidden';
+  const pxHeight = Math.round(stage.clientWidth * (tallHeight / width));
+  svg.style('width', '100%').style('height', pxHeight + 'px');
+}
+
 function renderWorldMap(){
   globeFeatures = worldFeatureCollection.features;
   buildGlobeTextures();
@@ -1718,6 +1742,7 @@ function renderWorldMap(){
 
 let globeAnimationStarted = false;
 function renderWorldView(){
+  resetMapCanvasSize();
   document.getElementById('breadcrumb').style.display = 'none';
   selected.clear();
   renderSelectedPanel();
@@ -1885,6 +1910,29 @@ function renderCountryView(countryName, geojson){
     return;
   }
 
+  // Dense, tall-shaped countries (Japan's 47 prefectures is the extreme
+  // case) get a genuinely taller map canvas here, so the ordinary label
+  // layout below has real physical room to spread labels apart instead of
+  // being squeezed into the exact same fixed box every country gets. A
+  // quick preliminary fit at the normal size is enough just to measure
+  // this country's own bounding-box aspect ratio before deciding — the
+  // real fit (below) redoes this properly at whatever height gets chosen.
+  let useTallCanvas = false;
+  if (features.length >= 25) {
+    const quickProj = d3.geoMercator().fitExtent([[30,60],[width-30, height-30]],
+      { type: 'FeatureCollection', features });
+    const qb = d3.geoPath(quickProj).bounds({ type: 'FeatureCollection', features });
+    const qbw = qb[1][0]-qb[0][0], qbh = qb[1][1]-qb[0][1];
+    useTallCanvas = qbw > 0 && (qbh / qbw) > 1.25;
+  }
+  // canvasHeight replaces the module-level `height` for the rest of this
+  // function (including the nested fitAndPruneByRenderedArea below, via
+  // closure) — every later fitExtent/label-bounds calculation picks up
+  // the taller size automatically with no other code needing to change.
+  const canvasHeight = useTallCanvas
+    ? Math.round(height * Math.min(2.4, Math.max(1.5, features.length / 24)))
+    : height;
+
   // Final safety net: measure how each shape actually RENDERS after
   // projection and drop anything absurdly oversized compared to the rest.
   // This catches rendering-level issues (e.g. self-intersecting or
@@ -1893,9 +1941,9 @@ function renderCountryView(countryName, geojson){
   function fitAndPruneByRenderedArea(feats){
     let current = feats;
     for(let pass = 0; pass < 3; pass++){
-      const proj = d3.geoMercator().fitExtent([[30,60],[width-30,height-30]], { type: 'FeatureCollection', features: current });
+      const proj = d3.geoMercator().fitExtent([[30,60],[width-30,canvasHeight-30]], { type: 'FeatureCollection', features: current });
       const p = d3.geoPath(proj);
-      const viewportArea = (width - 60) * (height - 90);
+      const viewportArea = (width - 60) * (canvasHeight - 90);
       const areas = current.map(f => Math.abs(p.area(f)));
       const sorted = [...areas].sort((a,b) => a - b);
       const median = sorted[Math.floor(sorted.length / 2)] || 1;
@@ -1909,7 +1957,7 @@ function renderCountryView(countryName, geojson){
       bad.forEach(f => console.warn('[Region Map] dropping oversized-render region:', (f.properties && f.properties.shapeName) || '(unnamed)'));
       current = good;
     }
-    const proj = d3.geoMercator().fitExtent([[30,60],[width-30,height-30]], { type: 'FeatureCollection', features: current });
+    const proj = d3.geoMercator().fitExtent([[30,60],[width-30,canvasHeight-30]], { type: 'FeatureCollection', features: current });
     return { projection: proj, path: d3.geoPath(proj), features: current };
   }
 
@@ -1924,6 +1972,9 @@ function renderCountryView(countryName, geojson){
   }
   activeProjection = localProjection;
   document.getElementById('sphereBg').style.display = 'none';
+
+  svg.attr('viewBox', `0 0 ${width} ${canvasHeight}`);
+  if (useTallCanvas) applyTallCanvasSize(canvasHeight); else resetMapCanvasSize();
 
   svg.call(zoom.transform, d3.zoomIdentity);
   countryLayer.selectAll('*').remove();
@@ -2036,6 +2087,7 @@ function renderCountryView(countryName, geojson){
 // lookup and the geoBoundaries ADM0 fetch below, so both tiers end up
 // looking identical regardless of which data source supplied the shape.
 function renderPlainCountryFeature(countryName, feature){
+  resetMapCanvasSize();
   const clone = JSON.parse(JSON.stringify(feature));
   rewindGeometry(clone.geometry);
   fixInvertedArea(clone);
@@ -2145,6 +2197,7 @@ function tryRenderCountryOutline(name){
 
 function showFallback(countryName, message){
   hideLoading();
+  resetMapCanvasSize();
   // Switch back to the interactive 3D globe. Without this, we stay in
   // whatever view drillIntoCountry() switched to (showDrillDownView(),
   // which hides the globe canvas and shows the flat SVG) — and since
