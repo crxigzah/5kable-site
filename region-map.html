@@ -1819,7 +1819,8 @@ function rewindGeometry(geom){
   return geom;
 }
 
-function renderCountryView(countryName, geojson){
+function renderCountryView(countryName, geojson, labelOverrides){
+  labelOverrides = labelOverrides || {};
   hideLoading();
   clearFallbackMarker();
 
@@ -1960,6 +1961,15 @@ function renderCountryView(countryName, geojson){
     const w = nm.length * CHAR_W * fontScale + 10;
     const h = LABEL_H * fontScale;
 
+    // A manually-placed override (set via the admin Region Label Editor)
+    // takes priority over everything else below — it bypasses both the
+    // in-place fit check and the auto-decluttering pass entirely, since an
+    // admin already decided exactly where this specific label should sit.
+    const ov = labelOverrides[nm];
+    if (ov) {
+      return { id: 'sub-' + i, name: nm, ox, oy, x: ov.x, y: ov.y, w, h, inPlace: false, manual: true, fontScale: ov.font_scale };
+    }
+
     // Does this region's own shape have room to hold its name directly?
     // Character width ~0.6x font size is a standard estimate for compact
     // sans-serif text at small sizes.
@@ -1980,7 +1990,7 @@ function renderCountryView(countryName, geojson){
     return { id: 'sub-' + i, name: nm, ox, oy, x: ox, y: oy, w, h, inPlace };
   });
 
-  const overflow = labelData.filter(l => !l.inPlace);
+  const overflow = labelData.filter(l => !l.inPlace && !l.manual);
 
   // Force-based decluttering: a weak spring pulls each label back toward
   // its true centroid, while overlapping labels repel each other. Tuned to
@@ -2024,6 +2034,26 @@ function renderCountryView(countryName, geojson){
         .attr('x', l.ox).attr('y', l.oy + inPlaceFontPx * 0.35)
         .attr('text-anchor', 'middle')
         .attr('font-size', inPlaceFontPx)
+        .text(l.name);
+      return;
+    }
+    if (l.manual) {
+      // Admin-placed via the Region Label Editor — render at the exact
+      // saved position/size, centered (matching how the editor itself
+      // draws it), with a leader line back to the true location only if
+      // it was actually moved away from it.
+      const moved = Math.hypot(l.x - l.ox, l.y - l.oy) > 6;
+      if (moved) {
+        gLabel.append('line')
+          .attr('x1', l.ox).attr('y1', l.oy)
+          .attr('x2', l.x).attr('y2', l.y)
+          .attr('stroke', 'var(--muted-2)').attr('stroke-width', 0.6);
+        gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', 2.5);
+      }
+      gLabel.append('text')
+        .attr('x', l.x).attr('y', l.y)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', 9 * l.fontScale)
         .text(l.name);
       return;
     }
@@ -2228,6 +2258,18 @@ const HONG_KONG_DISTRICTS = {"type": "FeatureCollection", "features": [{"type": 
 function drillIntoCountry(name){
   showDrillDownView();
 
+  // Manually-placed label overrides (set via the admin Region Label
+  // Editor) for countries whose auto-decluttered layout is too crowded to
+  // fix algorithmically. Never throws — a failed/empty fetch just means
+  // every region in this country falls back to the normal automatic
+  // layout, same as before this feature existed.
+  function fetchLabelOverrides(iso3){
+    return fetch(`${API_BASE}/geo/region-labels/${iso3}`)
+      .then(res => res.ok ? res.json() : { overrides: {} })
+      .then(d => d.overrides || {})
+      .catch(() => ({}));
+  }
+
   // Hong Kong isn't a UN member state, so geoBoundaries (the fetch path
   // below) has no data for it — same reason its country-level outline
   // needed embedding rather than the normal lookup. Its 18 districts are
@@ -2236,7 +2278,7 @@ function drillIntoCountry(name){
   // shapeName-per-feature schema renderCountryView expects everywhere else.
   if(normalize(name) === normalize('Hong Kong')){
     if(!subregionCache.has('HKG')) subregionCache.set('HKG', HONG_KONG_DISTRICTS);
-    renderCountryView(name, subregionCache.get('HKG'));
+    fetchLabelOverrides('HKG').then(overrides => renderCountryView(name, subregionCache.get('HKG'), overrides));
     return;
   }
 
@@ -2250,7 +2292,7 @@ function drillIntoCountry(name){
     if(cached === null){
       tryRenderCountryOutline(name);
     } else {
-      renderCountryView(name, cached);
+      fetchLabelOverrides(iso3).then(overrides => renderCountryView(name, cached, overrides));
     }
     return;
   }
@@ -2259,11 +2301,13 @@ function drillIntoCountry(name){
   showLoading(`Loading ${name} ${admLevel === 'ADM2' ? 'provinces' : 'regions'}…`);
   const url = `https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/main/releaseData/gbOpen/${iso3}/${admLevel}/geoBoundaries-${iso3}-${admLevel}_simplified.geojson`;
 
-  fetch(url)
-    .then(res => { if(!res.ok) throw new Error('not found'); return res.json(); })
-    .then(geojson => {
+  Promise.all([
+    fetch(url).then(res => { if(!res.ok) throw new Error('not found'); return res.json(); }),
+    fetchLabelOverrides(iso3)
+  ])
+    .then(([geojson, overrides]) => {
       subregionCache.set(iso3, geojson);
-      renderCountryView(name, geojson);
+      renderCountryView(name, geojson, overrides);
     })
     .catch(() => {
       subregionCache.set(iso3, null);
