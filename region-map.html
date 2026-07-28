@@ -195,6 +195,15 @@
     background:
       radial-gradient(ellipse at 50% 40%, var(--map-glow) 0%, var(--map-bg-outer) 70%);
     overflow:hidden;
+    /* Without this, a grid item's implicit minimum size defaults to its
+       content's intrinsic size — so when the SVG inside grows taller for
+       a dense country (Japan's tall-canvas mode), this whole grid cell
+       would try to grow to match instead of staying fixed-height with an
+       internal scrollbar, and since html/body force overflow:hidden that
+       extra height just gets silently clipped rather than becoming
+       reachable. min-height:0 lets this box actually shrink below its
+       content so its own overflow-y:auto (set in JS) can do its job. */
+    min-height:0;
   }
   .map-stage svg{ width:100%; height:100%; display:block; }
   .map-stage canvas{ width:100%; height:100%; display:block; cursor:grab; }
