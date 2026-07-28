@@ -195,15 +195,6 @@
     background:
       radial-gradient(ellipse at 50% 40%, var(--map-glow) 0%, var(--map-bg-outer) 70%);
     overflow:hidden;
-    /* Without this, a grid item's implicit minimum size defaults to its
-       content's intrinsic size — so when the SVG inside grows taller for
-       a dense country (Japan's tall-canvas mode), this whole grid cell
-       would try to grow to match instead of staying fixed-height with an
-       internal scrollbar, and since html/body force overflow:hidden that
-       extra height just gets silently clipped rather than becoming
-       reachable. min-height:0 lets this box actually shrink below its
-       content so its own overflow-y:auto (set in JS) can do its job. */
-    min-height:0;
   }
   .map-stage svg{ width:100%; height:100%; display:block; }
   .map-stage canvas{ width:100%; height:100%; display:block; cursor:grab; }
@@ -1719,31 +1710,6 @@ function worldCountryName(d){
   return nameById.get(String(d.id)) || (d.properties && d.properties.name) || '';
 }
 
-// Dense, tall-shaped countries (Japan's 47 prefectures is the extreme
-// case) don't have room for readable labels in the same fixed-size box
-// every other country gets — cramming more text into the same space just
-// makes it smaller and more crowded. The actual fix is to give these
-// countries a genuinely taller map area with real extra pixels (not just
-// a rescaled viewBox, which the SVG's width:100%/height:100% CSS would
-// otherwise squeeze right back down to the same visible size) and let the
-// panel scroll to reveal it. resetMapCanvasSize() returns to the normal
-// single-screen layout; applyTallCanvasSize(h) switches into scrollable
-// tall mode at internal height h.
-function resetMapCanvasSize(){
-  const stage = document.getElementById('mapStage');
-  stage.style.overflowY = '';
-  stage.style.overflowX = '';
-  svg.style('height', null).style('width', null);
-  svg.attr('viewBox', `0 0 ${width} ${height}`);
-}
-function applyTallCanvasSize(tallHeight){
-  const stage = document.getElementById('mapStage');
-  stage.style.overflowY = 'auto';
-  stage.style.overflowX = 'hidden';
-  const pxHeight = Math.round(stage.clientWidth * (tallHeight / width));
-  svg.style('width', '100%').style('height', pxHeight + 'px');
-}
-
 function renderWorldMap(){
   globeFeatures = worldFeatureCollection.features;
   buildGlobeTextures();
@@ -1752,7 +1718,6 @@ function renderWorldMap(){
 
 let globeAnimationStarted = false;
 function renderWorldView(){
-  resetMapCanvasSize();
   document.getElementById('breadcrumb').style.display = 'none';
   selected.clear();
   renderSelectedPanel();
@@ -1920,39 +1885,6 @@ function renderCountryView(countryName, geojson){
     return;
   }
 
-  // Dense, tall-shaped countries (Japan's 47 prefectures is the extreme
-  // case) get a genuinely taller map canvas here, so the ordinary label
-  // layout below has real physical room to spread labels apart instead of
-  // being squeezed into the exact same fixed box every country gets. A
-  // quick preliminary fit at the normal size is enough just to measure
-  // this country's own bounding-box aspect ratio before deciding — the
-  // real fit (below) redoes this properly at whatever height gets chosen.
-  let useTallCanvas = false;
-  if (features.length >= 25) {
-    const quickProj = d3.geoMercator().fitExtent([[30,60],[width-30, height-30]],
-      { type: 'FeatureCollection', features });
-    const qb = d3.geoPath(quickProj).bounds({ type: 'FeatureCollection', features });
-    const qbw = qb[1][0]-qb[0][0], qbh = qb[1][1]-qb[0][1];
-    // A country this densely divided (Japan's 47 is the extreme case)
-    // needs the extra room regardless of its overall bounding-box shape —
-    // real boundary data often includes small, far-flung outlying islands
-    // under some region's jurisdiction (e.g. Tokyo's ADM1 polygon legally
-    // includes islands hundreds of km south of the mainland), which can
-    // widen the TRUE bounding box enough to defeat a pure aspect-ratio
-    // check even though the main landmass is still visually cramped.
-    // Feature count alone is a reliable enough signal on its own past a
-    // high threshold; aspect ratio stays as an additional trigger for
-    // moderately-dense-but-narrow countries that don't hit that count.
-    useTallCanvas = features.length >= 35 || (qbw > 0 && (qbh / qbw) > 1.25);
-  }
-  // canvasHeight replaces the module-level `height` for the rest of this
-  // function (including the nested fitAndPruneByRenderedArea below, via
-  // closure) — every later fitExtent/label-bounds calculation picks up
-  // the taller size automatically with no other code needing to change.
-  const canvasHeight = useTallCanvas
-    ? Math.round(height * Math.min(2.4, Math.max(1.5, features.length / 24)))
-    : height;
-
   // Final safety net: measure how each shape actually RENDERS after
   // projection and drop anything absurdly oversized compared to the rest.
   // This catches rendering-level issues (e.g. self-intersecting or
@@ -1961,9 +1893,9 @@ function renderCountryView(countryName, geojson){
   function fitAndPruneByRenderedArea(feats){
     let current = feats;
     for(let pass = 0; pass < 3; pass++){
-      const proj = d3.geoMercator().fitExtent([[30,60],[width-30,canvasHeight-30]], { type: 'FeatureCollection', features: current });
+      const proj = d3.geoMercator().fitExtent([[30,60],[width-30,height-30]], { type: 'FeatureCollection', features: current });
       const p = d3.geoPath(proj);
-      const viewportArea = (width - 60) * (canvasHeight - 90);
+      const viewportArea = (width - 60) * (height - 90);
       const areas = current.map(f => Math.abs(p.area(f)));
       const sorted = [...areas].sort((a,b) => a - b);
       const median = sorted[Math.floor(sorted.length / 2)] || 1;
@@ -1977,7 +1909,7 @@ function renderCountryView(countryName, geojson){
       bad.forEach(f => console.warn('[Region Map] dropping oversized-render region:', (f.properties && f.properties.shapeName) || '(unnamed)'));
       current = good;
     }
-    const proj = d3.geoMercator().fitExtent([[30,60],[width-30,canvasHeight-30]], { type: 'FeatureCollection', features: current });
+    const proj = d3.geoMercator().fitExtent([[30,60],[width-30,height-30]], { type: 'FeatureCollection', features: current });
     return { projection: proj, path: d3.geoPath(proj), features: current };
   }
 
@@ -1993,9 +1925,6 @@ function renderCountryView(countryName, geojson){
   activeProjection = localProjection;
   document.getElementById('sphereBg').style.display = 'none';
 
-  svg.attr('viewBox', `0 0 ${width} ${canvasHeight}`);
-  if (useTallCanvas) applyTallCanvasSize(canvasHeight); else resetMapCanvasSize();
-
   svg.call(zoom.transform, d3.zoomIdentity);
   countryLayer.selectAll('*').remove();
   labelLayer.selectAll('*').remove();
@@ -2008,50 +1937,69 @@ function renderCountryView(countryName, geojson){
     .attr('d', localPath);
 
   // Show every region's label immediately — no click/selection needed.
-  // With densely-divided countries (e.g. Spain's 17 communities, Indonesia's
-  // 30+ provinces) labels placed at raw centroids overlap heavily, so we
-  // run a lightweight force-based decluttering pass: labels gently repel
-  // each other when they overlap, while a weak spring pulls each one back
-  // toward its true location. A thin leader line connects the label back
-  // to its region if it had to move.
-  // Label box size must match whichever theme is active — Google-style
-  // renders notably bigger text, so the decluttering algorithm needs
-  // proportionally bigger reserved space or labels will overlap again.
+  // Densely-divided countries used to get EVERY label pushed out to an
+  // external leader-line position, which is exactly what makes something
+  // like Japan's 47 prefectures unreadable: dozens of lines all reaching
+  // toward the same crowded cluster. The actual fix (the standard
+  // cartographic technique for this) is to label each region INSIDE its
+  // own shape whenever it's big enough to hold the text, and only fall
+  // back to an external leader-line label for the handful of regions too
+  // small to hold their own name (Tokyo, Kanagawa, etc. in Japan's case).
+  // Most regions end up needing no line at all; the existing decluttering
+  // system below only ever has to handle the small leftover group, which
+  // is exactly the regime it already works well in.
   const isGoogleTheme = document.body.classList.contains('google-theme');
   const labelFontPx = isGoogleTheme ? 14 : 9;
   const CHAR_W = 5.4 * (labelFontPx / 9), LABEL_H = 11 * (labelFontPx / 9);
   const fontScale = features.length > 45 ? 0.55 : features.length > 30 ? 0.7 : features.length > 18 ? 0.85 : 1;
+  const inPlaceFontPx = Math.max(5.5, 7.5 * fontScale);
 
   const labelData = features.map((d, i) => {
     const nm = subdivisionName(d.properties, i);
     const [ox, oy] = localPath.centroid(d);
     const w = nm.length * CHAR_W * fontScale + 10;
     const h = LABEL_H * fontScale;
-    return { id: 'sub-' + i, name: nm, ox, oy, x: ox, y: oy, w, h };
+
+    // Does this region's own shape have room to hold its name directly?
+    // Character width ~0.6x font size is a standard estimate for compact
+    // sans-serif text at small sizes.
+    const [[bx0, by0], [bx1, by1]] = localPath.bounds(d);
+    const bboxW = bx1 - bx0, bboxH = by1 - by0;
+    const textW = nm.length * inPlaceFontPx * 0.6 + 3;
+    const textH = inPlaceFontPx * 1.15;
+    let inPlace = bboxW > 13 && bboxH > 9 && textW < bboxW * 0.92 && textH < bboxH * 0.8;
+    // A bounding-box check alone can be fooled by a concave/oddly-shaped
+    // region whose centroid sits outside its own outline (a crescent or
+    // horseshoe shape, for instance) — verify the label's actual position
+    // is really inside the polygon before committing to in-place mode.
+    if (inPlace) {
+      const [lon, lat] = localProjection.invert([ox, oy]);
+      if (!d3.geoContains(d, [lon, lat])) inPlace = false;
+    }
+
+    return { id: 'sub-' + i, name: nm, ox, oy, x: ox, y: oy, w, h, inPlace };
   });
+
+  const overflow = labelData.filter(l => !l.inPlace);
 
   // Force-based decluttering: a weak spring pulls each label back toward
   // its true centroid, while overlapping labels repel each other. Tuned to
   // favour spreading (weak spring, strong repulsion, generous margin,
   // plenty of iterations) since a slightly-displaced-but-readable label
-  // beats an overlapping one — this applies to every country, not just
-  // especially dense ones, so all region maps stay legible.
-  // Denser countries get a weaker spring so labels can actually migrate
-  // out into unused canvas space instead of staying pinned close to a
-  // crowded cluster of true centroids, plus more iterations to let that
-  // weaker spring fully settle, and slightly larger overlap margins so
-  // labels end up with real breathing room rather than just-barely
-  // touching.
-  const springK = Math.max(0.003, 0.008 - features.length * 0.00009);
-  const iterations = Math.min(2000, 500 + features.length * 16);
+  // beats an overlapping one. Only runs on the leftover "doesn't fit
+  // in-place" group now, so even a country as dense as Japan only ever
+  // hands this a handful of labels — exactly the load it already handles
+  // well.
+  const springK = Math.max(0.003, 0.008 - overflow.length * 0.00009);
+  const iterations = Math.min(2000, 500 + overflow.length * 16);
   for(let iter = 0; iter < iterations; iter++){
-    for(const a of labelData){
+    for(const a of overflow){
       a.x += (a.ox - a.x) * springK;
       a.y += (a.oy - a.y) * springK;
     }
-    for(let i = 0; i < labelData.length; i++){
-      for(let j = i + 1; j < labelData.length; j++){
-        const a = labelData[i], b = labelData[j];
+    for(let i = 0; i < overflow.length; i++){
+      for(let j = i + 1; j < overflow.length; j++){
+        const a = overflow[i], b = overflow[j];
         const dx = b.x - a.x, dy = b.y - a.y;
         const overlapX = (a.w + b.w) / 2 + 7 - Math.abs(dx);
         const overlapY = (a.h + b.h) / 2 + 6 - Math.abs(dy);
@@ -2070,6 +2018,15 @@ function renderCountryView(countryName, geojson){
 
   labelData.forEach(l => {
     const gLabel = labelLayer.append('g').attr('data-id', l.id);
+    if (l.inPlace) {
+      // Sits directly inside its own shape — no line, no dot, just text.
+      gLabel.append('text')
+        .attr('x', l.ox).attr('y', l.oy + inPlaceFontPx * 0.35)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', inPlaceFontPx)
+        .text(l.name);
+      return;
+    }
     const moved = Math.hypot(l.x - l.ox, l.y - l.oy) > 6;
     if(moved){
       gLabel.append('line')
@@ -2107,7 +2064,6 @@ function renderCountryView(countryName, geojson){
 // lookup and the geoBoundaries ADM0 fetch below, so both tiers end up
 // looking identical regardless of which data source supplied the shape.
 function renderPlainCountryFeature(countryName, feature){
-  resetMapCanvasSize();
   const clone = JSON.parse(JSON.stringify(feature));
   rewindGeometry(clone.geometry);
   fixInvertedArea(clone);
@@ -2217,7 +2173,6 @@ function tryRenderCountryOutline(name){
 
 function showFallback(countryName, message){
   hideLoading();
-  resetMapCanvasSize();
   // Switch back to the interactive 3D globe. Without this, we stay in
   // whatever view drillIntoCountry() switched to (showDrillDownView(),
   // which hides the globe canvas and shows the flat SVG) — and since
