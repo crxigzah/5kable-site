@@ -1949,7 +1949,7 @@ function renderCountryView(countryName, geojson){
   const isGoogleTheme = document.body.classList.contains('google-theme');
   const labelFontPx = isGoogleTheme ? 14 : 9;
   const CHAR_W = 5.4 * (labelFontPx / 9), LABEL_H = 11 * (labelFontPx / 9);
-  const fontScale = features.length > 45 ? 0.68 : features.length > 30 ? 0.78 : features.length > 18 ? 0.9 : 1;
+  const fontScale = features.length > 45 ? 0.55 : features.length > 30 ? 0.7 : features.length > 18 ? 0.85 : 1;
 
   const labelData = features.map((d, i) => {
     const nm = subdivisionName(d.properties, i);
@@ -1965,18 +1965,25 @@ function renderCountryView(countryName, geojson){
   // plenty of iterations) since a slightly-displaced-but-readable label
   // beats an overlapping one — this applies to every country, not just
   // especially dense ones, so all region maps stay legible.
-  const iterations = Math.min(1400, 500 + features.length * 12);
+  // Denser countries get a weaker spring so labels can actually migrate
+  // out into unused canvas space instead of staying pinned close to a
+  // crowded cluster of true centroids, plus more iterations to let that
+  // weaker spring fully settle, and slightly larger overlap margins so
+  // labels end up with real breathing room rather than just-barely
+  // touching.
+  const springK = Math.max(0.003, 0.008 - features.length * 0.00009);
+  const iterations = Math.min(2000, 500 + features.length * 16);
   for(let iter = 0; iter < iterations; iter++){
     for(const a of labelData){
-      a.x += (a.ox - a.x) * 0.008;
-      a.y += (a.oy - a.y) * 0.008;
+      a.x += (a.ox - a.x) * springK;
+      a.y += (a.oy - a.y) * springK;
     }
     for(let i = 0; i < labelData.length; i++){
       for(let j = i + 1; j < labelData.length; j++){
         const a = labelData[i], b = labelData[j];
         const dx = b.x - a.x, dy = b.y - a.y;
-        const overlapX = (a.w + b.w) / 2 + 5 - Math.abs(dx);
-        const overlapY = (a.h + b.h) / 2 + 4 - Math.abs(dy);
+        const overlapX = (a.w + b.w) / 2 + 7 - Math.abs(dx);
+        const overlapY = (a.h + b.h) / 2 + 6 - Math.abs(dy);
         if(overlapX > 0 && overlapY > 0){
           if(overlapX < overlapY){
             const push = overlapX / 2 * 1.5 * (dx < 0 ? -1 : 1) || 0.7;
