@@ -541,6 +541,7 @@
       </div>
       <button class="btn" id="mapStyleBtn">🗺️ MAP STYLE</button>
       <button class="btn" id="labelsBtn">🏷️ HIDE LABELS</button>
+      <button class="btn" id="backToWorldBtn" style="display:none;">← World Map</button>
       <button class="btn" id="resetBtn">RESET VIEW</button>
       <div class="count-badge">
         <span class="n" id="countBadge">114</span>
@@ -554,7 +555,6 @@
       <div class="hud" id="hud">LAT — · LON —</div>
       <div class="map-tooltip" id="countryHoverTooltip"></div>
       <div class="breadcrumb" id="breadcrumb" style="display:none;">
-        <button class="btn" id="backToWorldBtn">← World Map</button>
         <span id="breadcrumbLabel"></span>
       </div>
       <div class="loading-overlay" id="loadingOverlay" style="display:none;">
@@ -1098,6 +1098,7 @@ function showGlobeView(){
   globeCanvasEl.style.display = '';
   svg.style('display', 'none');
   document.getElementById('annotateToolbar').style.display = 'none';
+  document.getElementById('backToWorldBtn').style.display = 'none';
   resizeGlobeRenderer();
 }
 function showDrillDownView(){
@@ -1105,6 +1106,7 @@ function showDrillDownView(){
   globeCanvasEl.style.display = 'none';
   svg.style('display', '');
   document.getElementById('annotateToolbar').style.display = 'flex';
+  document.getElementById('backToWorldBtn').style.display = '';
 }
 
 // Converts a raw screen position (clientX/clientY) into the SVG's own
