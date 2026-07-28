@@ -3379,7 +3379,7 @@ function showAccountSettings() {
             <div style="font-size:13px;font-weight:700;margin-bottom:2px;">🔐 Two-Factor Authentication</div>
             <div style="font-size:12px;color:#6a6a9a;">Use Google Authenticator or Authy for extra security</div>
           </div>
-          <button onclick="toggle2FA()" id="twofa-toggle-btn" style="background:linear-gradient(135deg,#7c3aed,#7c3aed);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">Enable</button>
+          <button onclick="toggle2FA()" id="twofa-toggle-btn" style="display:${user.totp_enabled ? 'none' : ''};background:linear-gradient(135deg,#7c3aed,#7c3aed);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">Enable</button>
         </div>
         <div id="twofa-setup" style="display:none;margin-top:16px;">
           <div style="font-size:12px;color:#aaa;margin-bottom:10px;">1. Scan this QR code with Google Authenticator or Authy</div>
@@ -3391,7 +3391,7 @@ function showAccountSettings() {
           </div>
           <div id="twofa-msg" style="font-size:11px;margin-top:6px;text-align:center;"></div>
         </div>
-        <div id="twofa-enabled-view" style="display:none;margin-top:12px;">
+        <div id="twofa-enabled-view" style="display:${user.totp_enabled ? 'block' : 'none'};margin-top:12px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
             <span style="color:#10b981;font-size:13px;">✓ 2FA is active on your account</span>
           </div>
@@ -3539,6 +3539,7 @@ async function confirm2FA() {
       document.getElementById('twofa-setup').style.display = 'none';
       document.getElementById('twofa-enabled-view').style.display = 'block';
       document.getElementById('twofa-toggle-btn').style.display = 'none';
+      const u = getUser() || {}; u.totp_enabled = true; localStorage.setItem('kbl_user', JSON.stringify(u));
       if(msg){msg.style.color='#10b981';msg.textContent='✓ 2FA enabled successfully!';}
     } else {
       if(msg){msg.style.color='#ff4c6a';msg.textContent=data.error||'Verification failed';}
@@ -3560,6 +3561,7 @@ async function disable2FA() {
       document.getElementById('twofa-enabled-view').style.display = 'none';
       document.getElementById('twofa-toggle-btn').style.display = '';
       document.getElementById('twofa-toggle-btn').textContent = 'Enable';
+      const u = getUser() || {}; u.totp_enabled = false; localStorage.setItem('kbl_user', JSON.stringify(u));
       if(msg){msg.style.color='#10b981';msg.textContent='2FA disabled';}
     } else {
       if(msg){msg.style.color='#ff4c6a';msg.textContent=data.error||'Failed';}
