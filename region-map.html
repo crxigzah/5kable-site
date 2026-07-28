@@ -179,6 +179,9 @@
     transition: all .15s;
   }
   .btn:hover{ border-color: var(--covered); color: var(--text); }
+  /* Smaller variant for the header toolbar specifically — the sidebar's
+     Select All/None/Export buttons keep the roomier default .btn size. */
+  .btn-hdr{ font-size:10px; padding:6px 9px; }
 
   /* ---------- main layout ---------- */
   main{
@@ -539,10 +542,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input id="searchInput" type="text" placeholder="Find a country…" autocomplete="off">
       </div>
-      <button class="btn" id="mapStyleBtn">🗺️ MAP STYLE</button>
-      <button class="btn" id="labelsBtn">🏷️ HIDE LABELS</button>
-      <button class="btn" id="backToWorldBtn" style="display:none;">← World Map</button>
-      <button class="btn" id="resetBtn">RESET VIEW</button>
+      <button class="btn btn-hdr" id="mapStyleBtn">🗺️ MAP STYLE</button>
+      <button class="btn btn-hdr" id="labelsBtn">🏷️ HIDE LABELS</button>
+      <button class="btn btn-hdr" id="resetBtn">RESET VIEW</button>
+      <button class="btn btn-hdr" id="backToWorldBtn" style="display:none;">← WORLD MAP</button>
       <div class="count-badge">
         <span class="n" id="countBadge">114</span>
         <span class="l">COVERED REGIONS</span>
