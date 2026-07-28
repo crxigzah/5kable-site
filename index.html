@@ -1178,11 +1178,6 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
         <h4>Discord Community</h4>
         <p>Fastest response. Join the server to get help, share scenes, and chat with other players.</p>
       </a>
-      <a href="mailto:support@5kable.net" class="contact-card">
-        <div class="contact-card-icon">📧</div>
-        <h4>Email Support</h4>
-        <p>For account issues, billing queries, or anything private. We aim to reply within 24 hours.</p>
-      </a>
       <a href="javascript:void(0)" onclick="openNewTicketModal()" class="contact-card">
         <div class="contact-card-icon">🎫</div>
         <h4>Submit a Ticket</h4>
@@ -1534,7 +1529,7 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
 
 <footer>
   <div class="footer-links">
-    <a href="#contact" onclick="goHome();setTimeout(()=>document.getElementById('contact')?.scrollIntoView({behavior:'smooth'}),100);return false;">Contact</a>
+    <a href="#contact" onclick="goHome();setTimeout(()=>openNewTicketModal(),100);return false;">Contact</a>
     <a onclick="showPolicy('credits')" style="cursor:pointer;">Credits</a>
     <a onclick="showPolicy('fairuse')" style="cursor:pointer;">Fair Use</a>
     <a href="#faq" onclick="goHome();setTimeout(()=>document.getElementById('faq')?.scrollIntoView({behavior:'smooth'}),100);return false;">FAQ</a>
