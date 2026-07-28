@@ -1734,6 +1734,7 @@ function resetMapCanvasSize(){
   stage.style.overflowY = '';
   stage.style.overflowX = '';
   svg.style('height', null).style('width', null);
+  svg.attr('viewBox', `0 0 ${width} ${height}`);
 }
 function applyTallCanvasSize(tallHeight){
   const stage = document.getElementById('mapStage');
