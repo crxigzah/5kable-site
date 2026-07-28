@@ -331,6 +331,10 @@
     font-size:11px; color: var(--muted); letter-spacing:.06em;
   }
   .breadcrumb span b{ color: var(--covered-hover); }
+  /* In the light "Google Maps style" theme, teal reads poorly against the
+     pale blue background — switch the highlighted country name to the
+     same dark neutral already used for that theme's map labels. */
+  body.google-theme .breadcrumb span b{ color: var(--map-label-text); }
 
   .loading-overlay{
     position:absolute; inset:0;
@@ -544,7 +548,6 @@
       </div>
       <button class="btn btn-hdr" id="mapStyleBtn">🗺️ MAP STYLE</button>
       <button class="btn btn-hdr" id="labelsBtn">🏷️ HIDE LABELS</button>
-      <button class="btn btn-hdr" id="resetBtn">RESET VIEW</button>
       <button class="btn btn-hdr" id="backToWorldBtn" style="display:none;">← WORLD MAP</button>
       <div class="count-badge">
         <span class="n" id="countBadge">114</span>
@@ -732,14 +735,6 @@ document.getElementById('zoomIn').onclick = () => {
 document.getElementById('zoomOut').onclick = () => {
   if (isGlobeView) { setGlobeZoom(globeCamDist + 0.5); return; }
   svg.transition().duration(250).call(zoom.scaleBy, 1/1.5);
-};
-document.getElementById('resetBtn').onclick = () => {
-  if (isGlobeView) {
-    globeGroup.rotation.set(0, 0, 0);
-    setGlobeZoom(4.2);
-    return;
-  }
-  svg.transition().duration(400).call(zoom.transform, d3.zoomIdentity);
 };
 
 // ── 3D globe (world-level country picker) ─────────────────────
