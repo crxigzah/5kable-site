@@ -1933,7 +1933,17 @@ function renderCountryView(countryName, geojson){
       { type: 'FeatureCollection', features });
     const qb = d3.geoPath(quickProj).bounds({ type: 'FeatureCollection', features });
     const qbw = qb[1][0]-qb[0][0], qbh = qb[1][1]-qb[0][1];
-    useTallCanvas = qbw > 0 && (qbh / qbw) > 1.25;
+    // A country this densely divided (Japan's 47 is the extreme case)
+    // needs the extra room regardless of its overall bounding-box shape —
+    // real boundary data often includes small, far-flung outlying islands
+    // under some region's jurisdiction (e.g. Tokyo's ADM1 polygon legally
+    // includes islands hundreds of km south of the mainland), which can
+    // widen the TRUE bounding box enough to defeat a pure aspect-ratio
+    // check even though the main landmass is still visually cramped.
+    // Feature count alone is a reliable enough signal on its own past a
+    // high threshold; aspect ratio stays as an additional trigger for
+    // moderately-dense-but-narrow countries that don't hit that count.
+    useTallCanvas = features.length >= 35 || (qbw > 0 && (qbh / qbw) > 1.25);
   }
   // canvasHeight replaces the module-level `height` for the rest of this
   // function (including the nested fitAndPruneByRenderedArea below, via
