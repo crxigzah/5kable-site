@@ -706,6 +706,16 @@ const oceanGrad = defs.append('radialGradient').attr('id','oceanGrad').attr('cx'
 oceanGrad.append('stop').attr('class','ocean-stop-1').attr('offset','0%');
 oceanGrad.append('stop').attr('class','ocean-stop-2').attr('offset','100%');
 
+// Arrowhead for a custom label-pointer arrow (set via the admin Region
+// Label Editor). Only used when an admin explicitly drew one — the
+// existing plain leader-line-back-to-centroid behavior below still
+// applies for labels moved without a custom arrow, so old saved
+// positions render exactly as before.
+defs.append('marker').attr('id','labelArrowHead')
+  .attr('viewBox','0 0 10 10').attr('refX', 8).attr('refY', 5)
+  .attr('markerWidth', 6).attr('markerHeight', 6).attr('orient','auto-start-reverse')
+  .append('path').attr('d','M0,0L10,5L0,10Z').attr('fill','var(--map-label-text)');
+
 const g = svg.append('g');
 g.append('path').attr('class','sphere').attr('id','sphereBg').attr('d', path({type:'Sphere'}));
 const countryLayer = g.append('g').attr('class','country-layer');
@@ -1967,7 +1977,9 @@ function renderCountryView(countryName, geojson, labelOverrides){
     // admin already decided exactly where this specific label should sit.
     const ov = labelOverrides[nm];
     if (ov) {
-      return { id: 'sub-' + i, name: nm, ox, oy, x: ov.x, y: ov.y, w, h, inPlace: false, manual: true, fontScale: ov.font_scale };
+      const hasArrow = ov.arrow_x != null && ov.arrow_y != null;
+      return { id: 'sub-' + i, name: nm, ox, oy, x: ov.x, y: ov.y, w, h, inPlace: false, manual: true,
+        fontScale: ov.font_scale, arrowX: hasArrow ? ov.arrow_x : null, arrowY: hasArrow ? ov.arrow_y : null };
     }
 
     // Does this region's own shape have room to hold its name directly?
@@ -2040,15 +2052,25 @@ function renderCountryView(countryName, geojson, labelOverrides){
     if (l.manual) {
       // Admin-placed via the Region Label Editor — render at the exact
       // saved position/size, centered (matching how the editor itself
-      // draws it), with a leader line back to the true location only if
-      // it was actually moved away from it.
-      const moved = Math.hypot(l.x - l.ox, l.y - l.oy) > 6;
-      if (moved) {
+      // draws it). If the admin drew a custom pointer arrow, that always
+      // takes priority (with a real arrowhead, drawn wherever they aimed
+      // it); otherwise fall back to the original plain leader line back
+      // to the true centroid whenever the label was moved away from it.
+      if (l.arrowX != null && l.arrowY != null) {
         gLabel.append('line')
-          .attr('x1', l.ox).attr('y1', l.oy)
-          .attr('x2', l.x).attr('y2', l.y)
-          .attr('stroke', 'var(--muted-2)').attr('stroke-width', 0.6);
-        gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', 2.5);
+          .attr('x1', l.x).attr('y1', l.y)
+          .attr('x2', l.arrowX).attr('y2', l.arrowY)
+          .attr('stroke', 'var(--map-label-text)').attr('stroke-width', 1)
+          .attr('marker-end', 'url(#labelArrowHead)');
+      } else {
+        const moved = Math.hypot(l.x - l.ox, l.y - l.oy) > 6;
+        if (moved) {
+          gLabel.append('line')
+            .attr('x1', l.ox).attr('y1', l.oy)
+            .attr('x2', l.x).attr('y2', l.y)
+            .attr('stroke', 'var(--muted-2)').attr('stroke-width', 0.6);
+          gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', 2.5);
+        }
       }
       gLabel.append('text')
         .attr('x', l.x).attr('y', l.y)
