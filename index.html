@@ -1969,7 +1969,10 @@ async function login() {
 }
 
 // ── Dashboard ─────────────────────────────────────────────
+let currentView = 'home';
+
 function goHome() {
+  currentView = 'home';
   clearInterval(ticketThreadPollInterval);
   document.getElementById('landing').style.display = '';
   document.getElementById('dashboard').style.display = 'none';
@@ -1981,6 +1984,7 @@ function goHome() {
 }
 
 function goToDashboard() {
+  currentView = 'dashboard';
   clearInterval(ticketThreadPollInterval);
   closeUserMenu();
   document.getElementById('landing').style.display = 'none';
@@ -2003,6 +2007,7 @@ function goToDashboard() {
 }
 
 function goToStats() {
+  currentView = 'stats';
   clearInterval(ticketThreadPollInterval);
   closeUserMenu();
   document.getElementById('landing').style.display = 'none';
@@ -2022,6 +2027,7 @@ function goToStats() {
 }
 
 function goToTickets() {
+  currentView = 'tickets';
   closeUserMenu();
   document.getElementById('landing').style.display = 'none';
   document.getElementById('dashboard').style.display = 'none';
@@ -2035,6 +2041,7 @@ function goToTickets() {
 }
 
 function goToLeaderboard() {
+  currentView = 'leaderboard';
   clearInterval(ticketThreadPollInterval);
   closeUserMenu();
   document.getElementById('landing').style.display = 'none';
@@ -4016,7 +4023,45 @@ window.addEventListener('load', () => {
   // else on the page, so a slow/failed load here never blocks or
   // breaks the rest of the site.
   Promise.all([loadWorldMapLibs(), loadThreeJs()]).then(initHeroGlobe).catch(() => {});
+  startLiveViewRefresh();
 });
+
+// ── Live view refresh ────────────────────────────────────
+// Previously, dashboard stats, leaderboards, and ticket lists only
+// loaded once per navigation — if you sat on a page, nothing updated
+// until you manually re-clicked into it. This keeps whichever view is
+// currently open quietly refreshed in the background, same interval
+// used by the admin panel's own live poll. Landing page is skipped
+// since it has nothing live to show; the ticket *thread* view already
+// has its own faster 4s poll (ticketThreadPollInterval) and isn't
+// touched here to avoid double-fetching the same data.
+function startLiveViewRefresh(){
+  setInterval(() => {
+    const token = getToken();
+    if (!token) return;
+    if (currentView === 'dashboard') {
+      loadDashboardExtras(token);
+      loadDashboardUsage(token);
+      loadRegionAccuracy(token);
+      loadGuessInsights(token);
+    } else if (currentView === 'stats') {
+      loadRegionAccuracy(token);
+      loadGuessInsights(token);
+      loadFullStats(token);
+      loadStatsBadges(token);
+      loadCountryProgress(token);
+    } else if (currentView === 'tickets') {
+      // Only refresh the list view — if a specific thread is open,
+      // its own faster poll already covers it and this would just
+      // be a redundant fetch.
+      if (document.getElementById('tickets-list-view')?.style.display !== 'none') {
+        loadMyTickets();
+      }
+    } else if (currentView === 'leaderboard') {
+      loadTopPlayersLeaderboard();
+    }
+  }, 15000);
+}
 </script>
 </body>
 </html>

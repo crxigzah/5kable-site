@@ -1002,6 +1002,7 @@ function doLogout(msg) {
   clearTimeout(inactivityTimer);
   clearInterval(pollInterval);
   clearInterval(ticketPollInterval);
+  clearInterval(liveAdminRefreshInterval);
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('tickets-full-page').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
@@ -1047,6 +1048,7 @@ function loadDashboard() {
       if (allActivityLogs.length) lastEventTime = allActivityLogs[0].created_at;
       startClock();
       startPoll();
+      startLiveAdminRefresh();
       resetInactivityTimer();
       loadGuides();
       loadCameraQuizList();
@@ -1056,6 +1058,32 @@ function loadDashboard() {
       loadScenesList();
     })
     .catch(() => doLogout('Could not connect.'));
+}
+
+// ── Live refresh for frequently-changing sections ──────────
+// Usage stats, the Users table, and the main Tickets table used to
+// only load once at login — everything else on this page (Logs) already
+// had its own 3s poll via startPoll(), but these three didn't, so they
+// looked frozen until a manual refresh. This keeps them current in the
+// background without re-fetching the heavier, rarely-changing sections
+// (guides, scene library, etc.) on every tick.
+let liveAdminRefreshInterval = null;
+function startLiveAdminRefresh(){
+  clearInterval(liveAdminRefreshInterval);
+  liveAdminRefreshInterval = setInterval(() => {
+    if (!adminToken) return;
+    fetch(`${API}/admin/dashboard`, {headers: adminHeaders()})
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) return; // don't force-logout on a background hiccup
+        loadStats(d.stats);
+        allUsers = d.users || [];
+        document.getElementById('user-count').textContent = `${allUsers.length} users`;
+        renderUsers(allUsers);
+      })
+      .catch(() => {});
+    if (typeof loadTicketsFullPage === 'function') loadTicketsFullPage();
+  }, 15000);
 }
 
 // ── Fast incremental poll (every 3 seconds, tiny payload) ──
