@@ -2389,24 +2389,11 @@ function showDashboard(user, token) {
 // ── Level / XP + GeoX mascot + seasonal banner ──────────────────
 const _gaxMaxLevel = 25; // matches the highest defined tier (Legend)
 
-function _gaxLevelInfo(xp) {
-  // Quadratic curve: level n's cumulative threshold is 50*n^2, so each
-  // level takes progressively more XP than the last (RPG-style pacing)
-  // — 50 XP for level 2, 200 cumulative for level 3, 450 for level 4...
-  let level = 1;
-  while (50 * level * level <= xp) level++;
-  if (level >= _gaxMaxLevel) {
-    // Capped — Legend is the top of the rank ladder, no "next level" to
-    // show progress toward.
-    return { level: _gaxMaxLevel, xpIntoLevel: 0, xpNeededForLevel: 0, pct: 100, isMaxLevel: true };
-  }
-  const xpForCurrentLevel = 50 * (level - 1) * (level - 1);
-  const xpForNextLevel = 50 * level * level;
-  const xpIntoLevel = xp - xpForCurrentLevel;
-  const xpNeededForLevel = xpForNextLevel - xpForCurrentLevel;
-  const pct = xpNeededForLevel > 0 ? Math.min(100, Math.round((xpIntoLevel / xpNeededForLevel) * 100)) : 100;
-  return { level, xpIntoLevel, xpNeededForLevel, pct, isMaxLevel: false };
-}
+// Note: the actual leveling formula (50*n^2 curve) now lives only on
+// the backend (_level_info() in app.py) and is returned as level_info
+// in every /guess/stats response — this used to be duplicated here as
+// _gaxLevelInfo(), which risked drifting out of sync if the curve was
+// ever tuned in only one of the two places.
 
 // Rank tiers — each is both a title AND a real visual reward (ring
 // color, badge color, icon). Climbing tiers changes your rank ring/badge
@@ -2458,13 +2445,16 @@ async function loadDashboardExtras(token){
     const statsRes = await fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
     const statsData = await statsRes.json();
 
-    // Total correct guesses across every country = XP, plus any
-    // admin-granted bonus XP (xp_bonus, set via the admin panel).
-    // Grows every single round played, so it's always a positive,
-    // motivating number even on an off day.
-    const totalXP = (statsData.stats || []).reduce((sum, s) => sum + (s.correct || 0), 0) + (statsData.xp_bonus || 0);
-    const { level, xpIntoLevel, xpNeededForLevel, pct, isMaxLevel } = _gaxLevelInfo(totalXP);
-    const tier = _gaxTierForLevel(level);
+    // Level/XP is now computed server-side (see level_info in the
+    // response) rather than recalculated here — keeps the leveling
+    // formula living in exactly one place instead of two.
+    const li = statsData.level_info || {};
+    const level = li.level || 1;
+    const xpIntoLevel = li.xp_into_level || 0;
+    const xpNeededForLevel = li.xp_needed_for_level || 0;
+    const pct = li.pct || 0;
+    const isMaxLevel = !!li.is_max_level;
+    const tier = { icon: li.tier_icon || '🌱', title: li.tier_title || 'Rookie', color: li.tier_color || '#8888aa' };
 
     if (numEl) numEl.innerHTML = `<div style="font-size:24px;line-height:1;">${tier.icon}</div>`;
     if (titleEl) titleEl.textContent = `Level ${level} — ${tier.title}`;
@@ -3430,9 +3420,12 @@ async function loadLevelIntoSettings(){
   try {
     const res = await fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
     const data = await res.json();
-    const totalXP = (data.stats || []).reduce((sum, s) => sum + (s.correct || 0), 0) + (data.xp_bonus || 0);
-    const { level, xpIntoLevel, xpNeededForLevel, isMaxLevel } = _gaxLevelInfo(totalXP);
-    const tier = _gaxTierForLevel(level);
+    const li = data.level_info || {};
+    const level = li.level || 1;
+    const xpIntoLevel = li.xp_into_level || 0;
+    const xpNeededForLevel = li.xp_needed_for_level || 0;
+    const isMaxLevel = !!li.is_max_level;
+    const tier = { icon: li.tier_icon || '🌱', title: li.tier_title || 'Rookie' };
     el.innerHTML = `
       <div style="width:38px;height:38px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;">${tier.icon}</div>
       <div>

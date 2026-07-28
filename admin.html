@@ -1067,6 +1067,21 @@ function loadDashboard() {
 // looked frozen until a manual refresh. This keeps them current in the
 // background without re-fetching the heavier, rarely-changing sections
 // (guides, scene library, etc.) on every tick.
+//
+// flashElement briefly turns an element teal, same visual cue the Logs
+// counter already used — otherwise these background updates change the
+// numbers silently and you could miss a new signup/ticket while looking
+// at another part of the page.
+function flashElement(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.color = '#00c9a7';
+  setTimeout(() => { el.style.color = ''; }, 800);
+}
+
+let lastKnownUserCount = null;
+let lastKnownNewToday = null;
+
 let liveAdminRefreshInterval = null;
 function startLiveAdminRefresh(){
   clearInterval(liveAdminRefreshInterval);
@@ -1077,8 +1092,16 @@ function startLiveAdminRefresh(){
       .then(d => {
         if (d.error) return; // don't force-logout on a background hiccup
         loadStats(d.stats);
+        if (lastKnownNewToday !== null && d.stats && d.stats.new_today !== lastKnownNewToday) {
+          flashElement('s-new');
+        }
+        lastKnownNewToday = d.stats ? d.stats.new_today : lastKnownNewToday;
         allUsers = d.users || [];
         document.getElementById('user-count').textContent = `${allUsers.length} users`;
+        if (lastKnownUserCount !== null && allUsers.length !== lastKnownUserCount) {
+          flashElement('user-count');
+        }
+        lastKnownUserCount = allUsers.length;
         renderUsers(allUsers);
       })
       .catch(() => {});
@@ -1815,6 +1838,7 @@ function backToDashboard(){
   window.scrollTo(0, 0);
 }
 
+let lastKnownTicketCount = null;
 function loadTicketsFullPage(){
   let query = '';
   if (ticketFilter === 'mine'){
@@ -1827,6 +1851,10 @@ function loadTicketsFullPage(){
     .then(d => {
       allTickets = d.tickets || [];
       document.getElementById('tickets-full-count').textContent = `${allTickets.length} ticket${allTickets.length===1?'':'s'}`;
+      if (lastKnownTicketCount !== null && allTickets.length !== lastKnownTicketCount) {
+        flashElement('tickets-full-count');
+      }
+      lastKnownTicketCount = allTickets.length;
       renderTicketsFullTable();
     });
 }
