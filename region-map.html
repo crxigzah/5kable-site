@@ -2029,6 +2029,33 @@ function renderCountryView(countryName, geojson, labelOverrides){
     return { id: 'sub-' + i, name: nm, ox, oy, x: ox, y: oy, w, h, inPlace, fitFontPx: inPlace ? fitFontPx : null };
   });
 
+  // A region's own "does my name fit my own shape" check has no idea
+  // whether a NEIGHBORING region's label ends up on top of it — a
+  // cluster of small adjacent regions (Japan's Kansai prefectures being
+  // the clearest case) can each individually pass that check and all get
+  // marked safe to render in-place, with zero separation applied between
+  // them, since the decluttering pass below only runs for labels that
+  // failed their own check. Demote whichever of any two colliding
+  // in-place labels has less spare room, so it falls through to that
+  // same decluttering system instead.
+  {
+    const placed = labelData.filter(l => l.inPlace);
+    for (let i = 0; i < placed.length; i++) {
+      const a = placed[i];
+      if (!a.inPlace) continue;
+      const aw = a.name.length * a.fitFontPx * 0.6 + 3, ah = a.fitFontPx * 1.15;
+      for (let j = i + 1; j < placed.length; j++) {
+        const b = placed[j];
+        if (!b.inPlace) continue;
+        const bw = b.name.length * b.fitFontPx * 0.6 + 3, bh = b.fitFontPx * 1.15;
+        const dx = Math.abs(a.ox - b.ox), dy = Math.abs(a.oy - b.oy);
+        if (dx < (aw + bw) / 2 * 0.8 && dy < (ah + bh) / 2 * 0.8) {
+          (a.fitFontPx <= b.fitFontPx ? a : b).inPlace = false;
+        }
+      }
+    }
+  }
+
   const overflow = labelData.filter(l => !l.inPlace && !l.manual);
 
   // Force-based decluttering: a weak spring pulls each label back toward
