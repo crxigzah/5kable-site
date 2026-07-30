@@ -1944,77 +1944,29 @@ function renderCountryView(countryName, geojson, labelOverrides){
   svg.call(zoom.transform, d3.zoomIdentity);
   countryLayer.selectAll('*').remove();
   labelLayer.selectAll('*').remove();
-  defs.selectAll('.region-label-mask-defs').remove();
 
   countryLayer.selectAll('path')
     .data(features)
     .join('path')
     .attr('class', 'subdivision')
-    .attr('id', (d, i) => 'region-path-' + i)
     .attr('data-id', (d, i) => 'sub-' + i)
     .attr('d', localPath);
 
-  // Hard border lock: a label can render inside its OWN region or out in
-  // open ocean, but never spilling onto a DIFFERENT region's territory.
-  // One shared mask (built once, referencing the paths just drawn above
-  // via <use> so nothing gets duplicated) blacks out every region;
-  // layering a second copy of each label's text, clipped to just its own
-  // region's shape, re-allows it there specifically. See
-  // appendReadableLabel() below for how the two pieces combine.
-  const oceanOnlyMask = defs.append('mask')
-    .attr('class', 'region-label-mask-defs')
-    .attr('id', 'oceanOnlyMask')
-    .attr('maskUnits', 'userSpaceOnUse')
-    .attr('x', 0).attr('y', 0).attr('width', width).attr('height', height);
-  oceanOnlyMask.append('rect').attr('x', 0).attr('y', 0).attr('width', width).attr('height', height).attr('fill', 'white');
-  features.forEach((f) => {
-    oceanOnlyMask.append('path').attr('d', localPath(f)).attr('fill', 'black');
-  });
-  // Grows each region's own "allowed" zone a few pixels past its true
-  // border, so a label sitting close to one gets some breathing room
-  // instead of being sliced exactly at the border. clip-path can't do
-  // this (by spec it ignores stroke-width entirely, using only a
-  // shape's raw fill geometry — a thick stroke there has zero effect).
-  // An SVG filter (feMorphology dilate) does work, but recomputing that
-  // on every region on every repaint during panning is expensive enough
-  // to visibly lag a dense country — a mask, unlike clip-path, DOES
-  // respect stroke normally, so painting a wide white stroke achieves
-  // the same outward growth as an ordinary (cheap) paint operation,
-  // with no filter needed at all.
-  features.forEach((f, i) => {
-    const m = defs.append('mask').attr('class', 'region-label-mask-defs').attr('id', 'mask-region-' + i)
-      .attr('maskUnits', 'userSpaceOnUse').attr('x', 0).attr('y', 0).attr('width', width).attr('height', height);
-    m.append('rect').attr('x', 0).attr('y', 0).attr('width', width).attr('height', height).attr('fill', 'black');
-    m.append('path').attr('d', localPath(f)).attr('fill', 'white').attr('stroke', 'white').attr('stroke-width', 10);
-  });
-
   // Shrinks a label's font size based on its own name length, targeting a
   // reasonable max rendered width — a long name (Kagoshima, Tokushima)
-  // gets scaled down before it ever reaches the clip mask above, instead
-  // of rendering at full size and having the mask silently cut it off
-  // mid-word once it crosses into a neighboring region. A short name
-  // (Mie, Nara) is well under the budget already and stays full size.
+  // renders smaller than a short one (Mie, Oita) instead of every label
+  // using one flat size regardless of word length.
   function autoFitFontSize(name, baseFontPx, maxWidthPx, floorRatio){
     const estWidth = name.length * baseFontPx * 0.6 + 3;
     if (estWidth <= maxWidthPx) return baseFontPx;
     return baseFontPx * Math.max(floorRatio, maxWidthPx / estWidth);
   }
 
-  // Renders a label as two overlaid copies with identical position/size/
-  // text — one masked to "everywhere except any region" (so it shows in
-  // open ocean), one masked to just this specific region's own shape
-  // plus a few pixels of buffer past its border (so it shows there too,
-  // without being sliced at the exact edge) — instead of a single
-  // unrestricted <text> that could bleed across a border into whichever
-  // neighboring region happens to be underneath it.
   function appendReadableLabel(g, ownIndex, attrs, content){
-    const base = g.append('text').attr('mask', 'url(#oceanOnlyMask)');
-    const own = g.append('text').attr('mask', `url(#mask-region-${ownIndex})`);
-    [base, own].forEach(t => {
-      Object.entries(attrs).forEach(([k, v]) => t.attr(k, v));
-      t.text(content);
-    });
-    return own; // callers that need to chain further .attr() calls use this one; base mirrors it via shared attrs above
+    const t = g.append('text');
+    Object.entries(attrs).forEach(([k, v]) => t.attr(k, v));
+    t.text(content);
+    return t;
   }
 
   // Show every region's label immediately — no click/selection needed.
