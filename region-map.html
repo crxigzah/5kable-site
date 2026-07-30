@@ -2494,17 +2494,20 @@ d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(w
   });
 
   // The region-level view and the plain-country-outline fallback both
-  // sanitize their geometry (winding-order correction + detecting a ring
-  // that got wound backwards and ended up describing "everywhere except
-  // this shape" instead of the shape itself) before ever rendering it —
-  // this was the one place in the codebase that skipped that step. A
-  // bad winding on the raw world-atlas data wouldn't necessarily be
-  // obvious on the visible globe (a stray sliver can be small and dark
-  // enough to blend into the ocean), but it still gets solidly painted
-  // onto the invisible per-pixel ID texture used for hover/click
-  // detection — which can make a distant, unrelated spot on the map
-  // register as some other country entirely.
-  worldFeatureCollection.features.forEach(f => { rewindGeometry(f.geometry); fixInvertedArea(f); });
+  // correct ring winding order before rendering — this was the one place
+  // in the codebase that skipped it. A bad winding on the raw
+  // world-atlas data wouldn't necessarily be obvious on the visible
+  // globe (a stray sliver can be small and dark enough to blend into
+  // the ocean), but it still gets solidly painted onto the invisible
+  // per-pixel ID texture used for hover/click detection — which can
+  // make a distant, unrelated spot on the map register as some other
+  // country entirely. Deliberately NOT running fixInvertedArea here too
+  // (unlike the region-level pass) — it relies on d3.geoArea, which,
+  // like d3.geoBounds (already flagged elsewhere in this file), is
+  // unreliable for antimeridian-crossing countries such as Russia and
+  // Fiji, and incorrectly "fixed" Russia's genuinely-correct geometry
+  // into one covering nearly the entire globe.
+  worldFeatureCollection.features.forEach(f => { rewindGeometry(f.geometry); });
 
   renderWorldMap();
   resizeGlobeRenderer();
