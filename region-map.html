@@ -2259,7 +2259,14 @@ function renderCountryView(countryName, geojson, labelOverrides){
     const overallCx = (Math.min(...allX) + Math.max(...allX)) / 2;
 
     clusters.forEach(members => {
-      if(members.length < 4) return; // a pairwise near-miss is already handled fine by the spring pass alone
+      // Any cluster still overlapping at this point already survived the
+      // full spring settle — by definition the local repulsion couldn't
+      // resolve it on its own, whether that's 2 labels or 12. Originally
+      // this only kicked in at 4+ members, which left small 2-3 label
+      // pileups (found on Hong Kong's Kwai Tsing/Sha Tin and Central and
+      // Western/Wan Chai/Eastern, and scattered pairs in Japan/Philippines)
+      // unresolved.
+      if(members.length < 2) return;
       const cx = members.reduce((s, l) => s + l.ox, 0) / members.length;
       const cy = members.reduce((s, l) => s + l.oy, 0) / members.length;
       const stackGap = LABEL_H * fontScale + 3;
@@ -2317,7 +2324,51 @@ function renderCountryView(countryName, geojson, labelOverrides){
     // Safety net: none of the repulsion above knows about the canvas edge,
     // so a label fighting for space near the border could otherwise get
     // pushed clean off it (found while testing on the Philippines' densely-
-    // divided Mindanao provinces).
+    // divided Mindanao provinces, near the bottom of that map). Shift each
+    // STACKED cluster back in bounds as one rigid group — clamping each
+    // member independently collapsed several onto the same edge
+    // coordinate, trading the off-canvas bug for a fresh overlap between
+    // them (found on that same Mindanao cluster).
+    clusters.forEach(members => {
+      if(members.length < 2) return;
+      const minX = Math.min(...members.map(l => l.x)), maxX = Math.max(...members.map(l => l.x));
+      const minY = Math.min(...members.map(l => l.y)), maxY = Math.max(...members.map(l => l.y));
+      const shiftX = minX < 20 ? 20 - minX : (maxX > width - 20 ? width - 20 - maxX : 0);
+      const shiftY = minY < 20 ? 20 - minY : (maxY > height - 20 ? height - 20 - maxY : 0);
+      if(shiftX || shiftY) members.forEach(l => { l.x += shiftX; l.y += shiftY; });
+    });
+    // A plain clamp isn't enough on its own: labels near the map edge
+    // (e.g. the Philippines' Mindanao provinces, close to the map's
+    // southern border) can independently get pushed toward that edge by
+    // the spring pass WITHOUT ever being flagged as a cluster with each
+    // other, since they weren't overlapping yet at the point clustering
+    // was decided. Clamping each one to the boundary afterward can then
+    // collapse several of them onto the same edge coordinate — a fresh
+    // collision caused by the clamp itself. Interleaving clamp and
+    // repulsion lets them spread out sideways along the edge instead.
+    for(let iter = 0; iter < 150; iter++){
+      for(const l of overflow){
+        l.x = Math.max(20, Math.min(width - 20, l.x));
+        l.y = Math.max(20, Math.min(height - 20, l.y));
+      }
+      for(let i = 0; i < overflow.length; i++){
+        for(let j = i + 1; j < overflow.length; j++){
+          const a = overflow[i], b = overflow[j];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const overlapX = (a.w + b.w) / 2 + 7 - Math.abs(dx);
+          const overlapY = (a.h + b.h) / 2 + 6 - Math.abs(dy);
+          if(overlapX > 0 && overlapY > 0){
+            if(overlapX < overlapY){
+              const push = overlapX / 2 * 1.2 * (dx < 0 ? -1 : 1) || 0.5;
+              a.x -= push; b.x += push;
+            } else {
+              const push = overlapY / 2 * 1.2 * (dy < 0 ? -1 : 1) || 0.5;
+              a.y -= push; b.y += push;
+            }
+          }
+        }
+      }
+    }
     for(const l of overflow){
       l.x = Math.max(20, Math.min(width - 20, l.x));
       l.y = Math.max(20, Math.min(height - 20, l.y));
@@ -2383,8 +2434,15 @@ function renderCountryView(countryName, geojson, labelOverrides){
         .attr('stroke', 'var(--muted-2)').attr('stroke-width', 0.6);
     }
     gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', dotRadius);
+    // Centered on (l.x, l.y), matching every collision check above (spring
+    // repulsion, in-place avoidance, clustering) — all of which treat l.x
+    // as the box's CENTER. Left-anchored text starting at l.x+6 (the
+    // previous behavior) put the real rendered box a half-width to the
+    // right of where the decluttering math believed it was, so two labels
+    // it had placed at a "safe" distance could still visually collide.
     appendReadableLabel(gLabel, l.idx, {
-      x: l.x + 6, y: l.y + 3,
+      x: l.x, y: l.y + 3,
+      'text-anchor': 'middle',
       'font-size': autoFitFontSize(l.name, labelFontPx * fontScale, 95, 0.55),
       'stroke-width': autoFitFontSize(l.name, labelFontPx * fontScale, 95, 0.55) * haloRatio
     }, l.name);
