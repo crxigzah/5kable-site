@@ -1849,7 +1849,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
       // of km from the main landmass. Including them forces the map to zoom
       // out so far that the country's actual mainland gets squeezed into a
       // tiny corner, so they are excluded from this reference-map view.
-      if(/puerto rico|guam\b|american samoa|northern mariana|u\.?s\.? virgin islands|^virgin islands|hawaii/i.test(nm)) return false;
+      if(/puerto rico|guam\b|american samoa|northern mariana|u\.?s\.? virgin islands|^virgin islands|hawaii|^other territories$|^chatham islands territory$/i.test(nm)) return false;
       return true;
     });
 
