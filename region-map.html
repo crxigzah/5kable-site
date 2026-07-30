@@ -1968,7 +1968,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
   const labelFontPx = isGoogleTheme ? 14 : 9;
   const CHAR_W = 5.4 * (labelFontPx / 9), LABEL_H = 11 * (labelFontPx / 9);
   const fontScale = features.length > 45 ? 0.55 : features.length > 30 ? 0.7 : features.length > 18 ? 0.85 : 1;
-  const inPlaceFontPx = Math.max(5.5, 7.5 * fontScale);
+  const inPlaceFontPx = Math.max(5.5, 7.5 * fontScale) * (labelFontPx / 9);
 
   const labelData = features.map((d, i) => {
     const nm = subdivisionName(d.properties, i);
