@@ -1972,7 +1972,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
   });
   features.forEach((f, i) => {
     defs.append('clipPath').attr('class', 'region-label-mask-defs').attr('id', 'clip-region-' + i)
-      .append('use').attr('href', '#region-path-' + i);
+      .append('path').attr('d', localPath(f)).attr('fill', 'black').attr('stroke', 'black').attr('stroke-width', 10);
   });
 
   // Shrinks a label's font size based on its own name length, targeting a
