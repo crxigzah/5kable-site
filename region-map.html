@@ -1948,13 +1948,52 @@ function renderCountryView(countryName, geojson, labelOverrides){
   svg.call(zoom.transform, d3.zoomIdentity);
   countryLayer.selectAll('*').remove();
   labelLayer.selectAll('*').remove();
+  defs.selectAll('.region-label-mask-defs').remove();
 
   countryLayer.selectAll('path')
     .data(features)
     .join('path')
     .attr('class', 'subdivision')
+    .attr('id', (d, i) => 'region-path-' + i)
     .attr('data-id', (d, i) => 'sub-' + i)
     .attr('d', localPath);
+
+  // Hard border lock: a label can render inside its OWN region or out in
+  // open ocean, but never spilling onto a DIFFERENT region's territory.
+  // One shared mask (built once, referencing the paths just drawn above
+  // via <use> so nothing gets duplicated) blacks out every region;
+  // layering a second copy of each label's text, clipped to just its own
+  // region's shape, re-allows it there specifically. See
+  // appendReadableLabel() below for how the two pieces combine.
+  const oceanOnlyMask = defs.append('mask')
+    .attr('class', 'region-label-mask-defs')
+    .attr('id', 'oceanOnlyMask')
+    .attr('maskUnits', 'userSpaceOnUse')
+    .attr('x', 0).attr('y', 0).attr('width', width).attr('height', height);
+  oceanOnlyMask.append('rect').attr('x', 0).attr('y', 0).attr('width', width).attr('height', height).attr('fill', 'white');
+  features.forEach((f) => {
+    oceanOnlyMask.append('path').attr('d', localPath(f)).attr('fill', 'black');
+  });
+  features.forEach((f, i) => {
+    defs.append('clipPath').attr('class', 'region-label-mask-defs').attr('id', 'clip-region-' + i)
+      .append('use').attr('href', '#region-path-' + i);
+  });
+
+  // Renders a label as two overlaid copies with identical position/size/
+  // text — one masked to "everywhere except any region" (so it shows in
+  // open ocean), one clipped to just this specific region's own shape
+  // (so it shows there too) — instead of a single unrestricted <text>
+  // that could bleed across a border into whichever neighboring region
+  // happens to be underneath it.
+  function appendReadableLabel(g, ownIndex, attrs, content){
+    const base = g.append('text').attr('mask', 'url(#oceanOnlyMask)');
+    const own = g.append('text').attr('clip-path', `url(#clip-region-${ownIndex})`);
+    [base, own].forEach(t => {
+      Object.entries(attrs).forEach(([k, v]) => t.attr(k, v));
+      t.text(content);
+    });
+    return own; // callers that need to chain further .attr() calls use this one; base mirrors it via shared attrs above
+  }
 
   // Show every region's label immediately — no click/selection needed.
   // Densely-divided countries used to get EVERY label pushed out to an
@@ -1988,7 +2027,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
     if (ov) {
       const hasArrow = ov.arrow_x != null && ov.arrow_y != null;
       const hasCurve = hasArrow && ov.arrow_cx != null && ov.arrow_cy != null;
-      return { id: 'sub-' + i, name: nm, ox, oy, x: ov.x, y: ov.y, w, h, inPlace: false, manual: true,
+      return { id: 'sub-' + i, idx: i, name: nm, ox, oy, x: ov.x, y: ov.y, w, h, inPlace: false, manual: true,
         fontScale: ov.font_scale, arrowX: hasArrow ? ov.arrow_x : null, arrowY: hasArrow ? ov.arrow_y : null,
         arrowCX: hasCurve ? ov.arrow_cx : null, arrowCY: hasCurve ? ov.arrow_cy : null,
         hideConnector: !!ov.hide_connector };
@@ -2026,7 +2065,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
       if (!d3.geoContains(d, [lon, lat])) inPlace = false;
     }
 
-    return { id: 'sub-' + i, name: nm, ox, oy, x: ox, y: oy, w, h, inPlace, fitFontPx: inPlace ? fitFontPx : null };
+    return { id: 'sub-' + i, idx: i, name: nm, ox, oy, x: ox, y: oy, w, h, inPlace, fitFontPx: inPlace ? fitFontPx : null };
   });
 
   // A region's own "does my name fit my own shape" check has no idea
@@ -2096,11 +2135,11 @@ function renderCountryView(countryName, geojson, labelOverrides){
     const gLabel = labelLayer.append('g').attr('data-id', l.id);
     if (l.inPlace) {
       // Sits directly inside its own shape — no line, no dot, just text.
-      gLabel.append('text')
-        .attr('x', l.ox).attr('y', l.oy + l.fitFontPx * 0.35)
-        .attr('text-anchor', 'middle')
-        .attr('font-size', l.fitFontPx)
-        .text(l.name);
+      appendReadableLabel(gLabel, l.idx, {
+        x: l.ox, y: l.oy + l.fitFontPx * 0.35,
+        'text-anchor': 'middle',
+        'font-size': l.fitFontPx
+      }, l.name);
       return;
     }
     if (l.manual) {
@@ -2134,11 +2173,11 @@ function renderCountryView(countryName, geojson, labelOverrides){
           gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', 2.5);
         }
       }
-      gLabel.append('text')
-        .attr('x', l.x).attr('y', l.y)
-        .attr('text-anchor', 'middle')
-        .attr('font-size', labelFontPx * l.fontScale)
-        .text(l.name);
+      appendReadableLabel(gLabel, l.idx, {
+        x: l.x, y: l.y,
+        'text-anchor': 'middle',
+        'font-size': labelFontPx * l.fontScale
+      }, l.name);
       return;
     }
     const moved = Math.hypot(l.x - l.ox, l.y - l.oy) > 6;
@@ -2149,10 +2188,10 @@ function renderCountryView(countryName, geojson, labelOverrides){
         .attr('stroke', 'var(--muted-2)').attr('stroke-width', 0.6);
     }
     gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', 2.5);
-    gLabel.append('text')
-      .attr('x', l.x + 6).attr('y', l.y + 3)
-      .attr('font-size', labelFontPx * fontScale)
-      .text(l.name);
+    appendReadableLabel(gLabel, l.idx, {
+      x: l.x + 6, y: l.y + 3,
+      'font-size': labelFontPx * fontScale
+    }, l.name);
   });
   document.getElementById('breadcrumb').style.display = 'flex';
   document.getElementById('breadcrumbLabel').innerHTML =
