@@ -1044,11 +1044,43 @@ function globeRaycastAt(clientX, clientY){
   const hits = globeRaycaster.intersectObject(globeMesh);
   return hits.length ? hits[0] : null;
 }
+// Canvas fill operations are always anti-aliased at shape edges, with no
+// way to turn that off — so a pixel right on a border between two
+// countries is a BLEND of their two ID colors, not either one. Since ID
+// colors are assigned by list order (not geography), two countries that
+// happen to sit next to each other on the map can have very different
+// index numbers, so decoding a blended edge pixel can land on some
+// completely unrelated third country. Guard against that: only trust a
+// sampled color if it exactly matches what that index's real ID color
+// should be; otherwise search outward in a small ring for the nearest
+// pixel that IS an exact match.
+function globeReadIdPixel(px, py){
+  const x = Math.max(0, Math.min(GLOBE_TEX_W - 1, px));
+  const y = Math.max(0, Math.min(GLOBE_TEX_H - 1, py));
+  const data = globeIdCtx.getImageData(x, y, 1, 1).data;
+  return [data[0], data[1], data[2]];
+}
 function globeUvToCountryIndex(uv){
   const px = Math.floor(uv.x * GLOBE_TEX_W);
   const py = Math.floor((1 - uv.y) * GLOBE_TEX_H);
-  const data = globeIdCtx.getImageData(Math.max(0, Math.min(GLOBE_TEX_W - 1, px)), Math.max(0, Math.min(GLOBE_TEX_H - 1, py)), 1, 1).data;
-  return globeIndexFromIdColor(data[0], data[1], data[2]);
+  const [r0, g0, b0] = globeReadIdPixel(px, py);
+  const idx0 = globeIndexFromIdColor(r0, g0, b0);
+  if (idx0 === -1) return -1; // ocean is a solid, un-anti-aliased fill — always trustworthy
+  const expected0 = globeIdColorFor(idx0);
+  if (`rgb(${r0},${g0},${b0})` === expected0) return idx0; // exact match, not a blended edge pixel
+
+  for (let radius = 1; radius <= 3; radius++){
+    for (let dy = -radius; dy <= radius; dy++){
+      for (let dx = -radius; dx <= radius; dx++){
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue; // only the ring at this radius
+        const [r, g, b] = globeReadIdPixel(px + dx, py + dy);
+        const idx = globeIndexFromIdColor(r, g, b);
+        if (idx === -1) continue;
+        if (`rgb(${r},${g},${b})` === globeIdColorFor(idx)) return idx;
+      }
+    }
+  }
+  return idx0; // nothing trustworthy nearby (rare) — fall back to the original guess
 }
 function globeUvToLatLon(uv){
   return [(0.5 - uv.y) * 180, (uv.x - 0.5) * 360];
@@ -1989,6 +2021,10 @@ function renderCountryView(countryName, geojson, labelOverrides){
   // instead of one flat pixel value, so a shrunk label gets a
   // proportionally thinner outline instead of an oversized one.
   const haloRatio = isGoogleTheme ? 2 / 14 : 3 / 9;
+  // Radius of the small dot marking a label's true location when it's
+  // been pushed out to an external position (manual override moved away
+  // from centroid, or auto-decluttered). One shared value to tune.
+  const dotRadius = parseFloat(mapSettings.dot_radius) || 1.3;
   const CHAR_W = 5.4 * (labelFontPx / 9), LABEL_H = 11 * (labelFontPx / 9);
   const fontScale = features.length > 45 ? 0.55 : features.length > 30 ? 0.7 : features.length > 18 ? 0.85 : 1;
   const inPlaceFontPx = Math.max(5.5, 7.5 * fontScale) * (labelFontPx / 9);
@@ -2152,7 +2188,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
             .attr('x1', l.ox).attr('y1', l.oy)
             .attr('x2', l.x).attr('y2', l.y)
             .attr('stroke', 'var(--muted-2)').attr('stroke-width', 0.6);
-          gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', 2.5);
+          gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', dotRadius);
         }
       }
       appendReadableLabel(gLabel, l.idx, {
@@ -2170,7 +2206,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
         .attr('x2', l.x).attr('y2', l.y)
         .attr('stroke', 'var(--muted-2)').attr('stroke-width', 0.6);
     }
-    gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', 2.5);
+    gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', dotRadius);
     appendReadableLabel(gLabel, l.idx, {
       x: l.x + 6, y: l.y + 3,
       'font-size': autoFitFontSize(l.name, labelFontPx * fontScale, 95, 0.55),
@@ -2263,6 +2299,16 @@ const countryOutlineCache = new Map();
 
 // Same backend used across the rest of the project (admin.html, etc.).
 const API_BASE = 'https://api.5kable.net';
+
+// Site-wide map display settings an admin can tune from the Region Label
+// Editor (leader-dot radius, etc.) — fetched once on load; renderCountryView
+// reads from this object each time it draws, so a value that arrives after
+// the first render still takes effect on the next country view.
+let mapSettings = { dot_radius: '1.3' };
+fetch(`${API_BASE}/geo/map-settings`)
+  .then(r => r.ok ? r.json() : null)
+  .then(d => { if (d && d.settings) Object.assign(mapSettings, d.settings); })
+  .catch(() => {});
 
 // The full "show me some outline of this country" fallback chain:
 //   1. Fast local world-atlas shape (renderCountryOutlineOnly) — works
