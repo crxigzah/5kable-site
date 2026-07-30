@@ -221,7 +221,12 @@
 
   .label-layer text{
     font-family: var(--font-mono);
-    font-size: var(--map-label-size);
+    /* font-size intentionally NOT set here — it needs to vary per label
+       (manual overrides, auto in-place sizing, auto-decluttered density
+       sizing all compute their own value in JS below). A class rule here
+       would always win over the element's own font-size attribute and
+       silently force every label to one flat size regardless of what JS
+       computed — every label now sets font-size explicitly instead. */
     font-weight: var(--map-label-weight);
     fill: var(--map-label-text);
     paint-order: stroke;
@@ -1978,8 +1983,10 @@ function renderCountryView(countryName, geojson, labelOverrides){
     const ov = labelOverrides[nm];
     if (ov) {
       const hasArrow = ov.arrow_x != null && ov.arrow_y != null;
+      const hasCurve = hasArrow && ov.arrow_cx != null && ov.arrow_cy != null;
       return { id: 'sub-' + i, name: nm, ox, oy, x: ov.x, y: ov.y, w, h, inPlace: false, manual: true,
-        fontScale: ov.font_scale, arrowX: hasArrow ? ov.arrow_x : null, arrowY: hasArrow ? ov.arrow_y : null };
+        fontScale: ov.font_scale, arrowX: hasArrow ? ov.arrow_x : null, arrowY: hasArrow ? ov.arrow_y : null,
+        arrowCX: hasCurve ? ov.arrow_cx : null, arrowCY: hasCurve ? ov.arrow_cy : null };
     }
 
     // Does this region's own shape have room to hold its name directly?
@@ -2057,11 +2064,19 @@ function renderCountryView(countryName, geojson, labelOverrides){
       // it); otherwise fall back to the original plain leader line back
       // to the true centroid whenever the label was moved away from it.
       if (l.arrowX != null && l.arrowY != null) {
-        gLabel.append('line')
-          .attr('x1', l.x).attr('y1', l.y)
-          .attr('x2', l.arrowX).attr('y2', l.arrowY)
-          .attr('stroke', 'var(--map-label-text)').attr('stroke-width', 1)
-          .attr('marker-end', 'url(#labelArrowHead)');
+        if (l.arrowCX != null && l.arrowCY != null) {
+          gLabel.append('path')
+            .attr('d', `M${l.x},${l.y} Q${l.arrowCX},${l.arrowCY} ${l.arrowX},${l.arrowY}`)
+            .attr('fill', 'none')
+            .attr('stroke', 'var(--map-label-text)').attr('stroke-width', 1)
+            .attr('marker-end', 'url(#labelArrowHead)');
+        } else {
+          gLabel.append('line')
+            .attr('x1', l.x).attr('y1', l.y)
+            .attr('x2', l.arrowX).attr('y2', l.arrowY)
+            .attr('stroke', 'var(--map-label-text)').attr('stroke-width', 1)
+            .attr('marker-end', 'url(#labelArrowHead)');
+        }
       } else {
         const moved = Math.hypot(l.x - l.ox, l.y - l.oy) > 6;
         if (moved) {
@@ -2075,7 +2090,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
       gLabel.append('text')
         .attr('x', l.x).attr('y', l.y)
         .attr('text-anchor', 'middle')
-        .attr('font-size', 9 * l.fontScale)
+        .attr('font-size', labelFontPx * l.fontScale)
         .text(l.name);
       return;
     }
@@ -2089,7 +2104,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
     gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', 2.5);
     gLabel.append('text')
       .attr('x', l.x + 6).attr('y', l.y + 3)
-      .attr('font-size', 9 * fontScale)
+      .attr('font-size', labelFontPx * fontScale)
       .text(l.name);
   });
   document.getElementById('breadcrumb').style.display = 'flex';
