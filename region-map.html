@@ -1996,7 +1996,22 @@ function renderCountryView(countryName, geojson, labelOverrides){
     const bboxW = bx1 - bx0, bboxH = by1 - by0;
     const textW = nm.length * inPlaceFontPx * 0.6 + 3;
     const textH = inPlaceFontPx * 1.15;
-    let inPlace = bboxW > 13 && bboxH > 9 && textW < bboxW * 0.92 && textH < bboxH * 0.8;
+    let inPlace = bboxW > 13 && bboxH > 9;
+    let fitFontPx = inPlaceFontPx;
+    if (inPlace) {
+      // Rather than an all-or-nothing check at the country's one standard
+      // size, see how much this specific shape would need the label
+      // shrunk to actually fit — a region can be huge in total area but
+      // narrow in one direction (Australia's Northern Territory being the
+      // motivating case: a tall, narrow strip, not a wide one), which a
+      // single fixed font size can't account for. Only give up on
+      // in-place entirely once the shrink needed would make the text
+      // smaller than about 70% of standard — past that point a callout
+      // label reads better than a squeezed-in one.
+      const neededScale = Math.min((bboxW * 0.92) / textW, (bboxH * 0.8) / textH, 1);
+      if (neededScale < 0.7) inPlace = false;
+      else fitFontPx = inPlaceFontPx * neededScale;
+    }
     // A bounding-box check alone can be fooled by a concave/oddly-shaped
     // region whose centroid sits outside its own outline (a crescent or
     // horseshoe shape, for instance) — verify the label's actual position
@@ -2006,7 +2021,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
       if (!d3.geoContains(d, [lon, lat])) inPlace = false;
     }
 
-    return { id: 'sub-' + i, name: nm, ox, oy, x: ox, y: oy, w, h, inPlace };
+    return { id: 'sub-' + i, name: nm, ox, oy, x: ox, y: oy, w, h, inPlace, fitFontPx: inPlace ? fitFontPx : null };
   });
 
   const overflow = labelData.filter(l => !l.inPlace && !l.manual);
@@ -2050,9 +2065,9 @@ function renderCountryView(countryName, geojson, labelOverrides){
     if (l.inPlace) {
       // Sits directly inside its own shape — no line, no dot, just text.
       gLabel.append('text')
-        .attr('x', l.ox).attr('y', l.oy + inPlaceFontPx * 0.35)
+        .attr('x', l.ox).attr('y', l.oy + l.fitFontPx * 0.35)
         .attr('text-anchor', 'middle')
-        .attr('font-size', inPlaceFontPx)
+        .attr('font-size', l.fitFontPx)
         .text(l.name);
       return;
     }
