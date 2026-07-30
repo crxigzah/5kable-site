@@ -2145,7 +2145,11 @@ function renderCountryView(countryName, geojson, labelOverrides){
         if (!b.inPlace) continue;
         const bw = b.name.length * b.fitFontPx * 0.6 + 3, bh = b.fitFontPx * 1.15;
         const dx = Math.abs(a.ox - b.ox), dy = Math.abs(a.oy - b.oy);
-        if (dx < (aw + bw) / 2 * 0.8 && dy < (ah + bh) / 2 * 0.8) {
+        // Exact box-overlap test (no leniency factor) — the previous 0.8x
+        // margin let genuinely-touching pairs (e.g. Fukui/Gifu, Aichi/
+        // Shizuoka) both stay marked in-place since they fell just short of
+        // that stricter threshold.
+        if (dx < (aw + bw) / 2 && dy < (ah + bh) / 2) {
           (a.fitFontPx <= b.fitFontPx ? a : b).inPlace = false;
         }
       }
@@ -2163,6 +2167,16 @@ function renderCountryView(countryName, geojson, labelOverrides){
   // check above can now demote a whole tightly-packed cluster into it at
   // once (Japan's Kansai/Tōhoku prefectures being the extreme case), so
   // it needs to handle noticeably larger groups than it originally did.
+  // Fixed obstacles for the repulsion pass below — an in-place label never
+  // moves, but an overflow label pushed toward one would silently render
+  // right on top of it, since nothing here previously knew those boxes
+  // existed at all.
+  const inPlaceBoxes = labelData.filter(l => l.inPlace).map(l => ({
+    x: l.ox, y: l.oy,
+    w: l.name.length * l.fitFontPx * 0.6 + 3,
+    h: l.fitFontPx * 1.15
+  }));
+
   const springK = Math.max(0.0015, 0.008 - overflow.length * 0.00012);
   const iterations = Math.min(3500, 600 + overflow.length * 30);
   for(let iter = 0; iter < iterations; iter++){
@@ -2186,6 +2200,127 @@ function renderCountryView(countryName, geojson, labelOverrides){
           }
         }
       }
+    }
+    for(const a of overflow){
+      for(const f of inPlaceBoxes){
+        const dx = f.x - a.x, dy = f.y - a.y;
+        const overlapX = (a.w + f.w) / 2 + 7 - Math.abs(dx);
+        const overlapY = (a.h + f.h) / 2 + 6 - Math.abs(dy);
+        if(overlapX > 0 && overlapY > 0){
+          // Damped, not a full snap to the obstacle's edge — a full-strength
+          // push landed every label avoiding the SAME in-place box on that
+          // box's exact edge coordinate (same shared height for all
+          // overflow labels), which just traded one collision for a new
+          // one between those labels themselves.
+          if(overlapX < overlapY) a.x -= overlapX * 0.5 * (dx < 0 ? -1 : 1) || 0.5;
+          else a.y -= overlapY * 0.5 * (dy < 0 ? -1 : 1) || 0.5;
+        }
+      }
+    }
+  }
+
+  // The spring pass above can only spread labels as far as their own
+  // repulsion pushes them — in a cluster as physically dense as Japan's
+  // Kansai prefectures or the Philippines' Visayas islands, there just
+  // isn't room to separate every label near its true spot without lines
+  // drifting absurdly far. For groups that are STILL overlapping after
+  // the spring settles, fall back to the same technique already used by
+  // hand for Manila's NCR districts: pull the whole group into a single
+  // compact vertical list in nearby open space, each with its own line
+  // back to its real location, instead of fighting to fit each one where
+  // it naturally sits.
+  {
+    const CLUSTER_PAD = 3;
+    function stillOverlaps(a, b){
+      const overlapX = (a.w + b.w) / 2 + CLUSTER_PAD - Math.abs(a.x - b.x);
+      const overlapY = (a.h + b.h) / 2 + CLUSTER_PAD - Math.abs(a.y - b.y);
+      return overlapX > 0 && overlapY > 0;
+    }
+    const parent = overflow.map((_, i) => i);
+    function find(i){ while(parent[i] !== i){ parent[i] = parent[parent[i]]; i = parent[i]; } return i; }
+    function union(i, j){ const ri = find(i), rj = find(j); if(ri !== rj) parent[ri] = rj; }
+    for(let i = 0; i < overflow.length; i++){
+      for(let j = i + 1; j < overflow.length; j++){
+        if(stillOverlaps(overflow[i], overflow[j])) union(i, j);
+      }
+    }
+    const clusters = new Map(); // union-find root -> member labels
+    overflow.forEach((l, i) => {
+      const r = find(i);
+      if(!clusters.has(r)) clusters.set(r, []);
+      clusters.get(r).push(l);
+    });
+
+    // Overall bounding centroid across every region in this country, used
+    // to decide which side counts as "outward" for a given cluster —
+    // coastal/archipelago countries reliably have open water between a
+    // dense inland/island cluster and the map edge in that direction.
+    const allX = labelData.map(l => l.ox), allY = labelData.map(l => l.oy);
+    const overallCx = (Math.min(...allX) + Math.max(...allX)) / 2;
+
+    clusters.forEach(members => {
+      if(members.length < 4) return; // a pairwise near-miss is already handled fine by the spring pass alone
+      const cx = members.reduce((s, l) => s + l.ox, 0) / members.length;
+      const cy = members.reduce((s, l) => s + l.oy, 0) / members.length;
+      const stackGap = LABEL_H * fontScale + 3;
+      const standoffX = 70 * (cx >= overallCx ? 1 : -1);
+      const anchorX = Math.max(45, Math.min(width - 45, cx + standoffX));
+      const totalH = (members.length - 1) * stackGap;
+      const anchorYStart = Math.max(30 + totalH / 2, Math.min(height - 30 - totalH / 2, cy)) - totalH / 2;
+      // Sorted top-to-bottom by true position so the list roughly mirrors
+      // the members' real relative layout instead of an arbitrary order.
+      members.sort((a, b) => a.oy - b.oy);
+      members.forEach((l, i) => {
+        l.x = anchorX;
+        l.y = anchorYStart + i * stackGap;
+      });
+    });
+
+    // Jumping straight to each cluster's stack position can create fresh
+    // overlaps the clustering pass never checked for: two separate dense
+    // clusters pushed "outward" in a similar direction can land near each
+    // other, and a stack can land on an unrelated in-place label. A short
+    // pure-repulsion cleanup (no pull back toward the true centroid, so it
+    // nudges rather than undoes the stacks) settles those without
+    // reintroducing the crowding this whole pass exists to avoid.
+    for(let iter = 0; iter < 200; iter++){
+      for(let i = 0; i < overflow.length; i++){
+        for(let j = i + 1; j < overflow.length; j++){
+          const a = overflow[i], b = overflow[j];
+          const dx = b.x - a.x, dy = b.y - a.y;
+          const overlapX = (a.w + b.w) / 2 + 7 - Math.abs(dx);
+          const overlapY = (a.h + b.h) / 2 + 6 - Math.abs(dy);
+          if(overlapX > 0 && overlapY > 0){
+            if(overlapX < overlapY){
+              const push = overlapX / 2 * 1.2 * (dx < 0 ? -1 : 1) || 0.5;
+              a.x -= push; b.x += push;
+            } else {
+              const push = overlapY / 2 * 1.2 * (dy < 0 ? -1 : 1) || 0.5;
+              a.y -= push; b.y += push;
+            }
+          }
+        }
+      }
+      for(const a of overflow){
+        for(const f of inPlaceBoxes){
+          const dx = f.x - a.x, dy = f.y - a.y;
+          const overlapX = (a.w + f.w) / 2 + 7 - Math.abs(dx);
+          const overlapY = (a.h + f.h) / 2 + 6 - Math.abs(dy);
+          if(overlapX > 0 && overlapY > 0){
+            if(overlapX < overlapY) a.x -= overlapX * 0.5 * (dx < 0 ? -1 : 1) || 0.5;
+            else a.y -= overlapY * 0.5 * (dy < 0 ? -1 : 1) || 0.5;
+          }
+        }
+      }
+    }
+
+    // Safety net: none of the repulsion above knows about the canvas edge,
+    // so a label fighting for space near the border could otherwise get
+    // pushed clean off it (found while testing on the Philippines' densely-
+    // divided Mindanao provinces).
+    for(const l of overflow){
+      l.x = Math.max(20, Math.min(width - 20, l.x));
+      l.y = Math.max(20, Math.min(height - 20, l.y));
     }
   }
 
