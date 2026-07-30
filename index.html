@@ -1515,19 +1515,6 @@ if (sessionStorage.getItem('kbl_unlocked') === '1') {
   </div>
 </div>
 
-<div class="modal-overlay" id="bug-report-modal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeBugReportModal()">✕</button>
-    <h2>🐛 Report a Bug</h2>
-    <div class="modal-sub">Found something broken? Tell us what happened and how to reproduce it.</div>
-    <div class="form-group"><label>Your name (optional)</label><input id="bugmodal-name" type="text" placeholder="GeoMaster99"/></div>
-    <div class="form-group"><label>Email (optional, so we can follow up)</label><input id="bugmodal-email" type="email" placeholder="you@example.com"/></div>
-    <div class="form-group"><label>What went wrong?</label><textarea id="bugmodal-message" rows="4" placeholder="Include steps to reproduce, browser, and script version if you can." style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:13px;outline:none;resize:vertical;font-family:inherit;"></textarea></div>
-    <button class="btn btn-primary form-btn" onclick="submitBugReportModal()" id="bugmodal-submit">Submit Bug Report</button>
-    <div class="form-error" id="bugmodal-error"></div>
-  </div>
-</div>
-
 <footer>
   <div class="footer-links">
     <a href="#contact" onclick="goHome();setTimeout(()=>openNewTicketModal(),100);return false;">Contact</a>
@@ -1587,7 +1574,9 @@ async function checkAuth() {
       localStorage.setItem('kbl_user', JSON.stringify(data.user));
       showDashboard(data.user, token);
     }
-    else localStorage.clear();
+    // Only the auth keys — an expired/invalid token shouldn't also wipe
+    // unrelated local prefs (avatar, currency, quiz streak stats).
+    else { localStorage.removeItem('kbl_token'); localStorage.removeItem('kbl_user'); }
   } catch(e) {
     // API offline show cached user if available
     const user = getUser();
@@ -1642,57 +1631,6 @@ function closeModal() {
   document.getElementById('auth-modal').classList.remove('active');
 }
 
-// ── Legacy bug report modal (orphaned — no longer linked from anywhere;
-// superseded by the ticket system's openNewTicketModal) ───
-function openBugReportModal() {
-  document.getElementById('bugmodal-name').value = '';
-  document.getElementById('bugmodal-email').value = '';
-  document.getElementById('bugmodal-message').value = '';
-  document.getElementById('bugmodal-error').style.display = 'none';
-  const btn = document.getElementById('bugmodal-submit');
-  btn.disabled = false;
-  btn.textContent = 'Submit Bug Report';
-  document.getElementById('bug-report-modal').classList.add('active');
-}
-function closeBugReportModal() {
-  document.getElementById('bug-report-modal').classList.remove('active');
-}
-async function submitBugReportModal() {
-  const message = document.getElementById('bugmodal-message').value.trim();
-  const errEl = document.getElementById('bugmodal-error');
-  if (!message) {
-    errEl.textContent = 'Please describe what went wrong.';
-    errEl.style.display = 'block';
-    return;
-  }
-  const btn = document.getElementById('bugmodal-submit');
-  btn.disabled = true;
-  btn.textContent = 'Submitting…';
-  errEl.style.display = 'none';
-  try {
-    const name = document.getElementById('bugmodal-name').value.trim();
-    const res = await fetch(API + '/tickets/create', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        category: 'bug',
-        subject: name ? `Bug report from ${name}` : 'Bug report',
-        message,
-        email: document.getElementById('bugmodal-email').value.trim(),
-        token: getToken() || '',
-      })
-    });
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error || 'Something went wrong');
-    btn.textContent = 'Submitted ✓';
-    setTimeout(closeBugReportModal, 900);
-  } catch (e) {
-    errEl.textContent = e.message || 'Could not submit. Please try again.';
-    errEl.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Submit Bug Report';
-  }
-}
 function switchTab(tab) {
   document.getElementById('form-register').style.display     = tab === 'register' ? '' : 'none';
   document.getElementById('form-login').style.display        = tab === 'login'    ? '' : 'none';
@@ -1818,7 +1756,7 @@ async function register() {
   try {
     const res  = await fetch(API + '/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, email, password, phone_number: phone}) });
     const data = await res.json();
-    if (!res.ok) { errEl.textContent = data.error; errEl.style.display = 'block'; return; }
+    if (!res.ok) { errEl.textContent = data.error || 'Could not create account. Try again.'; errEl.style.display = 'block'; return; }
     if (data.needs_verification) {
       pendingVerifyToken = data.token;
       pendingVerifyUser  = data.user;
@@ -1956,7 +1894,7 @@ async function login() {
       }
       if (data.code === 'totp_required') { document.getElementById('login-totp-group').style.display = ''; errEl.textContent = 'Enter your 2FA code to continue'; errEl.style.color='var(--muted)'; errEl.style.display = 'block'; return; }
       if (data.code === 'totp_invalid') { document.getElementById('login-totp-group').style.display = ''; errEl.textContent = 'Incorrect 2FA code'; errEl.style.color='#ff6b6b'; errEl.style.display = 'block'; return; }
-      errEl.textContent = data.error; errEl.style.display = 'block'; return;
+      errEl.textContent = data.error || 'Could not log in. Try again.'; errEl.style.display = 'block'; return;
     }
     localStorage.setItem('kbl_token', data.token);
     localStorage.setItem('kbl_user',  JSON.stringify(data.user));
@@ -3218,9 +3156,12 @@ function setCurrency(code) {
 
 // ── Account Settings Modal ────────────────────────────────
 const BANNED_WORDS = ['fuck','shit','cunt','bitch','nigger','nigga','faggot','retard','ass','dick','cock','pussy'];
+// Word-boundary matching, not plain substring — a substring check rejected
+// legitimate names that merely contain one of these as part of a longer
+// word (Cassandra, Hancock, Classic99, Bassist, ...).
+const BANNED_WORDS_RE = new RegExp('\\b(' + BANNED_WORDS.join('|') + ')\\b', 'i');
 function containsBannedWord(str) {
-  const lower = str.toLowerCase();
-  return BANNED_WORDS.some(w => lower.includes(w));
+  return BANNED_WORDS_RE.test(str);
 }
 
 // ── Country flag badges ──────────────────────────────────────
