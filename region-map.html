@@ -1069,7 +1069,7 @@ function globeUvToCountryIndex(uv){
   const expected0 = globeIdColorFor(idx0);
   if (`rgb(${r0},${g0},${b0})` === expected0) return idx0; // exact match, not a blended edge pixel
 
-  for (let radius = 1; radius <= 3; radius++){
+  for (let radius = 1; radius <= 5; radius++){
     for (let dy = -radius; dy <= radius; dy++){
       for (let dx = -radius; dx <= radius; dx++){
         if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue; // only the ring at this radius
@@ -1080,7 +1080,13 @@ function globeUvToCountryIndex(uv){
       }
     }
   }
-  return idx0; // nothing trustworthy nearby (rare) — fall back to the original guess
+  // Nothing trustworthy nearby — this is very likely a pixel blended
+  // toward OCEAN at a coastline (not a blend between two real
+  // countries), which can decode to any arbitrary index depending on
+  // how much it blended, landing on a totally unrelated country almost
+  // at random. Showing no tooltip here is far better than showing a
+  // wrong one.
+  return -1;
 }
 function globeUvToLatLon(uv){
   return [(0.5 - uv.y) * 180, (uv.x - 0.5) * 360];
