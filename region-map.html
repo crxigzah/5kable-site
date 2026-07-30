@@ -1086,6 +1086,7 @@ function globeUvToLatLon(uv){
   return [(0.5 - uv.y) * 180, (uv.x - 0.5) * 360];
 }
 
+let globeLastLoggedName = undefined;
 globeCanvasEl.addEventListener('mousemove', e => {
   if (globeDragging) return;
   const tooltipEl = document.getElementById('countryHoverTooltip');
@@ -1096,6 +1097,17 @@ globeCanvasEl.addEventListener('mousemove', e => {
   const idx = globeUvToCountryIndex(hit.uv);
   const feature = idx >= 0 ? globeFeatures[idx] : null;
   const nm = feature ? worldCountryName(feature) : null;
+  // TEMPORARY diagnostic — only logs when the hovered country actually
+  // changes (not every mouse-move tick), so it stays readable. Shows the
+  // exact raw pixel/index/color behind whatever name shows up, to trace
+  // a wrong result back to its actual cause instead of guessing.
+  if (nm !== globeLastLoggedName) {
+    globeLastLoggedName = nm;
+    const px = Math.floor(hit.uv.x * GLOBE_TEX_W);
+    const py = Math.floor((1 - hit.uv.y) * GLOBE_TEX_H);
+    const [r, g, b] = globeReadIdPixel(px, py);
+    console.log('[Region Map hover]', nm || '(ocean)', '— lat/lon', lat.toFixed(2), lon.toFixed(2), '— px/py', px, py, '— rgb', r, g, b, '— idx', idx);
+  }
   globeCanvasEl.style.cursor = (nm && coveredSet.has(normalize(nm))) ? 'pointer' : 'grab';
   if (nm){
     tooltipEl.textContent = nm;
