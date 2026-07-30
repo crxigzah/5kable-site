@@ -1192,8 +1192,10 @@ function globeScanForPhantomGeometry(){
   for (let py = 0; py < GLOBE_TEX_H; py += STEP) {
     for (let px = 0; px < GLOBE_TEX_W; px += STEP) {
       const i = (py * GLOBE_TEX_W + px) * 4;
-      const idx = globeIndexFromIdColor(imgData[i], imgData[i + 1], imgData[i + 2]);
+      const r = imgData[i], g = imgData[i + 1], b2 = imgData[i + 2];
+      const idx = globeIndexFromIdColor(r, g, b2);
       if (idx < 0 || idx >= globeFeatures.length) continue;
+      if (`rgb(${r},${g},${b2})` !== globeIdColorFor(idx)) continue; // anti-aliased edge pixel, not a confident sample
       const b = boundsFor(idx);
       if (!b) continue; // skipped (antimeridian-crossing or bad geometry we can't safely check)
       const [lon0, lat0, lon1, lat1] = b;
