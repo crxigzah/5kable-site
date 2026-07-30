@@ -221,17 +221,20 @@
 
   .label-layer text{
     font-family: var(--font-mono);
-    /* font-size intentionally NOT set here — it needs to vary per label
-       (manual overrides, auto in-place sizing, auto-decluttered density
-       sizing all compute their own value in JS below). A class rule here
-       would always win over the element's own font-size attribute and
-       silently force every label to one flat size regardless of what JS
-       computed — every label now sets font-size explicitly instead. */
+    /* font-size and stroke-width intentionally NOT set here — both need
+       to vary per label (manual overrides, auto in-place sizing, auto-
+       decluttered density sizing, and now auto-fit shrinking all compute
+       their own values in JS below). A class rule here would always win
+       over the element's own attributes and force one flat value onto
+       every label regardless of its actual rendered size — a small
+       auto-fit-shrunk label would end up with a halo far thicker than
+       its own text, looking like a solid white blob instead of a subtle
+       outline. Every label sets both explicitly instead, proportional
+       to its own font-size. */
     font-weight: var(--map-label-weight);
     fill: var(--map-label-text);
     paint-order: stroke;
     stroke: var(--map-label-halo);
-    stroke-width: var(--map-label-halo-width);
     stroke-linejoin: round;
     pointer-events:none;
   }
@@ -551,7 +554,6 @@
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input id="searchInput" type="text" placeholder="Find a country…" autocomplete="off">
       </div>
-      <button class="btn btn-hdr" id="mapStyleBtn">🗺️ MAP STYLE</button>
       <button class="btn btn-hdr" id="labelsBtn">🏷️ HIDE LABELS</button>
       <button class="btn btn-hdr" id="backToWorldBtn" style="display:none;">← WORLD MAP</button>
       <div class="count-badge">
@@ -1156,18 +1158,12 @@ document.getElementById('mapStage').addEventListener('wheel', (event) => {
   svg.transition().duration(120).call(zoom.scaleBy, factor, point);
 }, { passive: false });
 
-// ── Map color style toggle (dark app default vs. Google Maps-like) ──
-function applyMapStyle(style){
-  document.body.classList.toggle('google-theme', style === 'google');
-  const btn = document.getElementById('mapStyleBtn');
-  btn.textContent = style === 'google' ? '🌙 DARK STYLE' : '🗺️ MAP STYLE';
-  localStorage.setItem('kbl_region_map_style', style);
-}
-document.getElementById('mapStyleBtn').onclick = () => {
-  const isGoogle = document.body.classList.contains('google-theme');
-  applyMapStyle(isGoogle ? 'dark' : 'google');
-};
-applyMapStyle(localStorage.getItem('kbl_region_map_style') === 'google' ? 'google' : 'dark');
+// ── Map color style — Google Maps-style light theme only. Dark mode has
+// been removed; the CSS variables it used are still defined further up
+// (unused, kept only to avoid a larger, riskier CSS rewrite) but nothing
+// in this page can ever apply them anymore.
+document.body.classList.add('google-theme');
+localStorage.removeItem('kbl_region_map_style');
 
 // ── Labels visibility toggle (for clean badge/screenshot crops) ──
 function applyLabelsVisibility(hidden){
@@ -2021,6 +2017,11 @@ function renderCountryView(countryName, geojson, labelOverrides){
   // is exactly the regime it already works well in.
   const isGoogleTheme = document.body.classList.contains('google-theme');
   const labelFontPx = isGoogleTheme ? 14 : 9;
+  // Halo width as a ratio of font size, derived from the original fixed
+  // values (2px/14px light, 3px/9px dark) — applied per label below
+  // instead of one flat pixel value, so a shrunk label gets a
+  // proportionally thinner outline instead of an oversized one.
+  const haloRatio = isGoogleTheme ? 2 / 14 : 3 / 9;
   const CHAR_W = 5.4 * (labelFontPx / 9), LABEL_H = 11 * (labelFontPx / 9);
   const fontScale = features.length > 45 ? 0.55 : features.length > 30 ? 0.7 : features.length > 18 ? 0.85 : 1;
   const inPlaceFontPx = Math.max(5.5, 7.5 * fontScale) * (labelFontPx / 9);
@@ -2151,7 +2152,8 @@ function renderCountryView(countryName, geojson, labelOverrides){
       appendReadableLabel(gLabel, l.idx, {
         x: l.ox, y: l.oy + l.fitFontPx * 0.35,
         'text-anchor': 'middle',
-        'font-size': l.fitFontPx
+        'font-size': l.fitFontPx,
+        'stroke-width': l.fitFontPx * haloRatio
       }, l.name);
       return;
     }
@@ -2189,7 +2191,8 @@ function renderCountryView(countryName, geojson, labelOverrides){
       appendReadableLabel(gLabel, l.idx, {
         x: l.x, y: l.y,
         'text-anchor': 'middle',
-        'font-size': autoFitFontSize(l.name, labelFontPx * l.fontScale, 95, 0.55)
+        'font-size': autoFitFontSize(l.name, labelFontPx * l.fontScale, 95, 0.55),
+        'stroke-width': autoFitFontSize(l.name, labelFontPx * l.fontScale, 95, 0.55) * haloRatio
       }, l.name);
       return;
     }
@@ -2203,7 +2206,8 @@ function renderCountryView(countryName, geojson, labelOverrides){
     gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', 2.5);
     appendReadableLabel(gLabel, l.idx, {
       x: l.x + 6, y: l.y + 3,
-      'font-size': autoFitFontSize(l.name, labelFontPx * fontScale, 95, 0.55)
+      'font-size': autoFitFontSize(l.name, labelFontPx * fontScale, 95, 0.55),
+      'stroke-width': autoFitFontSize(l.name, labelFontPx * fontScale, 95, 0.55) * haloRatio
     }, l.name);
   });
   document.getElementById('breadcrumb').style.display = 'flex';
