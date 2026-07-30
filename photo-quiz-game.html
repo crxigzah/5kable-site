@@ -353,11 +353,14 @@ async function loadNext(){
           [others[i], others[j]] = [others[j], others[i]];
         }
         opts = [correct, ...others.slice(0, 3)];
-        // shuffle final order so the correct answer isn't always first
-        for (let i = opts.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [opts[i], opts[j]] = [opts[j], opts[i]];
-        }
+      }
+      // Always shuffle final order, not just when trimming down from >4 —
+      // otherwise a backend response of 4 or fewer options (e.g. correct
+      // answer always first) is never reshuffled, letting players learn
+      // positional patterns instead of the actual content.
+      for (let i = opts.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [opts[i], opts[j]] = [opts[j], opts[i]];
       }
     }
 

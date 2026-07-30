@@ -856,12 +856,18 @@ function renderGuide(c, data) {
           const anchor = (block.data.text||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
           return `<h2 id="${anchor}" style="font-size:20px;font-weight:800;margin:40px 0 16px;color:#e0e0f0;display:flex;align-items:center;gap:10px;">
             <span style="width:4px;height:22px;background:linear-gradient(180deg,#00c9a7,#7c3aed);border-radius:2px;display:inline-block;flex-shrink:0;"></span>
-            ${block.data.text||''}
+            ${escapeHtml(block.data.text||'')}
           </h2>`;
         case 'text':
           return `<p style="color:#c0c0d8;line-height:1.8;font-size:15px;margin-bottom:16px;white-space:pre-wrap;">${mdToHtml(block.data.text||'')}</p>`;
         case 'image':
-          return `<div style="margin:20px 0;">${block.data.src ? `<div class="enlargeable-photo" onclick="openLightbox('${block.data.src}')"><img src="${block.data.src}" style="width:100%;border-radius:12px;display:block;"><div class="expand-icon">${EXPAND_ICON}</div></div>` : ''}${block.data.caption ? `<div style="text-align:center;font-size:13px;color:var(--muted);margin-top:8px;">${block.data.caption}</div>` : ''}</div>`;
+          // Reads src back via dataset rather than inlining it into the
+          // onclick JS string directly — an inline onclick="fn('${src}')"
+          // is still exploitable even after HTML-escaping the value, since
+          // the browser HTML-decodes an event-handler attribute BEFORE
+          // parsing it as JS, so an escaped quote decodes right back into a
+          // real one and still breaks out of the string literal.
+          return `<div style="margin:20px 0;">${block.data.src ? `<div class="enlargeable-photo" data-src="${escapeHtml(block.data.src)}" onclick="openLightbox(this.dataset.src)"><img src="${escapeHtml(block.data.src)}" style="width:100%;border-radius:12px;display:block;"><div class="expand-icon">${EXPAND_ICON}</div></div>` : ''}${block.data.caption ? `<div style="text-align:center;font-size:13px;color:var(--muted);margin-top:8px;">${escapeHtml(block.data.caption)}</div>` : ''}</div>`;
         case 'tip': {
           const rTR = prevAttach ? '0' : '12px', rBR = nextAttach ? '0' : '12px';
           const mt = prevAttach ? '0' : '16px', mb = nextAttach ? '0' : '16px';
@@ -880,14 +886,14 @@ function renderGuide(c, data) {
           const mt = prevAttach ? '0' : '20px', mb = nextAttach ? '0' : '20px';
           return `<div style="display:grid;grid-template-columns:${itWidth==='100'?'1fr':itWidth+'% 1fr'};gap:24px;align-items:start;margin:${mt} 0 ${mb};background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--border);border-radius:${rT} ${rT} ${rB} ${rB};padding:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.03);">
             <div>
-              <div class="${block.data.src ? 'enlargeable-photo' : ''}" ${block.data.src ? `onclick="openLightbox('${block.data.src}')"` : ''} style="position:relative;">
-                ${block.data.src ? `<img src="${block.data.src}" style="width:100%;height:auto;display:block;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"><div class="expand-icon">${EXPAND_ICON}</div>` : ''}
+              <div class="${block.data.src ? 'enlargeable-photo' : ''}" ${block.data.src ? `data-src="${escapeHtml(block.data.src)}" onclick="openLightbox(this.dataset.src)"` : ''} style="position:relative;">
+                ${block.data.src ? `<img src="${escapeHtml(block.data.src)}" style="width:100%;height:auto;display:block;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"><div class="expand-icon">${EXPAND_ICON}</div>` : ''}
               </div>
-              ${block.data.caption ? `<div style="text-align:center;font-size:12px;color:var(--muted);margin-top:8px;font-style:italic;">${block.data.caption}</div>` : ''}
+              ${block.data.caption ? `<div style="text-align:center;font-size:12px;color:var(--muted);margin-top:8px;font-style:italic;">${escapeHtml(block.data.caption)}</div>` : ''}
             </div>
             <div>
               <p style="color:#c0c0d8;line-height:1.85;font-size:15px;margin:0 0 14px;white-space:pre-wrap;">${mdToHtml(block.data.text||'')}</p>
-              ${itMap ? `<img src="${itMap}" style="width:${itMapSize}px;max-width:100%;display:block;border-radius:6px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4));">` : ''}
+              ${itMap ? `<img src="${escapeHtml(itMap)}" style="width:${itMapSize}px;max-width:100%;display:block;border-radius:6px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4));">` : ''}
             </div>
           </div>`;
         }
@@ -905,10 +911,10 @@ function renderGuide(c, data) {
                 <span style="color:#00c9a7;flex-shrink:0;font-size:18px;">•</span>
                 <span>
                   ${item.url
-                    ? `<a href="${item.url}" target="_blank" rel="noopener" style="color:#e0e0f0;font-weight:700;text-decoration:none;" onmouseover="this.style.color='#00c9a7'" onmouseout="this.style.color='#e0e0f0'">${item.label}</a>`
-                    : `<strong style="color:#e0e0f0;">${item.label}</strong>`}
-                  ${item.url ? ` <a href="${item.url}" target="_blank" rel="noopener" style="color:#7c3aed;font-size:12px;text-decoration:underline;">link ↗</a>` : ''}
-                  ${item.desc ? ` <span style="color:#8888aa;">— ${item.desc}</span>` : ''}
+                    ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" style="color:#e0e0f0;font-weight:700;text-decoration:none;" onmouseover="this.style.color='#00c9a7'" onmouseout="this.style.color='#e0e0f0'">${escapeHtml(item.label)}</a>`
+                    : `<strong style="color:#e0e0f0;">${escapeHtml(item.label)}</strong>`}
+                  ${item.url ? ` <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" style="color:#7c3aed;font-size:12px;text-decoration:underline;">link ↗</a>` : ''}
+                  ${item.desc ? ` <span style="color:#8888aa;">— ${escapeHtml(item.desc)}</span>` : ''}
                 </span>
               </li>`).join('')}
           </ul>`;
@@ -919,7 +925,7 @@ function renderGuide(c, data) {
             <div style="font-size:11px;color:#7c3aed;font-weight:700;text-transform:uppercase;letter-spacing:.6px;width:100%;margin-bottom:8px;">📍 Jump to Region</div>
             ${rtBtns.map(label => {
               const a = label.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-              return `<button onclick="document.getElementById('${a}')?.scrollIntoView({behavior:'smooth'})" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);color:#a78bfa;padding:9px 18px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;" onmouseover="this.style.background='rgba(124,58,237,0.22)';this.style.color='#c4a0ff'" onmouseout="this.style.background='rgba(124,58,237,0.1)';this.style.color='#a78bfa'">${label}</button>`;
+              return `<button onclick="document.getElementById('${a}')?.scrollIntoView({behavior:'smooth'})" style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);color:#a78bfa;padding:9px 18px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;" onmouseover="this.style.background='rgba(124,58,237,0.22)';this.style.color='#c4a0ff'" onmouseout="this.style.background='rgba(124,58,237,0.1)';this.style.color='#a78bfa'">${escapeHtml(label)}</button>`;
             }).join('')}
           </div>`;
         case 'nav':
@@ -927,7 +933,7 @@ function renderGuide(c, data) {
           if (!navBtns.length) return '';
           const btns = navBtns.map((label, i) => {
             const a = label.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-            return `<button onclick="document.getElementById('${a}')?.scrollIntoView({behavior:'smooth'})" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#c0c0d8;padding:13px 28px;border-radius:30px;cursor:pointer;font-size:15px;font-weight:700;transition:all .2s;letter-spacing:.3px;backdrop-filter:blur(4px);" onmouseover="this.style.background='rgba(0,201,167,0.15)';this.style.borderColor='rgba(0,201,167,0.4)';this.style.color='#00c9a7'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='#c0c0d8'">${label}</button>`;
+            return `<button onclick="document.getElementById('${a}')?.scrollIntoView({behavior:'smooth'})" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#c0c0d8;padding:13px 28px;border-radius:30px;cursor:pointer;font-size:15px;font-weight:700;transition:all .2s;letter-spacing:.3px;backdrop-filter:blur(4px);" onmouseover="this.style.background='rgba(0,201,167,0.15)';this.style.borderColor='rgba(0,201,167,0.4)';this.style.color='#00c9a7'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(255,255,255,0.1)';this.style.color='#c0c0d8'">${escapeHtml(label)}</button>`;
           }).join('');
           return `<div style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 32px;">${btns}</div>`;
         default:
@@ -943,35 +949,38 @@ function renderGuide(c, data) {
     return;
   }
 
-  // Fallback: AI-generated structured guide
+  // Fallback: AI-generated structured guide. This content is model output,
+  // not admin-authored, so it gets the same escaping treatment as any other
+  // untrusted text rather than being trusted just because it isn't a raw
+  // user form field.
   const clues = (data.visual_clues || []).map(cl => `
     <div class="clue-card">
-      <div class="clue-icon">${cl.icon || '📍'}</div>
-      <div class="clue-title">${cl.title}</div>
-      <div class="clue-text">${cl.detail}</div>
+      <div class="clue-icon">${escapeHtml(cl.icon || '📍')}</div>
+      <div class="clue-title">${escapeHtml(cl.title)}</div>
+      <div class="clue-text">${escapeHtml(cl.detail)}</div>
     </div>`).join('');
 
   const confuse = (data.easy_to_confuse || []).map(x => `
     <div class="confuse-item">
-      <div class="confuse-country">${x.country}</div>
-      <div class="confuse-diff">${x.difference}</div>
+      <div class="confuse-country">${escapeHtml(x.country)}</div>
+      <div class="confuse-diff">${escapeHtml(x.difference)}</div>
     </div>`).join('');
 
   document.getElementById('cv-body').innerHTML = `
     <div class="guide-section">
       <h2>🔑 Dead Giveaway</h2>
-      <p style="font-size:17px;font-weight:600;color:#00c9a7;">${data.dead_giveaway || ''}</p>
+      <p style="font-size:17px;font-weight:600;color:#00c9a7;">${escapeHtml(data.dead_giveaway || '')}</p>
     </div>
     <div class="guide-section">
       <h2>👁️ Key Visual Clues</h2>
       <div class="clue-grid">${clues}</div>
     </div>
-    ${data.landscape ? `<div class="guide-section"><h2>🌍 Landscape & Terrain</h2><p>${data.landscape}</p></div>` : ''}
-    ${data.road_meta ? `<div class="guide-section"><h2>🛣️ Road Meta</h2><p>${data.road_meta}</p></div>` : ''}
-    ${data.language_signs ? `<div class="guide-section"><h2>🔤 Language & Signs</h2><p>${data.language_signs}</p></div>` : ''}
-    ${data.vehicles ? `<div class="guide-section"><h2>🚗 Vehicles & Infrastructure</h2><p>${data.vehicles}</p></div>` : ''}
+    ${data.landscape ? `<div class="guide-section"><h2>🌍 Landscape & Terrain</h2><p>${escapeHtml(data.landscape)}</p></div>` : ''}
+    ${data.road_meta ? `<div class="guide-section"><h2>🛣️ Road Meta</h2><p>${escapeHtml(data.road_meta)}</p></div>` : ''}
+    ${data.language_signs ? `<div class="guide-section"><h2>🔤 Language & Signs</h2><p>${escapeHtml(data.language_signs)}</p></div>` : ''}
+    ${data.vehicles ? `<div class="guide-section"><h2>🚗 Vehicles & Infrastructure</h2><p>${escapeHtml(data.vehicles)}</p></div>` : ''}
     ${confuse ? `<div class="guide-section"><h2>⚠️ Easy to Confuse With</h2>${confuse}</div>` : ''}
-    ${data.pro_tips ? `<div class="guide-section"><h2>⚡ Pro Tips</h2><p>${data.pro_tips}</p></div>` : ''}
+    ${data.pro_tips ? `<div class="guide-section"><h2>⚡ Pro Tips</h2><p>${escapeHtml(data.pro_tips)}</p></div>` : ''}
     <div style="text-align:center;margin-top:32px;">
       <button onclick="showMap()" style="background:var(--card);border:1px solid var(--border);color:var(--muted);padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;transition:all .2s;" onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">← Back to World Map</button>
     </div>`;
