@@ -1979,6 +1979,18 @@ function renderCountryView(countryName, geojson, labelOverrides){
       .append('use').attr('href', '#region-path-' + i);
   });
 
+  // Shrinks a label's font size based on its own name length, targeting a
+  // reasonable max rendered width — a long name (Kagoshima, Tokushima)
+  // gets scaled down before it ever reaches the clip mask above, instead
+  // of rendering at full size and having the mask silently cut it off
+  // mid-word once it crosses into a neighboring region. A short name
+  // (Mie, Nara) is well under the budget already and stays full size.
+  function autoFitFontSize(name, baseFontPx, maxWidthPx, floorRatio){
+    const estWidth = name.length * baseFontPx * 0.6 + 3;
+    if (estWidth <= maxWidthPx) return baseFontPx;
+    return baseFontPx * Math.max(floorRatio, maxWidthPx / estWidth);
+  }
+
   // Renders a label as two overlaid copies with identical position/size/
   // text — one masked to "everywhere except any region" (so it shows in
   // open ocean), one clipped to just this specific region's own shape
@@ -2176,7 +2188,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
       appendReadableLabel(gLabel, l.idx, {
         x: l.x, y: l.y,
         'text-anchor': 'middle',
-        'font-size': labelFontPx * l.fontScale
+        'font-size': autoFitFontSize(l.name, labelFontPx * l.fontScale, 95, 0.55)
       }, l.name);
       return;
     }
@@ -2190,7 +2202,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
     gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', 2.5);
     appendReadableLabel(gLabel, l.idx, {
       x: l.x + 6, y: l.y + 3,
-      'font-size': labelFontPx * fontScale
+      'font-size': autoFitFontSize(l.name, labelFontPx * fontScale, 95, 0.55)
     }, l.name);
   });
   document.getElementById('breadcrumb').style.display = 'flex';
