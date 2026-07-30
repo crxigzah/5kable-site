@@ -1970,9 +1970,21 @@ function renderCountryView(countryName, geojson, labelOverrides){
   features.forEach((f) => {
     oceanOnlyMask.append('path').attr('d', localPath(f)).attr('fill', 'black');
   });
+  // Grows each region's own "allowed" zone a few pixels past its true
+  // border, so a label sitting close to one gets some breathing room
+  // instead of being sliced exactly at the border. (clip-path can't do
+  // this — by spec it only ever uses a shape's raw fill geometry and
+  // ignores stroke-width entirely, so a thick stroke on the clip shape,
+  // which was tried first, has no effect at all; feMorphology genuinely
+  // dilates the rasterized shape in pixel space, which does work.)
+  defs.append('filter').attr('class', 'region-label-mask-defs').attr('id', 'rle-dilate')
+    .attr('x', '-20%').attr('y', '-20%').attr('width', '140%').attr('height', '140%')
+    .append('feMorphology').attr('operator', 'dilate').attr('radius', 5);
   features.forEach((f, i) => {
-    defs.append('clipPath').attr('class', 'region-label-mask-defs').attr('id', 'clip-region-' + i)
-      .append('path').attr('d', localPath(f)).attr('fill', 'black').attr('stroke', 'black').attr('stroke-width', 10);
+    const m = defs.append('mask').attr('class', 'region-label-mask-defs').attr('id', 'mask-region-' + i)
+      .attr('maskUnits', 'userSpaceOnUse').attr('x', 0).attr('y', 0).attr('width', width).attr('height', height);
+    m.append('rect').attr('x', 0).attr('y', 0).attr('width', width).attr('height', height).attr('fill', 'black');
+    m.append('path').attr('d', localPath(f)).attr('fill', 'white').attr('filter', 'url(#rle-dilate)');
   });
 
   // Shrinks a label's font size based on its own name length, targeting a
@@ -1989,13 +2001,14 @@ function renderCountryView(countryName, geojson, labelOverrides){
 
   // Renders a label as two overlaid copies with identical position/size/
   // text — one masked to "everywhere except any region" (so it shows in
-  // open ocean), one clipped to just this specific region's own shape
-  // (so it shows there too) — instead of a single unrestricted <text>
-  // that could bleed across a border into whichever neighboring region
-  // happens to be underneath it.
+  // open ocean), one masked to just this specific region's own shape
+  // plus a few pixels of buffer past its border (so it shows there too,
+  // without being sliced at the exact edge) — instead of a single
+  // unrestricted <text> that could bleed across a border into whichever
+  // neighboring region happens to be underneath it.
   function appendReadableLabel(g, ownIndex, attrs, content){
     const base = g.append('text').attr('mask', 'url(#oceanOnlyMask)');
-    const own = g.append('text').attr('clip-path', `url(#clip-region-${ownIndex})`);
+    const own = g.append('text').attr('mask', `url(#mask-region-${ownIndex})`);
     [base, own].forEach(t => {
       Object.entries(attrs).forEach(([k, v]) => t.attr(k, v));
       t.text(content);
