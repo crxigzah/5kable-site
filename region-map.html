@@ -1909,7 +1909,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
   function fitAndPruneByRenderedArea(feats){
     let current = feats;
     for(let pass = 0; pass < 3; pass++){
-      const proj = d3.geoMercator().fitExtent([[30,60],[width-30,height-30]], { type: 'FeatureCollection', features: current });
+      const proj = d3.geoMercator().fitExtent([[18,45],[width-18,height-18]], { type: 'FeatureCollection', features: current });
       const p = d3.geoPath(proj);
       const viewportArea = (width - 60) * (height - 90);
       const areas = current.map(f => Math.abs(p.area(f)));
@@ -1925,7 +1925,11 @@ function renderCountryView(countryName, geojson, labelOverrides){
       bad.forEach(f => console.warn('[Region Map] dropping oversized-render region:', (f.properties && f.properties.shapeName) || '(unnamed)'));
       current = good;
     }
-    const proj = d3.geoMercator().fitExtent([[30,60],[width-30,height-30]], { type: 'FeatureCollection', features: current });
+    // These margins must stay byte-identical to the ones in the Region
+    // Label Editor (5k-x7q2.html)'s own fitExtent calls — the two pages
+    // have to compute the exact same projection for saved label
+    // positions to land in the same place on both.
+    const proj = d3.geoMercator().fitExtent([[18,45],[width-18,height-18]], { type: 'FeatureCollection', features: current });
     return { projection: proj, path: d3.geoPath(proj), features: current };
   }
 
@@ -2151,7 +2155,7 @@ function renderPlainCountryFeature(countryName, feature){
   rewindGeometry(clone.geometry);
   fixInvertedArea(clone);
 
-  const localProjection = d3.geoMercator().fitExtent([[30,60],[width-30,height-30]], clone);
+  const localProjection = d3.geoMercator().fitExtent([[18,45],[width-18,height-18]], clone);
   const localPath = d3.geoPath(localProjection);
 
   hideLoading();
