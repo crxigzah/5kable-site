@@ -1456,7 +1456,8 @@ function setRegionCustomColor(id, hex){
 function buildCountryRegionsList(labelData){
   const listEl = document.getElementById('countryRegionsList');
   listEl.innerHTML = '';
-  labelData.forEach(l => {
+  const sorted = [...labelData].sort((a, b) => a.name.localeCompare(b.name));
+  sorted.forEach(l => {
     const item = document.createElement('div');
     item.className = 'region-toggle-item';
     item.innerHTML = `
