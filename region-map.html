@@ -1986,7 +1986,8 @@ function renderCountryView(countryName, geojson, labelOverrides){
       const hasCurve = hasArrow && ov.arrow_cx != null && ov.arrow_cy != null;
       return { id: 'sub-' + i, name: nm, ox, oy, x: ov.x, y: ov.y, w, h, inPlace: false, manual: true,
         fontScale: ov.font_scale, arrowX: hasArrow ? ov.arrow_x : null, arrowY: hasArrow ? ov.arrow_y : null,
-        arrowCX: hasCurve ? ov.arrow_cx : null, arrowCY: hasCurve ? ov.arrow_cy : null };
+        arrowCX: hasCurve ? ov.arrow_cx : null, arrowCY: hasCurve ? ov.arrow_cy : null,
+        hideConnector: !!ov.hide_connector };
     }
 
     // Does this region's own shape have room to hold its name directly?
@@ -2092,7 +2093,7 @@ function renderCountryView(countryName, geojson, labelOverrides){
             .attr('stroke', 'var(--map-label-text)').attr('stroke-width', 1)
             .attr('marker-end', 'url(#labelArrowHead)');
         }
-      } else {
+      } else if (!l.hideConnector) {
         const moved = Math.hypot(l.x - l.ox, l.y - l.oy) > 6;
         if (moved) {
           gLabel.append('line')
