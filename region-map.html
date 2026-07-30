@@ -2383,8 +2383,15 @@ function renderCountryView(countryName, geojson, labelOverrides){
         .attr('stroke', 'var(--muted-2)').attr('stroke-width', 0.6);
     }
     gLabel.append('circle').attr('cx', l.ox).attr('cy', l.oy).attr('r', dotRadius);
+    // Centered on (l.x, l.y), matching every collision check above (spring
+    // repulsion, in-place avoidance, clustering) — all of which treat l.x
+    // as the box's CENTER. Left-anchored text starting at l.x+6 (the
+    // previous behavior) put the real rendered box a half-width to the
+    // right of where the decluttering math believed it was, so two labels
+    // it had placed at a "safe" distance could still visually collide.
     appendReadableLabel(gLabel, l.idx, {
-      x: l.x + 6, y: l.y + 3,
+      x: l.x, y: l.y + 3,
+      'text-anchor': 'middle',
       'font-size': autoFitFontSize(l.name, labelFontPx * fontScale, 95, 0.55),
       'stroke-width': autoFitFontSize(l.name, labelFontPx * fontScale, 95, 0.55) * haloRatio
     }, l.name);
