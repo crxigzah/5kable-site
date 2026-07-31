@@ -83,8 +83,20 @@ body::after {
 
 nav {
   display:flex;align-items:center;justify-content:space-between;padding:14px 40px;
-  border-bottom:1px solid var(--border);position:sticky;top:0;
-  background:rgba(8,8,16,0.92);backdrop-filter:blur(20px);z-index:100;
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
+}
+/* The frosted-glass effect lives on a pseudo-element behind nav's content,
+   not on `nav` itself. backdrop-filter (like transform/filter/perspective/
+   will-change:transform) makes its element the CONTAINING BLOCK for any
+   position:fixed descendant, instead of the real viewport — that broke the
+   mobile off-canvas nav-links panel further down, whose top:0/bottom:0 was
+   silently resolving against nav's own ~96px height instead of the full
+   screen, squashing the whole slide-out menu into a sliver near the top.
+   Moving the blur to ::before keeps the exact same visual (painted behind
+   nav's real content either way) without nav itself tripping that rule. */
+nav::before {
+  content:'';position:absolute;inset:0;
+  background:rgba(8,8,16,0.92);backdrop-filter:blur(20px);z-index:-1;
 }
 .nav-logo {
   display:flex;align-items:center;gap:10px;cursor:pointer;
@@ -518,7 +530,16 @@ footer {
 }
 
 /* Smooth scroll */
-html { scroll-behavior: smooth; }
+/* overflow-x here (not just on body below) matters specifically because of
+   the off-canvas mobile nav panel further down: it's transform:translateX'd
+   off-screen, but a transformed position:fixed element still counts toward
+   the page's scrollable width in Chrome's layout model even while
+   invisible — body's own overflow-x:hidden doesn't clip that, since a
+   fixed element is positioned against the root/viewport, not against body.
+   Confirmed directly: without this, a 390px-wide phone viewport measured
+   as 690px wide (390 visible + the 300px off-canvas panel), because
+   nothing was clipping the panel's off-screen contribution. */
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 /* Hero flag emojis */
 .flag-strip span {

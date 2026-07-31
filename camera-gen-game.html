@@ -86,6 +86,17 @@
 
   .game-layout{ width:100%; display:flex; gap:20px; align-items:flex-start; justify-content:center; }
   .game-layout .quiz-card{ flex:1; min-width:0; max-width:1100px; }
+  /* .leaderboard-card is a fixed 280px with flex-shrink:0 (intentional on
+     desktop so it never gets squashed by a wide quiz card) - but with no
+     wrap, that same fixed width crushed the quiz card's flexible side down
+     to a sliver on any phone, wrapping its feedback text one word per
+     line. photo-quiz-game.html (same .game-layout/.leaderboard-card
+     structure) already has this exact fix at this exact breakpoint; it
+     just never got ported over here. */
+  @media (max-width:880px){
+    .game-layout{ flex-direction:column; align-items:center; }
+    .leaderboard-card{ width:100%; max-width:520px; }
+  }
 
   .leaderboard-card{
     width:280px; flex-shrink:0; background:var(--panel); border:1px solid var(--border); border-radius:16px;
