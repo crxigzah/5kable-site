@@ -599,12 +599,22 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 .nav-hamburger.open span:nth-child(2) { opacity: 0; }
 .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
+/* Must stay below nav's z-index (100), not above it. #nav-links and the
+   hamburger button live *inside* <nav>, which is itself a stacking context
+   (position:sticky + z-index). Their own z-index:200/210 only orders them
+   against each other within that context - it can't lift them above a
+   sibling like #nav-scrim, which gets compared against nav's context as a
+   whole. With z-index:195 here (above nav's 100), the scrim painted over
+   the entire nav stacking context, including the off-canvas menu nested
+   inside it: the panel looked washed out and every tap on a link or the
+   close button was swallowed by the scrim's own click-to-close handler
+   instead of reaching the link underneath. */
 .nav-scrim {
   display: none;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.6);
-  z-index: 195;
+  z-index: 90;
 }
 .nav-scrim.open { display: block; }
 
