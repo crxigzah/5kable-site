@@ -619,11 +619,67 @@ function globeRaycastAt(clientX, clientY){
   const hits = globeRaycaster.intersectObject(globeMesh);
   return hits.length ? hits[0] : null;
 }
-function globeClickableAt(uv){
+// Canvas fill operations are always anti-aliased at shape edges, with no
+// way to turn that off — so a pixel right on a border between two
+// countries is a BLEND of their two ID colors, not either one. Since ID
+// colors are assigned by list order (not geography), two countries that
+// happen to sit next to each other on the map can have very different
+// index numbers, so decoding a blended edge pixel can land on some
+// completely unrelated third country (this is the same bug region-map.html
+// had — ported that fix here). Guard against it: only trust a sampled
+// color if it exactly matches what that index's own ID color should be,
+// require a same-index majority among its 8 neighbors so a coincidental
+// blend speck (which tops out at 4/8 matching neighbors) can't pass as
+// real territory, and search outward in a small ring if the exact pixel
+// under the cursor isn't trustworthy on its own.
+function globeReadIdPixel(px, py){
+  const x = Math.max(0, Math.min(GLOBE_TEX_W - 1, px));
+  const y = Math.max(0, Math.min(GLOBE_TEX_H - 1, py));
+  const data = globeIdCtx.getImageData(x, y, 1, 1).data;
+  return [data[0], data[1], data[2]];
+}
+function globeExactIdIndexAt(px, py){
+  const [r, g, b] = globeReadIdPixel(px, py);
+  const idx = globeIndexFromIdColor(r, g, b);
+  if (idx === -1) return -1;
+  if (idx >= globeClickables.length) return null; // decodes past the real index range — can only be a stray blend
+  return (`rgb(${r},${g},${b})` === globeIdColorFor(idx)) ? idx : null;
+}
+function globeIsPlausibleCountryPixel(idx, px, py){
+  let hits = 0;
+  for (let dx = -1; dx <= 1; dx++){
+    for (let dy = -1; dy <= 1; dy++){
+      if (dx === 0 && dy === 0) continue;
+      if (globeExactIdIndexAt(px + dx, py + dy) === idx) hits++;
+    }
+  }
+  return hits >= 5;
+}
+function globeUvToClickableIndex(uv){
   const px = Math.floor(uv.x * GLOBE_TEX_W);
   const py = Math.floor((1 - uv.y) * GLOBE_TEX_H);
-  const data = globeIdCtx.getImageData(Math.max(0, Math.min(GLOBE_TEX_W - 1, px)), Math.max(0, Math.min(GLOBE_TEX_H - 1, py)), 1, 1).data;
-  const idx = globeIndexFromIdColor(data[0], data[1], data[2]);
+  const idx0 = globeExactIdIndexAt(px, py);
+  if (idx0 === -1) return -1; // ocean is a solid, un-anti-aliased fill — always trustworthy
+  if (idx0 !== null && globeIsPlausibleCountryPixel(idx0, px, py)) return idx0;
+
+  for (let radius = 1; radius <= 5; radius++){
+    for (let dy = -radius; dy <= radius; dy++){
+      for (let dx = -radius; dx <= radius; dx++){
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue; // only the ring at this radius
+        const cx = px + dx, cy = py + dy;
+        const idx = globeExactIdIndexAt(cx, cy);
+        if (idx === null || idx === -1) continue;
+        if (globeIsPlausibleCountryPixel(idx, cx, cy)) return idx;
+      }
+    }
+  }
+  // Nothing trustworthy nearby — likely a pixel blended toward OCEAN at a
+  // coastline, which can decode to any arbitrary index. Showing no
+  // tooltip here is far better than showing a wrong one.
+  return -1;
+}
+function globeClickableAt(uv){
+  const idx = globeUvToClickableIndex(uv);
   return idx >= 0 ? globeClickables[idx] : null;
 }
 
