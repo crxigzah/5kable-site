@@ -761,51 +761,6 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 </head>
 <body>
 
-<!-- Password Gate — site is under construction -->
-<div id="gate" style="position:fixed;inset:0;background:#080810;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;">
-  <div style="background:#10101e;border:1px solid #1e1e35;border-radius:20px;padding:48px 40px;width:100%;max-width:400px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.6);">
-    <div style="font-size:36px;margin-bottom:16px;">🔒</div>
-    <h1 style="font-size:22px;font-weight:800;margin-bottom:6px;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">5kable</h1>
-    <p style="color:#7a7a9a;font-size:14px;margin-bottom:32px;font-family:-apple-system,sans-serif;">Site under construction — come back soon</p>
-    <input id="gate-pw" type="password" placeholder="Enter password..." autocomplete="off"
-      style="width:100%;background:#080810;border:1px solid #1e1e35;border-radius:10px;padding:13px 16px;color:#e8e8f5;font-size:15px;font-family:-apple-system,sans-serif;outline:none;margin-bottom:12px;text-align:center;"
-      onkeydown="if(event.key==='Enter')checkGate()"
-      onfocus="this.style.borderColor='#00c9a7'" onblur="this.style.borderColor='#1e1e35'">
-    <button onclick="checkGate()"
-      style="width:100%;background:linear-gradient(135deg,#00c9a7,#00c9a7);border:none;color:#080810;font-weight:700;padding:13px;border-radius:10px;cursor:pointer;font-size:15px;font-family:-apple-system,sans-serif;transition:opacity .2s;"
-      onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Enter Site</button>
-    <div id="gate-err" style="color:#ff6b6b;font-size:13px;margin-top:12px;display:none;font-family:-apple-system,sans-serif;">Incorrect password</div>
-  </div>
-</div>
-
-<script>
-// Password gate — uses SHA-256 so the password isn't stored in plain text
-const GATE_HASH = 'cc12430df9dc449d2fe127de7b9d5d6485016ea0f6f971eab7d02e142c0c8a81';
-
-async function checkGate() {
-  const pw = document.getElementById('gate-pw').value;
-  const err = document.getElementById('gate-err');
-  if (!pw) return;
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
-  const hash = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  if (hash === GATE_HASH) {
-    sessionStorage.setItem('kbl_unlocked','1');
-    document.getElementById('gate').style.display = 'none';
-  } else {
-    err.style.display = 'block';
-    document.getElementById('gate-pw').style.borderColor = '#ff6b6b';
-    setTimeout(() => {
-      err.style.display = 'none';
-      document.getElementById('gate-pw').style.borderColor = '#1e1e35';
-    }, 2000);
-  }
-}
-
-// Stay unlocked for the session
-if (sessionStorage.getItem('kbl_unlocked') === '1') {
-  document.getElementById('gate').style.display = 'none';
-}
-</script>
 <div class="aurora-lines"></div>
 
 <nav>

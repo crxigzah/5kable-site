@@ -884,6 +884,16 @@ async function showCountry(c) {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
+      if (data._source === 'none') {
+        document.getElementById('cv-body').innerHTML = `
+          <div class="loading-pulse">
+            <div style="font-size:32px;margin-bottom:12px">🗺️</div>
+            <div style="font-weight:700;margin-bottom:8px">${escapeHtml(c.name)} guide coming soon</div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:20px">We haven't published a guide for this country yet — check back later.</div>
+            <button onclick="showMap()" style="background:#00c9a7;border:none;color:#080810;font-weight:700;padding:10px 24px;border-radius:8px;cursor:pointer;">← Back to World Map</button>
+          </div>`;
+        return;
+      }
       renderGuide(c, data);
       return;
     } catch(e) {
