@@ -750,14 +750,27 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
 // Same set of clickable things as the globe itself: covered countries,
 // small-territory dots, and the Alaska/Hawaii overlays — so search
 // never suggests something you couldn't also just click on the map.
+// SMALL_DOTS exists so tiny nations too small to click as a filled
+// polygon still get a clickable marker on the globe - but ~20 of them
+// (American Samoa, Christmas Island, Liechtenstein, Monaco, etc) are
+// ALSO already present in the main country list, so naively pushing
+// from every source produced two identical results for the same search.
+// Deduping by slug (keeping whichever source added it first) fixes
+// that without needing to know in advance which entries overlap.
 const searchableEntries = [];
+const seenSearchableSlugs = new Set();
+function addSearchableEntry(entry){
+  if (seenSearchableSlugs.has(entry.slug)) return;
+  seenSearchableSlugs.add(entry.slug);
+  searchableEntries.push(entry);
+}
 Object.keys(isoToCountry).forEach(iso => {
   if (GEOGUESSR_COUNTRIES.has(iso)){
-    searchableEntries.push({ name: isoToCountry[iso].name, slug: isoToCountry[iso].slug, iso });
+    addSearchableEntry({ name: isoToCountry[iso].name, slug: isoToCountry[iso].slug, iso });
   }
 });
-SMALL_DOTS.forEach(t => searchableEntries.push({ name: t.name, slug: t.slug, iso: t.iso }));
-US_REGIONS.forEach(t => searchableEntries.push({ name: t.name, slug: t.slug, iso: 'US' }));
+SMALL_DOTS.forEach(t => addSearchableEntry({ name: t.name, slug: t.slug, iso: t.iso }));
+US_REGIONS.forEach(t => addSearchableEntry({ name: t.name, slug: t.slug, iso: 'US' }));
 searchableEntries.sort((a, b) => a.name.localeCompare(b.name));
 
 const searchInput = document.getElementById('countrySearchInput');
