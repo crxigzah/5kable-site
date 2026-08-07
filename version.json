@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
+  "version": "1.0.2",
   "download_url": "https://github.com/crxigzah/5kable-releases/releases/latest/download/5kableExtension.zip",
-  "release_notes": "Fixed the extension polling GeoGuessr's own API without limit, which could pile up and slow the page down over a long session."
+  "release_notes": "The popup now shows the actual installed version instead of a hardcoded number."
 }
