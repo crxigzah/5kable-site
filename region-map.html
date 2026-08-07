@@ -592,7 +592,12 @@
         <button id="zoomOut">–</button>
       </div>
       <div class="legend">
-        <div class="item"><span class="sw" style="background:var(--map-land)"></span> Covered</div>
+        <!-- Hardcoded teal rather than var(--map-land): the globe's covered-country
+             color is painted directly in JS (buildGlobeTextures) and never picks up
+             the "Google Maps style" theme's red override the way the flat SVG map
+             does, so tying this swatch to that same variable made it show red while
+             the globe itself stayed teal regardless of theme. -->
+        <div class="item"><span class="sw" style="background:var(--covered-fill)"></span> Covered</div>
         <div class="item"><span class="sw" style="background:var(--map-land-nocode);border:1px solid var(--map-land-nocode-stroke)"></span> No coverage</div>
       </div>
     </div>
