@@ -1,5 +1,5 @@
 {
-  "version": "1.0.2",
+  "version": "1.0.3",
   "download_url": "https://github.com/crxigzah/5kable-releases/releases/latest/download/5kableExtension.zip",
-  "release_notes": "The popup now shows the actual installed version instead of a hardcoded number."
+  "release_notes": "Fixed GeoX chat sometimes getting confused about whether a round was still live right after a wrong guess."
 }
