@@ -127,10 +127,10 @@ nav { position:sticky;top:0;z-index:100;background:rgba(8,8,16,0.92);backdrop-fi
 <div id="map-view">
   <div class="map-header">
     <h1>🗺️ Country Metas</h1>
-    <p>Click any highlighted country to learn how to identify it in GeoGuessr</p>
+    <p>Click any highlighted country to learn how to identify it in map-guessing games</p>
   </div>
   <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:#00c9a7"></div>GeoGuessr coverage — click for guide</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00c9a7"></div>Street View coverage — click for guide</div>
     <div class="legend-item"><div class="legend-dot" style="background:#1e1e38"></div>No Street View coverage</div>
   </div>
 
@@ -701,8 +701,8 @@ globeCanvasEl.addEventListener('mousemove', e => {
   document.getElementById('tt-flag').innerHTML = flagImg(iso, 20);
   document.getElementById('tt-name').textContent = name;
   document.getElementById('tt-hint').innerHTML = isClickable
-    ? '<span class="tt-hint">Click for GeoGuessr guide →</span>'
-    : '<span class="tt-nope">No GeoGuessr coverage</span>';
+    ? '<span class="tt-hint">Click for guide →</span>'
+    : '<span class="tt-nope">No Street View coverage</span>';
   globeCanvasEl.style.cursor = isClickable ? 'pointer' : 'grab';
 });
 globeCanvasEl.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
@@ -868,7 +868,7 @@ async function showCountry(c) {
   cv.style.display = 'block';
   document.getElementById('cv-flag').innerHTML = flagImg(c.iso, 72);
   document.getElementById('cv-name').textContent = c.name;
-  document.getElementById('cv-sub').textContent = 'GeoGuessr Country Meta Guide';
+  document.getElementById('cv-sub').textContent = 'Country Meta Guide';
   document.getElementById('cv-body').innerHTML = `<div class="loading-pulse"><div class="spinner"></div><div>Loading ${c.name} guide...</div></div>`;
   window.scrollTo(0,0);
 
