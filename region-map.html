@@ -946,7 +946,7 @@ function clearFallbackMarker(){
   if(fallbackLabel){ globeGroup.remove(fallbackLabel); fallbackLabel.material.map.dispose(); fallbackLabel.material.dispose(); fallbackLabel = null; }
 }
 
-// One approximate lat/lon centre per GeoGuessr-supported country, used to
+// One approximate lat/lon centre per supported country, used to
 // rotate the globe toward whichever country hit the fallback path. Kept
 // intentionally coarse (country-level, not state/region-level) — this is
 // only for orienting the camera and placing a marker, not for anything
