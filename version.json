@@ -1,5 +1,5 @@
 {
-  "version": "1.0.0",
-  "download_url": "https://github.com/crxigzah/GeoAnalyzerX/releases/latest/download/GeoAnalyzerX-Extension.zip",
-  "release_notes": "Initial release"
+  "version": "1.0.1",
+  "download_url": "https://github.com/crxigzah/5kable-releases/releases/latest/download/5kable-Extension.zip",
+  "release_notes": "Fixed the extension polling GeoGuessr's own API without limit, which could pile up and slow the page down over a long session."
 }
