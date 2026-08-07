@@ -457,6 +457,22 @@
   .region-toggle-item:hover{ background: var(--panel-2); }
   .region-toggle-name{ font-weight:600; }
   .region-swatch-row{ display:flex; gap:5px; flex-wrap:wrap; }
+
+  /* Sub-headers grouping Japan's prefectures under their traditional
+     region (Hokkaido/Tohoku/Kanto/etc) — bigger and more prominent than
+     the individual prefecture names below them, so the grouping reads
+     clearly while scrolling a 47-item list. */
+  .region-group-header{
+    font-weight:700;
+    font-size:13px;
+    color: var(--covered);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin:16px 6px 4px;
+    padding-top:12px;
+    border-top:1px solid var(--line);
+  }
+  .region-group-header:first-child{ margin-top:0; padding-top:0; border-top:none; }
   .region-swatch{
     width:18px; height:18px;
     border-radius:50%;
@@ -1534,21 +1550,65 @@ function setRegionCustomColor(id, hex){
   label.style('display', '');
 }
 
+// Japan's 47 prefectures grouped under their 8 traditional regions, in
+// standard north-to-south listing order. Used only to add group headers
+// to the Japan regions sidebar below — doesn't touch the actual map data,
+// which already carries plain prefecture-level labels/geometry.
+const JAPAN_REGION_GROUPS = [
+  { region: 'Hokkaido', prefectures: ['Hokkaido'] },
+  { region: 'Tohoku', prefectures: ['Aomori','Iwate','Miyagi','Akita','Yamagata','Fukushima'] },
+  { region: 'Kanto', prefectures: ['Ibaraki','Tochigi','Gunma','Saitama','Chiba','Tokyo','Kanagawa'] },
+  { region: 'Chubu', prefectures: ['Niigata','Toyama','Ishikawa','Fukui','Yamanashi','Nagano','Gifu','Shizuoka','Aichi'] },
+  { region: 'Kansai', prefectures: ['Mie','Shiga','Kyoto','Osaka','Hyogo','Nara','Wakayama'] },
+  { region: 'Chugoku', prefectures: ['Tottori','Shimane','Okayama','Hiroshima','Yamaguchi'] },
+  { region: 'Shikoku', prefectures: ['Tokushima','Kagawa','Ehime','Kochi'] },
+  { region: 'Kyushu', prefectures: ['Fukuoka','Saga','Nagasaki','Kumamoto','Oita','Miyazaki','Kagoshima','Okinawa'] },
+];
+
+function renderRegionToggleItem(listEl, l){
+  const item = document.createElement('div');
+  item.className = 'region-toggle-item';
+  item.innerHTML = `
+    <div class="region-toggle-name">${l.name}</div>
+    <div class="region-swatch-row" data-id="${l.id}">
+      ${REGION_PALETTE.map(p => `<button class="region-swatch${p.key==='default' ? ' active' : ''}" data-id="${l.id}" data-key="${p.key}" title="${p.label}" style="background:${p.swatchBg || p.color};">${p.key==='hide' ? '✕' : ''}</button>`).join('')}
+      <input type="color" class="region-swatch region-swatch-custom" data-id="${l.id}" data-key="custom" title="Pick any color" value="#d1443a">
+    </div>`;
+  listEl.appendChild(item);
+}
+
 function buildCountryRegionsList(labelData){
   const listEl = document.getElementById('countryRegionsList');
   listEl.innerHTML = '';
-  const sorted = [...labelData].sort((a, b) => a.name.localeCompare(b.name));
-  sorted.forEach(l => {
-    const item = document.createElement('div');
-    item.className = 'region-toggle-item';
-    item.innerHTML = `
-      <div class="region-toggle-name">${l.name}</div>
-      <div class="region-swatch-row" data-id="${l.id}">
-        ${REGION_PALETTE.map(p => `<button class="region-swatch${p.key==='default' ? ' active' : ''}" data-id="${l.id}" data-key="${p.key}" title="${p.label}" style="background:${p.swatchBg || p.color};">${p.key==='hide' ? '✕' : ''}</button>`).join('')}
-        <input type="color" class="region-swatch region-swatch-custom" data-id="${l.id}" data-key="custom" title="Pick any color" value="#d1443a">
-      </div>`;
-    listEl.appendChild(item);
-  });
+
+  if (currentCountryName === 'Japan'){
+    const byName = new Map(labelData.map(l => [l.name, l]));
+    const grouped = new Set();
+    JAPAN_REGION_GROUPS.forEach(({region, prefectures}) => {
+      const members = prefectures.map(n => byName.get(n)).filter(Boolean);
+      if (!members.length) return;
+      const header = document.createElement('div');
+      header.className = 'region-group-header';
+      header.textContent = region;
+      listEl.appendChild(header);
+      members.sort((a, b) => a.name.localeCompare(b.name))
+        .forEach(l => { renderRegionToggleItem(listEl, l); grouped.add(l.name); });
+    });
+    // Anything in the actual data that isn't in the standard 47-prefecture
+    // list above (unexpected naming from the source data, etc) still gets
+    // shown rather than silently dropped - just ungrouped, at the end.
+    const leftover = labelData.filter(l => !grouped.has(l.name)).sort((a, b) => a.name.localeCompare(b.name));
+    if (leftover.length){
+      const header = document.createElement('div');
+      header.className = 'region-group-header';
+      header.textContent = 'Other';
+      listEl.appendChild(header);
+      leftover.forEach(l => renderRegionToggleItem(listEl, l));
+    }
+  } else {
+    const sorted = [...labelData].sort((a, b) => a.name.localeCompare(b.name));
+    sorted.forEach(l => renderRegionToggleItem(listEl, l));
+  }
   listEl.querySelectorAll('.region-swatch:not(.region-swatch-custom)').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.id, key = btn.dataset.key;
