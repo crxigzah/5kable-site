@@ -1,20 +1,22 @@
 // Cloudflare Pages "Advanced Mode" worker — takes complete manual control
-// over every request, which is the only thing that actually worked.
+// over every request.
 //
-// Two earlier attempts at this both got silently overridden by Cloudflare
-// Pages' own automatic implicit redirect for nested paths under an
-// existing .html file's name (confirmed via DevTools: /metas/<slug>
-// always came back as a fresh, non-cached 308 to bare /metas, even with
-// a matching _redirects rule present and even with a functions/metas/
-// [slug].js Pages Function in place — neither one actually intercepted
-// the request before that automatic redirect fired). A root _worker.js
-// replaces Cloudflare's whole default request pipeline for this project,
-// so there's no automatic behavior left to race against.
+// The actual root cause (found via DevTools across three failed attempts —
+// _redirects, a Pages Function, and an earlier version of this worker):
+// env.ASSETS.fetch() — Cloudflare's own internal asset resolver, which
+// every one of those approaches ultimately calls into — auto-redirects
+// any request for an EXPLICIT ".html" path to its clean-URL equivalent
+// (e.g. a request for /metas.html itself gets 308'd to /metas). That
+// redirect was firing from inside the fetch call itself, not from
+// routing precedence, so nothing that dispatched to "/metas.html" could
+// ever have avoided it — including the previous version of this file.
+// Requesting the already-clean "/metas" path instead sidesteps it
+// entirely, since Cloudflare has nothing left to canonicalize.
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/metas/')) {
-      url.pathname = '/metas.html';
+      url.pathname = '/metas';
       return env.ASSETS.fetch(new Request(url, request));
     }
     // Everything else: identical to Cloudflare Pages' own default behavior
