@@ -1,0 +1,6 @@
+# Serves metas.html directly (status 200, not a redirect) for any
+# /metas/<country-slug> URL, so Google indexes each country guide as its
+# own real page instead of getting a 404 that only a browser's JS then
+# papers over. GitHub Pages couldn't do this rewrite at all, which is
+# why 404.html previously had to fake it client-side after the fact.
+/metas/*  /metas.html  200
