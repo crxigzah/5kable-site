@@ -7,6 +7,14 @@
 <meta name="description" content="A geography training tool that actually works — learn every region and master your geographic knowledge.">
 <link rel="canonical" href="https://5kable.net/">
 <meta property="og:url" content="https://5kable.net/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="5kable — AI-Powered Geography Training">
+<meta property="og:description" content="A geography training tool that actually works — learn every region and master your geographic knowledge.">
+<meta property="og:image" content="https://5kable.net/apple-touch-icon.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="5kable — AI-Powered Geography Training">
+<meta name="twitter:description" content="A geography training tool that actually works — learn every region and master your geographic knowledge.">
+<meta name="twitter:image" content="https://5kable.net/apple-touch-icon.png">
 <style>
 :root {
   --bg: #080810;
@@ -3809,7 +3817,7 @@ const POLICIES = {
       <p>By installing or using 5kable ("the Script", "the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use 5kable.</p>
 
       <h3>2. Description of Service</h3>
-      <p>5kable is a the extension userscript that uses the Anthropic Claude API to provide AI-powered scene analysis, post-round teaching, and a community scene library to help users improve their geographic knowledge. It is a singleplayer training tool only and is not affiliated with, endorsed by, or connected to any map-guessing game publisher.</p>
+      <p>5kable is a browser extension that uses the Anthropic Claude API to provide AI-powered scene analysis, post-round teaching, and a community scene library to help users improve their geographic knowledge. It is a singleplayer training tool only and is not affiliated with, endorsed by, or connected to any map-guessing game publisher.</p>
 
       <h3>3. Eligibility</h3>
       <p>You must be at least 13 years of age to use 5kable. By creating an account, you represent that you meet this requirement.</p>
@@ -3826,7 +3834,7 @@ const POLICIES = {
       <p>You are responsible for maintaining the security of your account credentials. You must notify us immediately of any unauthorised use. We reserve the right to suspend or terminate accounts that violate these Terms.</p>
 
       <h3>6. Third-Party Services</h3>
-      <p>5kable requires your own . Your use of the Anthropic Claude API is governed by Anthropic's own Terms of Service and Usage Policies. 5kable is not responsible for the availability or cost of the Anthropic API.</p>
+      <p>5kable's AI features are powered by the Anthropic Claude API, called from our own servers using our own API key — you do not need your own Anthropic account or API key to use 5kable. 5kable's use of the Claude API is governed by Anthropic's own Terms of Service and Usage Policies, and 5kable is not responsible for the availability of the Anthropic API.</p>
 
       <h3>7. Subscriptions and Billing</h3>
       <p>Pro subscriptions are billed monthly through Stripe. By subscribing, you authorise recurring charges. You may cancel at any time; access continues until the end of the current billing period. All prices are inclusive of applicable taxes.</p>
@@ -3849,26 +3857,33 @@ const POLICIES = {
     date: 'Effective: 1 January 2026',
     body: `
       <h3>1. What We Collect</h3>
-      <p>When you create an account, we collect your username, email address, and a hashed version of your password. We do not store plain-text passwords. We also store session tokens and your subscription tier.</p>
-      <p>When you press F7, we store the location (coordinates and a Google-provided Street View panorama reference) so other users' training guides can look up that panorama live, directly from Google. We do not collect, store, or transmit the actual screenshot or scene image itself — that exists only temporarily in your own browser, to show your post-round teaching popup, and is never uploaded to our servers.</p>
+      <p>When you create an account, we collect your username, email address, a hashed version of your password, and (for SMS verification via Twilio) your phone number. We do not store plain-text passwords or verification codes. We also store session tokens and your subscription tier.</p>
+      <p>When you press F7, we store the location (coordinates and a Google-provided Street View panorama reference) so other users' training guides can look up that panorama live, directly from Google. Your Street View screenshots are processed in memory to generate your analysis and are never saved to our database.</p>
+      <p>If you use 5K chat, we log your messages and the AI's replies (along with the round's location context) to review conversation quality and improve the feature. If you submit a bug report, meta-guide correction, or support ticket, we store the message content and any contact details you provide. For security and abuse prevention, we log IP addresses alongside certain account actions (e.g. registration, login attempts).</p>
 
       <h3>2. How We Use Your Data</h3>
       <ul>
         <li>To authenticate your account and maintain your session.</li>
         <li>To verify your subscription tier and deliver Pro features.</li>
         <li>To process payments through Stripe (we do not handle card details directly).</li>
+        <li>To verify your identity via SMS during account creation (via Twilio).</li>
         <li>To send important account-related communications (e.g. password changes, policy updates).</li>
+        <li>To review and improve AI feature quality (chat logs, support tickets).</li>
+        <li>To understand overall site usage via Google Analytics (see Section 7).</li>
       </ul>
 
-      <h3>3. Claude API</h3>
-      <p>When you use AI analysis features, your Street View screenshots are sent directly from your browser to the Anthropic Claude API using your own . 5kable's servers do not see or store these images. Your use of the Claude API is subject to Anthropic's Privacy Policy.</p>
+      <h3>3. AI Processing</h3>
+      <p>When you use AI analysis, teaching, or chat features, your Street View screenshots and messages are sent to 5kable's own servers, which call the Anthropic Claude API on your behalf using 5kable's own API key — you do not need your own Anthropic account or API key. Screenshots are processed in memory to generate your analysis and are not saved to our database. Anthropic's processing of this data is subject to Anthropic's own Privacy Policy.</p>
 
       <h3>4. Third-Party Processors</h3>
       <ul>
+        <li><strong>Anthropic</strong> AI analysis via the Claude API, called from our servers.</li>
         <li><strong>Stripe</strong> payment processing. Stripe handles all card data under their own PCI-DSS compliance.</li>
+        <li><strong>Twilio</strong> SMS phone verification during account creation.</li>
         <li><strong>Supabase</strong> database hosting for user accounts and sessions, hosted in eu-west-1 (Ireland).</li>
         <li><strong>Render</strong> API server hosting.</li>
-        <li><strong>Google</strong> Street View panoramas shown in training guides are embedded live from Google Maps Platform; viewing them is subject to Google's own Privacy Policy.</li>
+        <li><strong>Google</strong> Street View panoramas shown in training guides are embedded live from Google Maps Platform, and Google Analytics measures site usage; both are subject to Google's own Privacy Policy.</li>
+        <li><strong>Discord</strong> bug reports, meta-guide corrections, and support ticket notifications may be forwarded to our team's private Discord server for visibility — only the report content and any contact details you provide are shared.</li>
       </ul>
 
       <h3>5. Data Retention</h3>
@@ -3877,8 +3892,8 @@ const POLICIES = {
       <h3>6. Your Rights</h3>
       <p>Depending on your jurisdiction, you may have the right to access, correct, port, or delete your personal data. Contact us to exercise these rights.</p>
 
-      <h3>7. Cookies and Local Storage</h3>
-      <p>5kable's website uses localStorage to store your session token, currency preference, and avatar settings. We do not use tracking cookies or third-party analytics.</p>
+      <h3>7. Cookies, Local Storage, and Analytics</h3>
+      <p>5kable's website uses localStorage to store your session token, currency preference, and avatar settings. We use Google Analytics to understand overall site usage (pages visited, general traffic patterns) — this never includes what you type into 5K chat or your account credentials. We do not use third-party advertising or tracking cookies.</p>
 
       <h3>8. Children's Privacy</h3>
       <p>5kable is not directed at children under 13. We do not knowingly collect data from children under 13. If you believe a child has provided us with personal data, contact us immediately.</p>
