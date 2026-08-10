@@ -840,11 +840,50 @@ function navigateTo(slug) {
   showCountry(c);
 }
 
+// Each country's URL only became a real, crawlable page once hosting
+// started serving /metas/<slug> with a 200 instead of the old GitHub
+// Pages 404-redirect trick — but a distinct URL alone still isn't a
+// distinct PAGE to Google if every one of them carries the same
+// <title>/description/canonical as the generic /metas map. Without
+// this, all country guides would keep collapsing into one search
+// result no matter how many get written. Restored by resetPageMeta()
+// when navigating back to the map.
+const DEFAULT_META = {
+  title: document.title,
+  description: document.querySelector('meta[name="description"]')?.content || '',
+  canonical: document.querySelector('link[rel="canonical"]')?.href || 'https://5kable.net/metas',
+};
+function setMetaContent(selector, attr, value){
+  const el = document.querySelector(selector);
+  if (el) el[attr] = value;
+}
+function applyPageMeta(title, description, url){
+  document.title = title;
+  setMetaContent('meta[name="description"]', 'content', description);
+  setMetaContent('link[rel="canonical"]', 'href', url);
+  setMetaContent('meta[property="og:url"]', 'content', url);
+  setMetaContent('meta[property="og:title"]', 'content', title);
+  setMetaContent('meta[property="og:description"]', 'content', description);
+  setMetaContent('meta[name="twitter:title"]', 'content', title);
+  setMetaContent('meta[name="twitter:description"]', 'content', description);
+}
+function updatePageMetaForCountry(c){
+  applyPageMeta(
+    `${c.name} Meta Guide — 5kable`,
+    `How to identify ${c.name} in map-guessing games — road signs, poles, architecture, and other visual clues, explained.`,
+    `https://5kable.net/metas/${c.slug}`
+  );
+}
+function resetPageMeta(){
+  applyPageMeta(DEFAULT_META.title, DEFAULT_META.description, DEFAULT_META.canonical);
+}
+
 function showMap() {
   document.getElementById('map-view').style.display = 'block';
   document.getElementById('country-view').style.display = 'none';
   document.getElementById('nav-report-btn').style.display = 'none';
   history.pushState({}, '', '/metas');
+  resetPageMeta();
   globeIsVisible = true;
   resizeGlobeRenderer();
 }
@@ -894,6 +933,7 @@ async function showCountry(c) {
   document.getElementById('map-view').style.display = 'none';
   globeIsVisible = false;
   currentCountryName = c.name;
+  updatePageMetaForCountry(c);
   document.getElementById('nav-report-btn').style.display = 'inline-block';
   const cv = document.getElementById('country-view');
   cv.style.display = 'block';
