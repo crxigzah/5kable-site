@@ -150,7 +150,12 @@
 
 <main>
   <h1 id="game-title">Training Game</h1>
-  <div class="sub" id="game-sub"></div>
+  <!-- Static fallback matching the default (bollard) mode's text — this
+       div is empty until the script below overwrites it based on the
+       ?type= query param, and Google's crawler can snapshot the page
+       before that JS runs. An empty heading + empty sub is thin enough
+       content that Google flagged this page as a soft 404. -->
+  <div class="sub" id="game-sub">Guess the country from the bollard alone.</div>
 
   <div class="scoreboard">
     <div class="score-item"><div class="score-num" id="score-correct">0</div><div class="score-label">Correct</div></div>
