@@ -1647,21 +1647,6 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     <div id="form-register">
       <div class="form-group"><label>Username</label><input id="reg-username" type="text" placeholder="GeoMaster99"/></div>
       <div class="form-group"><label>Email</label><input id="reg-email" type="email" placeholder="you@example.com"/></div>
-      <div class="form-group">
-        <label>Phone Number <span style="color:#ff6b6b;">*</span></label>
-        <div style="display:flex;gap:8px;">
-          <div id="phone-code-wrap" style="flex:0 0 110px;position:relative;">
-            <button type="button" id="phone-code-btn" onclick="togglePhoneCodeList(event)" style="width:100%;background:#0d0d18;border:1px solid #1e1e35;color:#e0e0f0;padding:11px 8px;border-radius:10px;font-size:14px;display:flex;align-items:center;gap:6px;cursor:pointer;">
-              <img id="phone-code-flag" src="" style="width:20px;height:14px;border-radius:2px;object-fit:cover;flex-shrink:0;">
-              <span id="phone-code-label" style="flex:1;text-align:left;">+1</span>
-              <span style="color:#8888aa;font-size:10px;">▾</span>
-            </button>
-            <div id="phone-code-list" style="display:none;position:absolute;top:100%;left:0;margin-top:4px;width:260px;max-height:260px;overflow-y:auto;background:#14141f;border:1px solid #2a2a3e;border-radius:10px;z-index:50;box-shadow:0 12px 32px rgba(0,0,0,0.45);"></div>
-            <input type="hidden" id="reg-phone-code" value="+1">
-          </div>
-          <input id="reg-phone" type="tel" placeholder="412 345 678" autocomplete="tel" style="flex:1;"/>
-        </div>
-      </div>
       <div class="form-group"><label>Password</label><input id="reg-password" type="password" placeholder="Min 6 characters"/></div>
       <button class="btn btn-primary form-btn" onclick="register()">Create Account</button>
       <div class="form-error" id="reg-error"></div>
@@ -1679,13 +1664,6 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       <button class="btn btn-primary form-btn" onclick="verifyEmailCode()">Verify Email</button>
       <div class="form-error" id="verify-error"></div>
       <div style="margin-top:10px;text-align:center;"><span style="color:var(--teal);cursor:pointer;text-decoration:none;font-size:13px;font-weight:600;" onclick="resendVerifyCode()">Resend code</span></div>
-    </div>
-    <div id="form-verify-phone" style="display:none;">
-      <div class="form-group"><label>Verification Code</label><input id="verify-phone-code" type="text" maxlength="6" inputmode="numeric" placeholder="6-digit code"/></div>
-      <div class="form-error" id="verify-phone-hint" style="color:var(--muted);display:block;">We've texted a 6-digit code to your phone number.</div>
-      <button class="btn btn-primary form-btn" onclick="verifyPhoneCode()">Verify Phone</button>
-      <div class="form-error" id="verify-phone-error"></div>
-      <div style="margin-top:10px;text-align:center;"><span style="color:var(--teal);cursor:pointer;text-decoration:none;font-size:13px;font-weight:600;" onclick="resendPhoneCode()">Resend code</span></div>
     </div>
   </div>
 </div>
@@ -1818,115 +1796,19 @@ function switchTab(tab) {
   document.getElementById('form-register').style.display     = tab === 'register' ? '' : 'none';
   document.getElementById('form-login').style.display        = tab === 'login'    ? '' : 'none';
   document.getElementById('form-verify').style.display       = tab === 'verify'   ? '' : 'none';
-  document.getElementById('form-verify-phone').style.display = tab === 'verify-phone' ? '' : 'none';
   document.getElementById('tab-register').className = 'tab' + (tab === 'register' ? ' active' : '');
   document.getElementById('tab-login').className    = 'tab' + (tab === 'login'    ? ' active' : '');
-  const hideTabs = (tab === 'verify' || tab === 'verify-phone');
+  const hideTabs = (tab === 'verify');
   document.getElementById('tab-register').style.display = hideTabs ? 'none' : '';
   document.getElementById('tab-login').style.display    = hideTabs ? 'none' : '';
-  document.getElementById('modal-title').textContent = tab === 'register' ? 'Create Account' : tab === 'verify' ? 'Verify Your Email' : tab === 'verify-phone' ? 'Verify Your Phone' : 'Welcome Back';
-  document.getElementById('modal-sub').textContent   = tab === 'register' ? 'Join 5kable for free' : tab === 'verify' ? 'Almost there!' : tab === 'verify-phone' ? 'One last step!' : 'Sign in to your account';
+  document.getElementById('modal-title').textContent = tab === 'register' ? 'Create Account' : tab === 'verify' ? 'Verify Your Email' : 'Welcome Back';
+  document.getElementById('modal-sub').textContent   = tab === 'register' ? 'Join 5kable for free' : tab === 'verify' ? 'Almost there!' : 'Sign in to your account';
 }
-
-// ── Phone country codes ────────────────────────────────────
-const PHONE_COUNTRY_CODES = [
-  {name:"United States", iso:"US", dial:"+1"}, {name:"Canada", iso:"CA", dial:"+1"},
-  {name:"United Kingdom", iso:"GB", dial:"+44"}, {name:"Ireland", iso:"IE", dial:"+353"},
-  {name:"Australia", iso:"AU", dial:"+61"}, {name:"New Zealand", iso:"NZ", dial:"+64"},
-  {name:"Germany", iso:"DE", dial:"+49"}, {name:"France", iso:"FR", dial:"+33"},
-  {name:"Spain", iso:"ES", dial:"+34"}, {name:"Portugal", iso:"PT", dial:"+351"},
-  {name:"Italy", iso:"IT", dial:"+39"}, {name:"Netherlands", iso:"NL", dial:"+31"},
-  {name:"Belgium", iso:"BE", dial:"+32"}, {name:"Switzerland", iso:"CH", dial:"+41"},
-  {name:"Austria", iso:"AT", dial:"+43"}, {name:"Sweden", iso:"SE", dial:"+46"},
-  {name:"Norway", iso:"NO", dial:"+47"}, {name:"Denmark", iso:"DK", dial:"+45"},
-  {name:"Finland", iso:"FI", dial:"+358"}, {name:"Iceland", iso:"IS", dial:"+354"},
-  {name:"Poland", iso:"PL", dial:"+48"}, {name:"Czechia", iso:"CZ", dial:"+420"},
-  {name:"Slovakia", iso:"SK", dial:"+421"}, {name:"Hungary", iso:"HU", dial:"+36"},
-  {name:"Romania", iso:"RO", dial:"+40"}, {name:"Bulgaria", iso:"BG", dial:"+359"},
-  {name:"Greece", iso:"GR", dial:"+30"}, {name:"Turkey", iso:"TR", dial:"+90"},
-  {name:"Croatia", iso:"HR", dial:"+385"}, {name:"Slovenia", iso:"SI", dial:"+386"},
-  {name:"Serbia", iso:"RS", dial:"+381"}, {name:"Ukraine", iso:"UA", dial:"+380"},
-  {name:"Russia", iso:"RU", dial:"+7"}, {name:"Estonia", iso:"EE", dial:"+372"},
-  {name:"Latvia", iso:"LV", dial:"+371"}, {name:"Lithuania", iso:"LT", dial:"+370"},
-  {name:"Luxembourg", iso:"LU", dial:"+352"}, {name:"Malta", iso:"MT", dial:"+356"},
-  {name:"Cyprus", iso:"CY", dial:"+357"},
-  {name:"Japan", iso:"JP", dial:"+81"}, {name:"South Korea", iso:"KR", dial:"+82"},
-  {name:"China", iso:"CN", dial:"+86"}, {name:"Taiwan", iso:"TW", dial:"+886"},
-  {name:"Hong Kong", iso:"HK", dial:"+852"}, {name:"Macau", iso:"MO", dial:"+853"},
-  {name:"Singapore", iso:"SG", dial:"+65"}, {name:"Malaysia", iso:"MY", dial:"+60"},
-  {name:"Indonesia", iso:"ID", dial:"+62"}, {name:"Philippines", iso:"PH", dial:"+63"},
-  {name:"Thailand", iso:"TH", dial:"+66"}, {name:"Vietnam", iso:"VN", dial:"+84"},
-  {name:"India", iso:"IN", dial:"+91"}, {name:"Pakistan", iso:"PK", dial:"+92"},
-  {name:"Bangladesh", iso:"BD", dial:"+880"}, {name:"Sri Lanka", iso:"LK", dial:"+94"},
-  {name:"Nepal", iso:"NP", dial:"+977"},
-  {name:"Israel", iso:"IL", dial:"+972"}, {name:"United Arab Emirates", iso:"AE", dial:"+971"},
-  {name:"Saudi Arabia", iso:"SA", dial:"+966"}, {name:"Qatar", iso:"QA", dial:"+974"},
-  {name:"Kuwait", iso:"KW", dial:"+965"}, {name:"Bahrain", iso:"BH", dial:"+973"},
-  {name:"Oman", iso:"OM", dial:"+968"}, {name:"Jordan", iso:"JO", dial:"+962"},
-  {name:"Lebanon", iso:"LB", dial:"+961"}, {name:"Egypt", iso:"EG", dial:"+20"},
-  {name:"South Africa", iso:"ZA", dial:"+27"}, {name:"Nigeria", iso:"NG", dial:"+234"},
-  {name:"Kenya", iso:"KE", dial:"+254"}, {name:"Ghana", iso:"GH", dial:"+233"},
-  {name:"Morocco", iso:"MA", dial:"+212"},
-  {name:"Brazil", iso:"BR", dial:"+55"}, {name:"Mexico", iso:"MX", dial:"+52"},
-  {name:"Argentina", iso:"AR", dial:"+54"}, {name:"Chile", iso:"CL", dial:"+56"},
-  {name:"Colombia", iso:"CO", dial:"+57"}, {name:"Peru", iso:"PE", dial:"+51"},
-  {name:"Uruguay", iso:"UY", dial:"+598"}, {name:"Ecuador", iso:"EC", dial:"+593"},
-  {name:"Costa Rica", iso:"CR", dial:"+506"}, {name:"Panama", iso:"PA", dial:"+507"},
-];
-PHONE_COUNTRY_CODES.sort((a,b) => a.name.localeCompare(b.name));
-
-function flagUrl(iso) {
-  return `https://flagcdn.com/24x18/${iso.toLowerCase()}.png`;
-}
-
-function selectPhoneCode(dial, iso) {
-  document.getElementById('reg-phone-code').value = dial;
-  document.getElementById('phone-code-label').textContent = dial;
-  document.getElementById('phone-code-flag').src = flagUrl(iso);
-  document.getElementById('phone-code-list').style.display = 'none';
-}
-
-function togglePhoneCodeList(e) {
-  e.stopPropagation();
-  const list = document.getElementById('phone-code-list');
-  list.style.display = (list.style.display === 'none' || !list.style.display) ? 'block' : 'none';
-}
-
-// Close the dropdown if the user clicks anywhere outside it
-document.addEventListener('click', (e) => {
-  const wrap = document.getElementById('phone-code-wrap');
-  if (wrap && !wrap.contains(e.target)) {
-    const list = document.getElementById('phone-code-list');
-    if (list) list.style.display = 'none';
-  }
-});
-
-function initPhoneCodeDropdown() {
-  const list = document.getElementById('phone-code-list');
-  if (!list) return;
-  list.innerHTML = PHONE_COUNTRY_CODES.map(c => `
-    <div class="phone-code-option" onclick="selectPhoneCode('${c.dial}','${c.iso}')"
-         role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectPhoneCode('${c.dial}','${c.iso}')}"
-         style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:13px;color:#e0e0f0;"
-         onmouseover="this.style.background='#1e1e2e'" onmouseout="this.style.background='transparent'">
-      <img src="${flagUrl(c.iso)}" style="width:20px;height:14px;border-radius:2px;object-fit:cover;flex-shrink:0;">
-      <span style="flex:1;">${c.name}</span>
-      <span style="color:#8888aa;">${c.dial}</span>
-    </div>`).join('');
-  // Best-effort default based on the browser's locale, falls back to +1 (US)
-  const locale = (navigator.language || 'en-US').split('-')[1];
-  const match = PHONE_COUNTRY_CODES.find(c => c.iso === locale) || PHONE_COUNTRY_CODES.find(c => c.dial === '+1');
-  if (match) selectPhoneCode(match.dial, match.iso);
-}
-initPhoneCodeDropdown();
 
 // ── Register ──────────────────────────────────────────────
 async function register() {
   const username = document.getElementById('reg-username').value.trim();
   const email    = document.getElementById('reg-email').value.trim();
-  const phoneCode  = document.getElementById('reg-phone-code').value;
-  const phoneLocal = document.getElementById('reg-phone').value.trim().replace(/[^\d]/g, '').replace(/^0+/, '');
-  const phone    = phoneLocal ? phoneCode + phoneLocal : '';
   const password = document.getElementById('reg-password').value;
   const errEl    = document.getElementById('reg-error');
   errEl.style.display = 'none';
@@ -1939,7 +1821,7 @@ async function register() {
   errEl.style.display = 'none';
   const referral_code = new URLSearchParams(window.location.search).get('ref') || '';
   try {
-    const res  = await fetch(API + '/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, email, password, phone_number: phone, referral_code}) });
+    const res  = await fetch(API + '/auth/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({username, email, password, referral_code}) });
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.error || 'Could not create account. Try again.'; errEl.style.display = 'block'; return; }
     if (data.needs_verification) {
@@ -1969,10 +1851,6 @@ async function verifyEmailCode() {
     const res  = await fetch(API + '/auth/verify_email', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token: pendingVerifyToken, code}) });
     const data = await res.json();
     if (!res.ok || !data.success) { errEl.textContent = data.error || 'Incorrect code'; errEl.style.color='#ff6b6b'; errEl.style.display='block'; return; }
-    if (data.needs_phone_verification) {
-      switchTab('verify-phone');
-      return;
-    }
     localStorage.setItem('kbl_token', pendingVerifyToken);
     localStorage.setItem('kbl_user',  JSON.stringify(pendingVerifyUser));
     closeModal();
@@ -1991,38 +1869,6 @@ async function resendVerifyCode() {
     const data = await res.json();
     if (!res.ok || !data.success) { errEl.textContent = data.error || 'Could not resend code'; errEl.style.color='#ff6b6b'; errEl.style.display='block'; return; }
     errEl.textContent = 'New code sent — check your inbox'; errEl.style.color='#00c9a7'; errEl.style.display='block';
-  } catch(e) { errEl.textContent = 'Could not connect to server. Try again.'; errEl.style.color='#ff6b6b'; errEl.style.display='block'; }
-}
-
-async function verifyPhoneCode() {
-  const code  = document.getElementById('verify-phone-code').value.trim();
-  const errEl = document.getElementById('verify-phone-error');
-  errEl.style.display = 'none';
-  if (!pendingVerifyToken) { errEl.textContent = 'Session expired, please sign in again'; errEl.style.color='#ff6b6b'; errEl.style.display='block'; return; }
-  if (code.length !== 6) { errEl.textContent = 'Enter the 6-digit code'; errEl.style.color='#ff6b6b'; errEl.style.display='block'; return; }
-  errEl.style.color='var(--muted)'; errEl.textContent = 'Verifying...'; errEl.style.display='block';
-  try {
-    const res  = await fetch(API + '/auth/verify_phone', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token: pendingVerifyToken, code}) });
-    const data = await res.json();
-    if (!res.ok || !data.success) { errEl.textContent = data.error || 'Incorrect code'; errEl.style.color='#ff6b6b'; errEl.style.display='block'; return; }
-    localStorage.setItem('kbl_token', pendingVerifyToken);
-    localStorage.setItem('kbl_user',  JSON.stringify(pendingVerifyUser));
-    closeModal();
-    showDashboard(pendingVerifyUser, pendingVerifyToken);
-    pendingVerifyToken = null;
-    pendingVerifyUser  = null;
-  } catch(e) { errEl.textContent = 'Could not connect to server. Try again.'; errEl.style.color='#ff6b6b'; errEl.style.display='block'; }
-}
-
-async function resendPhoneCode() {
-  const errEl = document.getElementById('verify-phone-error');
-  if (!pendingVerifyToken) { errEl.textContent = 'Session expired, please sign in again'; errEl.style.color='#ff6b6b'; errEl.style.display='block'; return; }
-  errEl.style.color='var(--muted)'; errEl.textContent = 'Sending new code...'; errEl.style.display='block';
-  try {
-    const res  = await fetch(API + '/auth/resend_phone_code', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token: pendingVerifyToken}) });
-    const data = await res.json();
-    if (!res.ok || !data.success) { errEl.textContent = data.error || 'Could not resend code'; errEl.style.color='#ff6b6b'; errEl.style.display='block'; return; }
-    errEl.textContent = 'New code sent — check your phone'; errEl.style.color='#00c9a7'; errEl.style.display='block';
   } catch(e) { errEl.textContent = 'Could not connect to server. Try again.'; errEl.style.color='#ff6b6b'; errEl.style.display='block'; }
 }
 
@@ -2061,19 +1907,6 @@ async function login() {
           pendingVerifyToken = vdata.token;
           pendingVerifyUser  = vdata.user;
           switchTab('verify');
-        } catch (e) { errEl.textContent = 'Could not connect to server. Try again.'; errEl.style.color='#ff6b6b'; errEl.style.display = 'block'; }
-        return;
-      }
-      if (data.code === 'phone_unverified') {
-        errEl.textContent = 'Sending you a new verification code...';
-        errEl.style.color='var(--muted)'; errEl.style.display = 'block';
-        try {
-          const vres = await fetch(API + '/auth/request_phone_verification', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, password}) });
-          const vdata = await vres.json();
-          if (!vres.ok) { errEl.textContent = vdata.error || 'Could not send a new code. Please try again.'; errEl.style.color='#ff6b6b'; errEl.style.display = 'block'; return; }
-          pendingVerifyToken = vdata.token;
-          pendingVerifyUser  = vdata.user;
-          switchTab('verify-phone');
         } catch (e) { errEl.textContent = 'Could not connect to server. Try again.'; errEl.style.color='#ff6b6b'; errEl.style.display = 'block'; }
         return;
       }
@@ -4583,10 +4416,10 @@ const POLICIES = {
   },
   privacy: {
     title: 'Privacy Policy',
-    date: 'Effective: 1 January 2026',
+    date: 'Effective: 13 August 2026',
     body: `
       <h3>1. What We Collect</h3>
-      <p>When you create an account, we collect your username, email address, a hashed version of your password, and (for SMS verification via Twilio) your phone number. We do not store plain-text passwords or verification codes. We also store session tokens and your subscription tier.</p>
+      <p>When you create an account, we collect your username, email address, and a hashed version of your password. We do not store plain-text passwords or verification codes. We also store session tokens and your subscription tier.</p>
       <p>When you press F7, we store the location (coordinates and a Google-provided Street View panorama reference) so other users' training guides can look up that panorama live, directly from Google. Your Street View screenshots are processed in memory to generate your analysis and are never saved to our database.</p>
       <p>If you use 5K chat, we log your messages and the AI's replies (along with the round's location context) to review conversation quality and improve the feature. If you submit a bug report, meta-guide correction, or support ticket, we store the message content and any contact details you provide. For security and abuse prevention, we log IP addresses alongside certain account actions (e.g. registration, login attempts).</p>
 
@@ -4595,7 +4428,6 @@ const POLICIES = {
         <li>To authenticate your account and maintain your session.</li>
         <li>To verify your subscription tier and deliver Pro features.</li>
         <li>To process payments through Stripe (we do not handle card details directly).</li>
-        <li>To verify your identity via SMS during account creation (via Twilio).</li>
         <li>To send important account-related communications (e.g. password changes, policy updates).</li>
         <li>To review and improve AI feature quality (chat logs, support tickets).</li>
         <li>To understand overall site usage via Google Analytics (see Section 7).</li>
@@ -4608,7 +4440,6 @@ const POLICIES = {
       <ul>
         <li><strong>Anthropic</strong> AI analysis via the Claude API, called from our servers.</li>
         <li><strong>Stripe</strong> payment processing. Stripe handles all card data under their own PCI-DSS compliance.</li>
-        <li><strong>Twilio</strong> SMS phone verification during account creation.</li>
         <li><strong>Supabase</strong> database hosting for user accounts and sessions, hosted in eu-west-1 (Ireland).</li>
         <li><strong>Render</strong> API server hosting.</li>
         <li><strong>Google</strong> Street View panoramas shown in training guides are embedded live from Google Maps Platform, and Google Analytics measures site usage; both are subject to Google's own Privacy Policy.</li>
