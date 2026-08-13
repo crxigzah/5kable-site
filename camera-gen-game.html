@@ -203,6 +203,32 @@ function saveStats(){
 }
 renderStats();
 
+// Correct/Played/Best used to live only in localStorage — the one place
+// on the site where a logged-in player's stats weren't tied to their
+// account. Guests keep the localStorage-only behavior; logged-in players
+// get their real totals loaded from the server instead of starting at 0.
+async function loadMyQuizStats(){
+  const token = getToken();
+  if (!token) return;
+  try {
+    const res = await fetch(`${API}/camera_quiz/my_stats`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ token })
+    });
+    const data = await res.json();
+    if (data.error) return;
+    stats.correct = data.total_correct;
+    stats.total = data.total_played;
+    stats.best = data.best_streak;
+    // stats.streak (the current in-progress run) is deliberately left
+    // alone — it's a live streak, not a lifetime total, and resets
+    // naturally on the next wrong answer regardless.
+    saveStats();
+    renderStats();
+  } catch(e) {}
+}
+loadMyQuizStats();
+
 function getToken() { return localStorage.getItem('kbl_token'); }
 function getUser()  { try { return JSON.parse(localStorage.getItem('kbl_user')); } catch(e) { return null; } }
 function escapeHtml(s){
@@ -296,6 +322,14 @@ function submitAnswer(picked){
   }
   saveStats();
   renderStats();
+
+  const token = getToken();
+  if (token) {
+    fetch(`${API}/camera_quiz/record_answer`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ token, correct: isCorrect })
+    }).catch(() => {});
+  }
 
   document.querySelectorAll('.opt-btn').forEach(btn => {
     btn.disabled = true;
