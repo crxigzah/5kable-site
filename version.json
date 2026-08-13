@@ -1,5 +1,5 @@
 {
-  "version": "1.0.6",
+  "version": "1.0.7",
   "download_url": "https://github.com/crxigzah/5kable-releases/releases/latest/download/5kableExtension.zip",
-  "release_notes": "The toolbar popup now shows your level and daily streak alongside your tier."
+  "release_notes": "Referral bonuses now notify both sides — a toast for the new player, an email for whoever invited them."
 }
