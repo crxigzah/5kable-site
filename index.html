@@ -2616,9 +2616,9 @@ async function loadRegionAccuracy(token){
       const color = s.pct >= 80 ? 'var(--teal)' : s.pct >= 50 ? '#f0a500' : '#ff6b6b';
       const rowId = `stats-country-row-${i}`;
       const slug = STATS_COUNTRY_SLUGS[s.country];
-      const guideLink = slug ? `<a href="/metas/${slug}" onclick="event.stopPropagation()" title="View ${escapeHtmlLocal(s.country)} guide" style="color:var(--muted);text-decoration:none;flex-shrink:0;">📖</a>` : '';
+      const guideLink = slug ? `<a href="/metas/${slug}" onclick="event.stopPropagation()" title="View ${escapeHtmlLocal(s.country)} guide" style="flex-shrink:0;line-height:0;">${renderBadgeImg(s.country, 18) || '🏳️'}</a>` : '';
       return `<div>
-        <div onclick="toggleCountryRegions('${rowId}', ${JSON.stringify(s.country)})" style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+        <div onclick="toggleCountryRegions('${rowId}', ${JSON.stringify(s.country).replace(/"/g, '&quot;')})" style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;">
           <div style="width:150px;font-size:13px;font-weight:600;flex-shrink:0;display:flex;align-items:center;gap:6px;">${escapeHtmlLocal(s.country)}${guideLink}</div>
           <div style="flex:1;background:var(--bg2);border-radius:6px;height:8px;overflow:hidden;">
             <div style="width:${s.pct}%;height:100%;background:${color};"></div>
