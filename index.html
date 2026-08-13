@@ -2728,8 +2728,12 @@ async function loadFullStats(token){
   const confusionEl = document.getElementById('stats-confusion-matrix');
   const recentEl = document.getElementById('stats-recent-activity');
   try {
-    const res = await fetch(API + '/guess/full_stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const [res, contribRes] = await Promise.all([
+      fetch(API + '/guess/full_stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) }),
+      fetch(API + '/scenes/my_contributions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) }),
+    ]);
     const data = await res.json();
+    const contrib = await contribRes.json();
     _gaxRegionBreakdown = data.region_breakdown || {};
 
     // ── Overview cards ──────────────────────────────────────────
@@ -2745,6 +2749,8 @@ async function loadFullStats(token){
         ['🔥', o.current_streak, 'Current Streak'],
         ['⚡', o.best_streak, 'Best Streak Ever'],
         ['📅', o.sessions, 'Sessions Played'],
+        ['📍', contrib.contributed ?? 0, 'Locations Contributed'],
+        ['🌟', contrib.times_helped_others ?? 0, 'Times Helped Others'],
       ];
       overviewEl.innerHTML = cards.map(([icon, num, label]) => `
         <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;transition:transform .15s,border-color .15s;cursor:default;" onmouseover="this.style.transform='translateY(-3px)';this.style.borderColor='rgba(0,201,167,0.4)'" onmouseout="this.style.transform='translateY(0)';this.style.borderColor='var(--border)'">
