@@ -1669,7 +1669,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     <div id="form-login" style="display:none;">
       <div class="form-group"><label>Email</label><input id="login-email" type="email" placeholder="you@example.com"/></div>
       <div class="form-group"><label>Password</label><input id="login-password" type="password" placeholder="Your password"/></div>
-      <div class="form-group" id="login-totp-group" style="display:none;"><label>2FA Code</label><input id="login-totp" type="text" placeholder="6-digit code" maxlength="6" inputmode="numeric"/></div>
+      <div class="form-group" id="login-totp-group" style="display:none;"><label>2FA Code</label><input id="login-totp" type="text" placeholder="6-digit code" maxlength="10" inputmode="text"/><div style="font-size:11px;color:#6a6a9a;margin-top:4px;">Lost your authenticator? A backup code works here too.</div></div>
       <button class="btn btn-primary form-btn" onclick="login()">Sign In</button>
       <div class="form-error" id="login-error"></div>
     </div>
@@ -3994,12 +3994,16 @@ function showAccountSettings() {
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
             <span style="color:#10b981;font-size:13px;">✓ 2FA is active on your account</span>
           </div>
-          <div style="font-size:12px;color:#6a6a9a;margin-bottom:8px;">Enter your authenticator code to disable:</div>
+          <div style="font-size:12px;color:#6a6a9a;margin-bottom:8px;">Enter your authenticator code to disable (a backup code also works):</div>
           <div style="display:flex;gap:8px;">
-            <input id="twofa-disable-code" type="text" maxlength="6" placeholder="000000" style="flex:1;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:9px 12px;border-radius:8px;font-size:16px;letter-spacing:6px;text-align:center;outline:none;"/>
+            <input id="twofa-disable-code" type="text" maxlength="10" placeholder="000000" style="flex:1;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:9px 12px;border-radius:8px;font-size:16px;letter-spacing:6px;text-align:center;outline:none;"/>
             <button onclick="disable2FA()" style="background:#ff4c6a;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;">Disable</button>
           </div>
           <div id="twofa-disable-msg" style="font-size:11px;margin-top:6px;text-align:center;"></div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #1e1e35;">
+            <div style="font-size:12px;color:#6a6a9a;margin-bottom:8px;">Lost your backup codes? Regenerate a fresh set of 10 (invalidates the old ones):</div>
+            <button onclick="regenerateBackupCodes()" style="background:transparent;color:#b388ff;border:1px solid #7c3aed;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">🔄 Regenerate backup codes</button>
+          </div>
         </div>
       </div>
 
@@ -4184,10 +4188,62 @@ async function confirm2FA() {
       document.getElementById('twofa-toggle-btn').style.display = 'none';
       const u = getUser() || {}; u.totp_enabled = true; localStorage.setItem('kbl_user', JSON.stringify(u));
       if(msg){msg.style.color='#10b981';msg.textContent='✓ 2FA enabled successfully!';}
+      if (Array.isArray(data.backup_codes) && data.backup_codes.length) showBackupCodesModal(data.backup_codes);
     } else {
       if(msg){msg.style.color='#ff4c6a';msg.textContent=data.error||'Verification failed';}
     }
   } catch(e) { if(msg){msg.style.color='#ff4c6a';msg.textContent='Connection error';} }
+}
+
+let _pendingBackupCodes = [];
+
+function showBackupCodesModal(codes) {
+  _pendingBackupCodes = codes;
+  const existing = document.getElementById('backup-codes-modal');
+  if (existing) existing.remove();
+  const overlay = document.createElement('div');
+  overlay.id = 'backup-codes-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2100;display:flex;align-items:center;justify-content:center;font-family:Segoe UI,Arial,sans-serif;';
+  overlay.innerHTML = `
+    <div style="background:#10101e;border:1px solid #1e1e35;border-radius:20px;padding:32px;width:420px;max-width:94vw;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,0.8);">
+      <div style="font-size:18px;font-weight:800;margin-bottom:8px;">🔑 Save your backup codes</div>
+      <div style="color:#8888aa;font-size:13px;margin-bottom:16px;">If you lose access to your authenticator app, each of these codes can be used once to sign in or disable 2FA. Store them somewhere safe — <strong>this is the only time they'll be shown.</strong></div>
+      <div style="background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;color:#e0e0f0;margin-bottom:16px;">
+        ${codes.map(c => `<div>${escapeHtmlLocal(c)}</div>`).join('')}
+      </div>
+      <button class="btn btn-outline" style="width:100%;margin-bottom:8px;" onclick="copyBackupCodes()">Copy Codes</button>
+      <button class="btn btn-primary" style="width:100%;" onclick="document.getElementById('backup-codes-modal').remove()">I've saved these — Close</button>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+function copyBackupCodes() {
+  const text = _pendingBackupCodes.join('\n');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => toastIdx('Backup codes copied ✓'));
+  } else {
+    prompt('Copy your backup codes:', text);
+  }
+}
+
+async function regenerateBackupCodes() {
+  const token = getToken();
+  if (!token) return;
+  const code = prompt('Enter your current authenticator code (or an existing backup code) to confirm:');
+  if (!code) return;
+  try {
+    const res = await fetch(API + '/auth/2fa/backup_codes/regenerate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token, code: code.trim()})
+    });
+    const data = await res.json();
+    if (Array.isArray(data.backup_codes) && data.backup_codes.length) {
+      showBackupCodesModal(data.backup_codes);
+      toastIdx('New backup codes generated ✓');
+    } else {
+      alert(data.error || 'Could not regenerate backup codes');
+    }
+  } catch(e) { alert('Connection error'); }
 }
 
 async function disable2FA() {
