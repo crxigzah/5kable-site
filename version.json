@@ -1,5 +1,5 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "download_url": "https://github.com/crxigzah/5kable-releases/releases/latest/download/5kableExtension.zip",
-  "release_notes": "Removed remaining GeoGuessr mentions from the extension's visible text (description, tooltips, status messages)."
+  "release_notes": "You'll now see achievement and streak toasts right in the panel when you earn them, instead of only on the dashboard."
 }
