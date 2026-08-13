@@ -2547,6 +2547,57 @@ function escapeHtmlLocal(s){
   return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// Country name -> /metas/<slug> mapping, mirrored from metas.html's own
+// list (not derived by lowercasing/stripping the name here) because a
+// handful of countries have accents or punctuation - São Tomé & Príncipe,
+// Curaçao, Türkiye - where a naive slugify would silently produce a
+// broken link. Used to turn the Stats page's plain-text country/region
+// mentions (Coin-Flip Countries, Best/Worst Country & Region, Region
+// Accuracy) into direct links to that country's guide, so seeing a weak
+// spot and fixing it is one click instead of three.
+const STATS_COUNTRY_SLUGS = {
+  "Alaska":"alaska","Albania":"albania","American Samoa":"american-samoa","Andorra":"andorra",
+  "Argentina":"argentina","Australia":"australia","Austria":"austria","Bangladesh":"bangladesh",
+  "Belgium":"belgium","Bhutan":"bhutan","Bolivia":"bolivia","Bosnia & Herzegovina":"bosnia",
+  "Botswana":"botswana","Brazil":"brazil","Bulgaria":"bulgaria","Cambodia":"cambodia",
+  "Canada":"canada","Chile":"chile","Christmas Island":"christmas-island","Colombia":"colombia",
+  "Costa Rica":"costa-rica","Croatia":"croatia","Curaçao":"curacao","Cyprus":"cyprus",
+  "Czech Republic":"czech-republic","Denmark":"denmark","Dominican Republic":"dominican-republic",
+  "Ecuador":"ecuador","Estonia":"estonia","Eswatini":"eswatini","Faroe Islands":"faroe-islands",
+  "Finland":"finland","France":"france","Georgia":"georgia","Germany":"germany","Ghana":"ghana",
+  "Gibraltar":"gibraltar","Greece":"greece","Greenland":"greenland","Guam":"guam",
+  "Guatemala":"guatemala","Hawaii":"hawaii","Hong Kong":"hong-kong","Hungary":"hungary",
+  "Iceland":"iceland","India":"india","Indonesia":"indonesia","Ireland":"ireland",
+  "Isle of Man":"isle-of-man","Israel":"israel","Italy":"italy","Japan":"japan","Jersey":"jersey",
+  "Jordan":"jordan","Kazakhstan":"kazakhstan","Kenya":"kenya","Kyrgyzstan":"kyrgyzstan",
+  "Laos":"laos","Latvia":"latvia","Lebanon":"lebanon","Lesotho":"lesotho",
+  "Liechtenstein":"liechtenstein","Lithuania":"lithuania","Luxembourg":"luxembourg",
+  "Madagascar":"madagascar","Malaysia":"malaysia","Malta":"malta","Mexico":"mexico",
+  "Monaco":"monaco","Mongolia":"mongolia","Montenegro":"montenegro","Namibia":"namibia",
+  "Nepal":"nepal","Netherlands":"netherlands","New Zealand":"new-zealand","Nigeria":"nigeria",
+  "North Macedonia":"north-macedonia","Northern Mariana Islands":"northern-mariana-islands",
+  "Norway":"norway","Oman":"oman","Panama":"panama","Paraguay":"paraguay","Peru":"peru",
+  "Philippines":"philippines","Poland":"poland","Portugal":"portugal","Puerto Rico":"puerto-rico",
+  "Qatar":"qatar","Romania":"romania","Russia":"russia","Rwanda":"rwanda","San Marino":"san-marino",
+  "São Tomé & Príncipe":"sao-tome-and-principe","Senegal":"senegal","Serbia":"serbia",
+  "Singapore":"singapore","Slovakia":"slovakia","Slovenia":"slovenia","South Africa":"south-africa",
+  "South Korea":"south-korea","Spain":"spain","Sri Lanka":"sri-lanka","Sweden":"sweden",
+  "Switzerland":"switzerland","Taiwan":"taiwan","Thailand":"thailand","Tunisia":"tunisia",
+  "Türkiye":"turkey","Turkey":"turkey","Uganda":"uganda","Ukraine":"ukraine",
+  "United Arab Emirates":"united-arab-emirates","United Kingdom":"united-kingdom",
+  "United States":"united-states","United States of America":"united-states","Uruguay":"uruguay",
+  "US Virgin Islands":"us-virgin-islands","Vietnam":"vietnam",
+};
+// Wraps label in a link to that country's guide if we recognise the
+// name; otherwise returns the label as plain text unchanged, rather
+// than risk a broken link for a name we don't have a mapping for.
+function statsCountryLink(countryName, labelHtml){
+  const slug = STATS_COUNTRY_SLUGS[countryName];
+  return slug
+    ? `<a href="/metas/${slug}" style="color:inherit;text-decoration:none;border-bottom:1px dotted currentColor;" title="View ${escapeHtmlLocal(countryName)} guide">${labelHtml}</a>`
+    : labelHtml;
+}
+
 let _gaxRegionBreakdown = {};
 
 async function loadRegionAccuracy(token){
@@ -2564,9 +2615,11 @@ async function loadRegionAccuracy(token){
     listEl.innerHTML = sorted.map((s, i) => {
       const color = s.pct >= 80 ? 'var(--teal)' : s.pct >= 50 ? '#f0a500' : '#ff6b6b';
       const rowId = `stats-country-row-${i}`;
+      const slug = STATS_COUNTRY_SLUGS[s.country];
+      const guideLink = slug ? `<a href="/metas/${slug}" onclick="event.stopPropagation()" title="View ${escapeHtmlLocal(s.country)} guide" style="color:var(--muted);text-decoration:none;flex-shrink:0;">📖</a>` : '';
       return `<div>
         <div onclick="toggleCountryRegions('${rowId}', ${JSON.stringify(s.country)})" style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;">
-          <div style="width:150px;font-size:13px;font-weight:600;flex-shrink:0;">${escapeHtmlLocal(s.country)}</div>
+          <div style="width:150px;font-size:13px;font-weight:600;flex-shrink:0;display:flex;align-items:center;gap:6px;">${escapeHtmlLocal(s.country)}${guideLink}</div>
           <div style="flex:1;background:var(--bg2);border-radius:6px;height:8px;overflow:hidden;">
             <div style="width:${s.pct}%;height:100%;background:${color};"></div>
           </div>
@@ -2614,25 +2667,25 @@ async function loadGuessInsights(token){
     const data = await res.json();
 
     bestEl.innerHTML = data.best
-      ? `${escapeHtmlLocal(data.best.country)} <span style="color:var(--teal);font-size:14px;">${data.best.pct}%</span> <span style="color:var(--muted);font-size:12px;font-weight:400;">(${data.best.correct}/${data.best.total})</span>`
+      ? statsCountryLink(data.best.country, `${escapeHtmlLocal(data.best.country)} <span style="color:var(--teal);font-size:14px;">${data.best.pct}%</span> <span style="color:var(--muted);font-size:12px;font-weight:400;">(${data.best.correct}/${data.best.total})</span>`)
       : `<span style="color:var(--muted);font-size:13px;font-weight:400;">⏳ Awaiting games played</span>`;
 
     worstEl.innerHTML = data.worst
-      ? `${escapeHtmlLocal(data.worst.country)} <span style="color:#ff6b6b;font-size:14px;">${data.worst.pct}%</span> <span style="color:var(--muted);font-size:12px;font-weight:400;">(${data.worst.correct}/${data.worst.total})</span>`
+      ? statsCountryLink(data.worst.country, `${escapeHtmlLocal(data.worst.country)} <span style="color:#ff6b6b;font-size:14px;">${data.worst.pct}%</span> <span style="color:var(--muted);font-size:12px;font-weight:400;">(${data.worst.correct}/${data.worst.total})</span>`)
       : `<span style="color:var(--muted);font-size:13px;font-weight:400;">⏳ Awaiting games played</span>`;
 
     if (dashBestEl) dashBestEl.innerHTML = data.best
-      ? `${escapeHtmlLocal(data.best.country)} <span style="color:var(--teal);">${data.best.pct}%</span>`
+      ? statsCountryLink(data.best.country, `${escapeHtmlLocal(data.best.country)} <span style="color:var(--teal);">${data.best.pct}%</span>`)
       : `<span style="color:var(--muted);font-size:13px;font-weight:400;">Play some rounds to find out</span>`;
     if (dashWorstEl) dashWorstEl.innerHTML = data.worst
-      ? `${escapeHtmlLocal(data.worst.country)} <span style="color:#ff6b6b;">${data.worst.pct}%</span>`
+      ? statsCountryLink(data.worst.country, `${escapeHtmlLocal(data.worst.country)} <span style="color:#ff6b6b;">${data.worst.pct}%</span>`)
       : `<span style="color:var(--muted);font-size:13px;font-weight:400;">Play some rounds to find out</span>`;
 
     fiftyEl.innerHTML = (data.fifty_fifty && data.fifty_fifty.length)
-      ? data.fifty_fifty.map(c => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
+      ? data.fifty_fifty.map(c => statsCountryLink(c.country, `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px;">
           <span>${escapeHtmlLocal(c.country)}</span>
           <span style="color:#f0a500;">${c.pct}% <span style="color:var(--muted);">(${c.correct}/${c.total})</span></span>
-        </div>`).join('')
+        </div>`)).join('')
       : `<div style="color:var(--muted);font-size:13px;">⏳ Awaiting games played</div>`;
   } catch(e) {
     bestEl.textContent = '—'; worstEl.textContent = '—';
@@ -2703,10 +2756,10 @@ async function loadFullStats(token){
 
     // ── Best/worst region ────────────────────────────────────────
     bestRegionEl.innerHTML = data.best_region
-      ? `${escapeHtmlLocal(data.best_region.region)} <span style="color:var(--muted);font-size:12px;font-weight:400;">(${escapeHtmlLocal(data.best_region.country)})</span> <span style="color:var(--teal);font-size:14px;">${data.best_region.pct}%</span>`
+      ? statsCountryLink(data.best_region.country, `${escapeHtmlLocal(data.best_region.region)} <span style="color:var(--muted);font-size:12px;font-weight:400;">(${escapeHtmlLocal(data.best_region.country)})</span> <span style="color:var(--teal);font-size:14px;">${data.best_region.pct}%</span>`)
       : `<span style="color:var(--muted);font-size:13px;font-weight:400;">⏳ Awaiting games played</span>`;
     worstRegionEl.innerHTML = data.worst_region
-      ? `${escapeHtmlLocal(data.worst_region.region)} <span style="color:var(--muted);font-size:12px;font-weight:400;">(${escapeHtmlLocal(data.worst_region.country)})</span> <span style="color:#ff6b6b;font-size:14px;">${data.worst_region.pct}%</span>`
+      ? statsCountryLink(data.worst_region.country, `${escapeHtmlLocal(data.worst_region.region)} <span style="color:var(--muted);font-size:12px;font-weight:400;">(${escapeHtmlLocal(data.worst_region.country)})</span> <span style="color:#ff6b6b;font-size:14px;">${data.worst_region.pct}%</span>`)
       : `<span style="color:var(--muted);font-size:13px;font-weight:400;">⏳ Awaiting games played</span>`;
 
     // ── Daily trend (last 30 days) ────────────────────────────────
