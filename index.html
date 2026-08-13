@@ -1250,6 +1250,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       <div style="display:flex;align-items:center;gap:12px;">
         <span class="dash-tier" id="dash-tier">Free</span>
         <button class="btn btn-outline" onclick="shareProfile()" style="font-size:12px;padding:6px 14px;">🔗 Share Profile</button>
+        <button class="btn btn-outline" onclick="compareWithFriend()" style="font-size:12px;padding:6px 14px;">⚔️ Compare</button>
         <button class="btn btn-outline" onclick="logout()" style="font-size:12px;padding:6px 14px;">Sign Out</button>
       </div>
     </div>
@@ -1384,7 +1385,42 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
         <div style="font-weight:700;font-size:13px;margin-bottom:14px;">🏆 Achievements <span id="profile-achievements-count" style="color:var(--muted);font-weight:400;"></span></div>
         <div id="profile-achievements-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;"></div>
       </div>
-      <div style="text-align:center;">
+      <div style="text-align:center;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button id="profile-compare-btn" style="display:none;" class="btn btn-primary" onclick="goToCompare(getUser().username, document.getElementById('profile-username').textContent)">⚔️ Compare with Me</button>
+        <button class="btn btn-outline" onclick="goHome()">← Back to 5kable</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="compare-page" style="display:none;min-height:80vh;">
+  <div style="padding:40px;max-width:640px;margin:0 auto;position:relative;z-index:1;">
+    <div id="compare-page-loading" style="text-align:center;color:var(--muted);font-size:13px;padding:60px 0;">Loading comparison…</div>
+    <div id="compare-page-error" style="display:none;text-align:center;padding:60px 0;">
+      <div style="font-size:40px;margin-bottom:12px;">🕵️</div>
+      <div style="font-weight:700;font-size:16px;margin-bottom:8px;">Couldn't load that comparison</div>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:20px;">One of these players couldn't be found.</div>
+      <button class="btn btn-primary" onclick="goHome()">← Back to Home</button>
+    </div>
+    <div id="compare-page-content" style="display:none;">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:26px;font-weight:800;">⚔️ Head-to-Head</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="text-align:center;flex:1;">
+          <div id="compare-a-avatar" style="width:56px;height:56px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#080810;margin:0 auto 10px;"></div>
+          <div id="compare-a-name" style="font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+          <div id="compare-a-tier" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
+        </div>
+        <div style="font-size:18px;font-weight:800;color:var(--muted);padding:0 12px;flex-shrink:0;">VS</div>
+        <div style="text-align:center;flex:1;">
+          <div id="compare-b-avatar" style="width:56px;height:56px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;margin:0 auto 10px;"></div>
+          <div id="compare-b-name" style="font-weight:800;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+          <div id="compare-b-tier" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
+        </div>
+      </div>
+      <div id="compare-stats-rows" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:4px 20px;"></div>
+      <div style="text-align:center;margin-top:20px;">
         <button class="btn btn-outline" onclick="goHome()">← Back to 5kable</button>
       </div>
     </div>
@@ -2033,6 +2069,7 @@ function goHome() {
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
   document.getElementById('profile-page').style.display = 'none';
+  document.getElementById('compare-page').style.display = 'none';
   window.scrollTo(0, 0);
   updatePricingButtons();
 }
@@ -2047,6 +2084,7 @@ function goToDashboard() {
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
   document.getElementById('profile-page').style.display = 'none';
+  document.getElementById('compare-page').style.display = 'none';
   window.scrollTo(0, 0);
   // Refresh stats every time the dashboard is opened, not just on
   // initial page load — previously only showDashboard() (called once
@@ -2071,6 +2109,7 @@ function goToStats() {
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
   document.getElementById('profile-page').style.display = 'none';
+  document.getElementById('compare-page').style.display = 'none';
   window.scrollTo(0, 0);
   const token = getToken();
   if (token) {
@@ -2090,6 +2129,7 @@ function goToTickets() {
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
   document.getElementById('profile-page').style.display = 'none';
+  document.getElementById('compare-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'block';
   document.getElementById('ticket-thread-view').style.display = 'none';
   document.getElementById('tickets-list-view').style.display = 'block';
@@ -2233,6 +2273,7 @@ async function goToPublicProfile(username){
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
+  document.getElementById('compare-page').style.display = 'none';
   document.getElementById('profile-page').style.display = 'block';
   window.scrollTo(0, 0);
 
@@ -2289,6 +2330,10 @@ async function goToPublicProfile(username){
         </div>`).join('');
     }
 
+    const me = getUser();
+    const compareBtn = document.getElementById('profile-compare-btn');
+    compareBtn.style.display = (me && me.username.toLowerCase() !== data.username.toLowerCase()) ? '' : 'none';
+
     loadingEl.style.display = 'none';
     contentEl.style.display = 'block';
   } catch(e) {
@@ -2305,6 +2350,79 @@ function shareProfile(){
     navigator.clipboard.writeText(url).then(() => toastIdx('Profile link copied ✓'));
   } else {
     prompt('Copy your profile link:', url);
+  }
+}
+
+function compareWithFriend(){
+  const user = getUser();
+  if (!user) return;
+  const opponent = (prompt("Enter a player's username to compare stats with:") || '').trim();
+  if (!opponent) return;
+  goToCompare(user.username, opponent);
+}
+
+// Head-to-head comparison — reuses /profile/<username> (fetched twice)
+// rather than needing a dedicated backend endpoint, since every stat it
+// shows is already aggregated there.
+async function goToCompare(usernameA, usernameB){
+  currentView = 'compare';
+  clearInterval(ticketThreadPollInterval);
+  closeUserMenu();
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('stats-page').style.display = 'none';
+  document.getElementById('tickets-page').style.display = 'none';
+  document.getElementById('leaderboard-page').style.display = 'none';
+  document.getElementById('profile-page').style.display = 'none';
+  document.getElementById('compare-page').style.display = 'block';
+  window.scrollTo(0, 0);
+
+  const loadingEl = document.getElementById('compare-page-loading');
+  const errorEl = document.getElementById('compare-page-error');
+  const contentEl = document.getElementById('compare-page-content');
+  loadingEl.style.display = 'block';
+  errorEl.style.display = 'none';
+  contentEl.style.display = 'none';
+
+  try {
+    const [resA, resB] = await Promise.all([
+      fetch(`${API}/profile/${encodeURIComponent(usernameA)}`),
+      fetch(`${API}/profile/${encodeURIComponent(usernameB)}`),
+    ]);
+    const [a, b] = await Promise.all([resA.json(), resB.json()]);
+    if (!resA.ok || a.error || !resB.ok || b.error) { loadingEl.style.display = 'none'; errorEl.style.display = 'block'; return; }
+
+    document.getElementById('compare-a-avatar').textContent = a.username.charAt(0).toUpperCase();
+    document.getElementById('compare-a-name').textContent = a.username;
+    document.getElementById('compare-a-tier').textContent = `${a.tier_icon} Lv.${a.level}`;
+    document.getElementById('compare-b-avatar').textContent = b.username.charAt(0).toUpperCase();
+    document.getElementById('compare-b-name').textContent = b.username;
+    document.getElementById('compare-b-tier').textContent = `${b.tier_icon} Lv.${b.level}`;
+
+    const rows = [
+      ['Level', a.level, b.level],
+      ['Total XP', a.total_xp, b.total_xp],
+      ['Day Streak', a.current_streak, b.current_streak],
+      ['Best Streak', a.longest_streak, b.longest_streak],
+      ['Locations Added', a.contributed, b.contributed],
+      ['Achievements', a.achievements_earned.length, b.achievements_earned.length],
+    ];
+    document.getElementById('compare-stats-rows').innerHTML = rows.map(([label, va, vb], i) => {
+      const aWins = va > vb, bWins = vb > va;
+      const borderStyle = i === rows.length - 1 ? '' : 'border-bottom:1px solid var(--border);';
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;${borderStyle}">
+          <div style="flex:1;text-align:right;padding-right:16px;font-weight:${aWins ? '800' : '400'};color:${aWins ? 'var(--teal)' : 'var(--text)'};">${va.toLocaleString()}${aWins ? ' 🏆' : ''}</div>
+          <div style="width:130px;text-align:center;color:var(--muted);font-size:11px;flex-shrink:0;">${label}</div>
+          <div style="flex:1;text-align:left;padding-left:16px;font-weight:${bWins ? '800' : '400'};color:${bWins ? 'var(--teal)' : 'var(--text)'};">${vb.toLocaleString()}${bWins ? ' 🏆' : ''}</div>
+        </div>`;
+    }).join('');
+
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+  } catch(e) {
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'block';
   }
 }
 
@@ -2622,6 +2740,7 @@ function showDashboard(user, token) {
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
   document.getElementById('profile-page').style.display = 'none';
+  document.getElementById('compare-page').style.display = 'none';
   window.scrollTo(0,0);
   updateNav(user);
   updateNavAvatar();
@@ -3496,6 +3615,7 @@ function logout() {
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
   document.getElementById('profile-page').style.display = 'none';
+  document.getElementById('compare-page').style.display = 'none';
   resetNav();
   closeUserMenu();
   if (token) {
