@@ -431,10 +431,10 @@ nav::before {
 .dash-welcome { font-size:24px;font-weight:800; }
 .dash-tier { display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;background:rgba(0,201,167,0.12);border:1px solid var(--teal);color:var(--teal); }
 .dash-tier.pro { background:rgba(240,165,0,0.12);border-color:var(--gold);color:var(--gold); }
-.dash-cards { display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px; }
-.dash-card { background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px; }
-.dash-card-num { font-size:28px;font-weight:800;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
-.dash-card-label { font-size:12px;color:var(--muted);margin-top:4px; }
+.dash-cards { display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px; }
+.dash-card { background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 10px; }
+.dash-card-num { font-size:18px;font-weight:800;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+.dash-card-label { font-size:11px;color:var(--muted);margin-top:3px; }
 
 /* Auth modal */
 .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center; }
@@ -1281,39 +1281,10 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       </div>
     </div>
 
-    <!-- Level rewards roadmap -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:16px;">
-      <div style="font-weight:700;font-size:13px;margin-bottom:14px;">🎖️ Rank Rewards</div>
-      <div id="dash-rewards-roadmap" style="display:flex;flex-direction:column;gap:2px;"></div>
-    </div>
-
-    <!-- Milestone achievements -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:16px;">
-      <div style="font-weight:700;font-size:13px;margin-bottom:14px;">🏆 Achievements</div>
-      <div id="dash-achievements-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;">
-        <div style="grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;padding:10px 0;">Loading…</div>
-      </div>
-    </div>
-
-    <!-- Invite Friends -->
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:16px;">
-      <div style="font-weight:700;font-size:13px;margin-bottom:4px;">🎁 Invite Friends</div>
-      <div style="color:var(--muted);font-size:12px;margin-bottom:14px;">Share your link — you both get bonus XP once they verify their email and play their first round.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-        <input id="dash-referral-link" readonly value="Loading…" style="flex:1;min-width:200px;background:#0d0d18;border:1px solid #1e1e35;color:#e0e0f0;padding:9px 12px;border-radius:8px;font-size:12px;" onclick="this.select()">
-        <button class="btn btn-primary" style="font-size:12px;padding:8px 16px;" onclick="copyReferralLink()">Copy Link</button>
-      </div>
-      <div style="display:flex;gap:20px;font-size:12px;color:var(--muted);">
-        <span>👥 <span id="dash-referral-total" style="color:var(--text);font-weight:700;">0</span> joined</span>
-        <span>✅ <span id="dash-referral-converted" style="color:var(--text);font-weight:700;">0</span> earned you XP</span>
-      </div>
-    </div>
-
-    <div class="dash-cards">
-      <div class="dash-card"><div class="dash-card-num">✓</div><div class="dash-card-label">Account Active</div></div>
-      <div class="dash-card"><div class="dash-card-num" id="dash-tier-display">Free</div><div class="dash-card-label">Current Plan</div></div>
-      <div class="dash-card"><div class="dash-card-num" id="dash-joined">—</div><div class="dash-card-label">Member Since</div></div>
-    </div>
+    <!-- Your Progress — the most actionable content, promoted right after
+         your identity block instead of buried below the collectible
+         systems (Rank Rewards/Achievements weren't more important than
+         your actual practice stats, just visually louder). -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <div style="font-weight:700;">📊 Your Progress</div>
@@ -1336,8 +1307,50 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
         </div>
       </div>
     </div>
-    <div style="display:flex;gap:16px;flex-wrap:wrap;">
-      <div id="upgrade-section" style="flex:1;min-width:280px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;">
+
+    <!-- Progress systems — Rank Rewards and Achievements are both
+         "collectible" trackers rather than day-to-day info, so they're
+         paired side by side instead of each claiming a full-width row. -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-bottom:16px;">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:14px;">🎖️ Rank Rewards</div>
+        <div id="dash-rewards-roadmap" style="display:flex;flex-direction:column;gap:2px;"></div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:14px;">🏆 Achievements</div>
+        <div id="dash-achievements-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px;">
+          <div style="grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;padding:10px 0;">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invite Friends -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:16px;">
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px;">🎁 Invite Friends</div>
+      <div style="color:var(--muted);font-size:12px;margin-bottom:14px;">Share your link — you both get bonus XP once they verify their email and play their first round.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <input id="dash-referral-link" readonly value="Loading…" style="flex:1;min-width:200px;background:#0d0d18;border:1px solid #1e1e35;color:#e0e0f0;padding:9px 12px;border-radius:8px;font-size:12px;" onclick="this.select()">
+        <button class="btn btn-primary" style="font-size:12px;padding:8px 16px;" onclick="copyReferralLink()">Copy Link</button>
+      </div>
+      <div style="display:flex;gap:20px;font-size:12px;color:var(--muted);">
+        <span>👥 <span id="dash-referral-total" style="color:var(--text);font-weight:700;">0</span> joined</span>
+        <span>✅ <span id="dash-referral-converted" style="color:var(--text);font-weight:700;">0</span> earned you XP</span>
+      </div>
+    </div>
+
+    <!-- Account meta + Upgrade — the lowest-frequency-checked info,
+         tightened and pushed to the bottom so it stops competing
+         visually with actual gameplay content above it. -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:14px;">👤 Account</div>
+        <div class="dash-cards">
+          <div class="dash-card"><div class="dash-card-num">✓</div><div class="dash-card-label">Account Active</div></div>
+          <div class="dash-card"><div class="dash-card-num" id="dash-tier-display">Free</div><div class="dash-card-label">Current Plan</div></div>
+          <div class="dash-card"><div class="dash-card-num" id="dash-joined">—</div><div class="dash-card-label">Member Since</div></div>
+        </div>
+      </div>
+      <div id="upgrade-section" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;">
         <div style="font-weight:700;margin-bottom:8px;">⭐ Upgrade to Pro</div>
         <div style="color:var(--muted);font-size:13px;margin-bottom:16px;">Priority AI, advanced comparisons, export your library and more.</div>
         <button class="btn btn-primary" onclick="upgradeToPro()" style="width:100%;padding:11px;">Upgrade Now <span class="price-display" data-gbp="9.99">£9.99</span>/mo</button>
@@ -2852,13 +2865,13 @@ function renderRewardsRoadmap(level) {
   const el = document.getElementById('dash-rewards-roadmap');
   if (!el) return;
   const currentTier = _gaxTierForLevel(level);
-  el.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;';
+  el.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:6px;';
   el.innerHTML = _gaxLevelTiers.map(t => {
     const unlocked = level >= t.level;
     const isCurrent = currentTier.level === t.level;
-    return `<div style="text-align:center;padding:10px 6px;border-radius:10px;background:${isCurrent ? 'rgba(0,201,167,0.1)' : 'var(--bg2)'};border:1px solid ${isCurrent ? 'var(--teal)' : 'transparent'};opacity:${unlocked ? '1' : '.45'};">
-      <div style="font-size:20px;line-height:1;margin-bottom:6px;filter:${unlocked ? 'none' : 'grayscale(1)'};">${t.icon}</div>
-      <div style="font-size:11px;font-weight:700;color:${unlocked ? 'var(--text)' : 'var(--muted)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</div>
+    return `<div style="text-align:center;padding:8px 4px;border-radius:10px;background:${isCurrent ? 'rgba(0,201,167,0.1)' : 'var(--bg2)'};border:1px solid ${isCurrent ? 'var(--teal)' : 'transparent'};opacity:${unlocked ? '1' : '.45'};">
+      <div style="font-size:18px;line-height:1;margin-bottom:5px;filter:${unlocked ? 'none' : 'grayscale(1)'};">${t.icon}</div>
+      <div style="font-size:10px;font-weight:700;color:${unlocked ? 'var(--text)' : 'var(--muted)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.title}</div>
       <div style="font-size:9px;color:var(--muted);margin-top:2px;">Lv.${t.level}${unlocked ? '' : ' 🔒'}</div>
     </div>`;
   }).join('');
@@ -2943,9 +2956,9 @@ async function loadAchievements(token){
     const data = await res.json();
     const achievements = data.achievements || [];
     grid.innerHTML = achievements.map(a => `
-      <div style="text-align:center;padding:10px 6px;border-radius:10px;background:${a.earned ? 'rgba(0,201,167,0.1)' : 'var(--bg2)'};border:1px solid ${a.earned ? 'var(--teal)' : 'transparent'};opacity:${a.earned ? '1' : '.45'};" title="${escapeHtmlLocal(a.desc)}">
-        <div style="font-size:20px;line-height:1;margin-bottom:6px;filter:${a.earned ? 'none' : 'grayscale(1)'};">${a.icon}</div>
-        <div style="font-size:11px;font-weight:700;color:${a.earned ? 'var(--text)' : 'var(--muted)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtmlLocal(a.title)}</div>
+      <div style="text-align:center;padding:8px 4px;border-radius:10px;background:${a.earned ? 'rgba(0,201,167,0.1)' : 'var(--bg2)'};border:1px solid ${a.earned ? 'var(--teal)' : 'transparent'};opacity:${a.earned ? '1' : '.45'};" title="${escapeHtmlLocal(a.desc)}">
+        <div style="font-size:18px;line-height:1;margin-bottom:5px;filter:${a.earned ? 'none' : 'grayscale(1)'};">${a.icon}</div>
+        <div style="font-size:10px;font-weight:700;color:${a.earned ? 'var(--text)' : 'var(--muted)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtmlLocal(a.title)}</div>
         <div style="font-size:9px;color:var(--muted);margin-top:2px;">${a.earned ? '✓ Earned' : '🔒'}</div>
       </div>`).join('');
 
