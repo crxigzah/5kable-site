@@ -1249,6 +1249,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
         <span class="dash-tier" id="dash-tier">Free</span>
+        <button class="btn btn-outline" onclick="shareProfile()" style="font-size:12px;padding:6px 14px;">🔗 Share Profile</button>
         <button class="btn btn-outline" onclick="logout()" style="font-size:12px;padding:6px 14px;">Sign Out</button>
       </div>
     </div>
@@ -1345,6 +1346,46 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;">
       <div id="leaderboard-page-list">
         <div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">Loading...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="profile-page" style="display:none;min-height:80vh;">
+  <div style="padding:40px;max-width:640px;margin:0 auto;position:relative;z-index:1;">
+    <div id="profile-page-loading" style="text-align:center;color:var(--muted);font-size:13px;padding:60px 0;">Loading profile…</div>
+    <div id="profile-page-error" style="display:none;text-align:center;padding:60px 0;">
+      <div style="font-size:40px;margin-bottom:12px;">🕵️</div>
+      <div style="font-weight:700;font-size:16px;margin-bottom:8px;">Player not found</div>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:20px;">No 5kable player goes by that name.</div>
+      <button class="btn btn-primary" onclick="goHome()">← Back to Home</button>
+    </div>
+    <div id="profile-page-content" style="display:none;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div id="profile-avatar" style="width:72px;height:72px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#080810;margin:0 auto 14px;"></div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
+          <div id="profile-username" style="font-size:22px;font-weight:800;"></div>
+          <img id="profile-flag" style="display:none;width:22px;border-radius:3px;" title="Active country badge">
+        </div>
+        <div id="profile-tier" style="color:var(--muted);font-size:13px;margin-top:4px;"></div>
+        <div id="profile-member-since" style="color:var(--muted);font-size:11px;margin-top:2px;"></div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+          <span style="font-weight:700;font-size:13px;" id="profile-level-title">Level 1 — Rookie</span>
+          <span style="font-size:11px;color:var(--muted);" id="profile-xp-text">0 XP</span>
+        </div>
+        <div style="height:6px;background:var(--bg2);border-radius:3px;overflow:hidden;">
+          <div id="profile-level-fill" style="height:100%;width:0%;background:var(--teal);border-radius:3px;"></div>
+        </div>
+      </div>
+      <div id="profile-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:16px;"></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:16px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:14px;">🏆 Achievements <span id="profile-achievements-count" style="color:var(--muted);font-weight:400;"></span></div>
+        <div id="profile-achievements-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;"></div>
+      </div>
+      <div style="text-align:center;">
+        <button class="btn btn-outline" onclick="goHome()">← Back to 5kable</button>
       </div>
     </div>
   </div>
@@ -1991,6 +2032,7 @@ function goHome() {
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
+  document.getElementById('profile-page').style.display = 'none';
   window.scrollTo(0, 0);
   updatePricingButtons();
 }
@@ -2004,6 +2046,7 @@ function goToDashboard() {
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
+  document.getElementById('profile-page').style.display = 'none';
   window.scrollTo(0, 0);
   // Refresh stats every time the dashboard is opened, not just on
   // initial page load — previously only showDashboard() (called once
@@ -2027,6 +2070,7 @@ function goToStats() {
   document.getElementById('stats-page').style.display = 'block';
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
+  document.getElementById('profile-page').style.display = 'none';
   window.scrollTo(0, 0);
   const token = getToken();
   if (token) {
@@ -2045,6 +2089,7 @@ function goToTickets() {
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
+  document.getElementById('profile-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'block';
   document.getElementById('ticket-thread-view').style.display = 'none';
   document.getElementById('tickets-list-view').style.display = 'block';
@@ -2172,8 +2217,106 @@ async function loadTopContributorsLeaderboard(){
   }
 }
 
+// ── Public profile ────────────────────────────────────────
+// Reachable from anywhere via index.html?u=<username> — works even for
+// a logged-out visitor, since it's meant to be a shareable link. Ties
+// together every gamification stat this session added (level, flag
+// badge, achievements, daily streak, contributions), none of which
+// previously had anywhere to be shown off outside a player's own
+// private dashboard.
+async function goToPublicProfile(username){
+  currentView = 'profile';
+  clearInterval(ticketThreadPollInterval);
+  closeUserMenu();
+  document.getElementById('landing').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('stats-page').style.display = 'none';
+  document.getElementById('tickets-page').style.display = 'none';
+  document.getElementById('leaderboard-page').style.display = 'none';
+  document.getElementById('profile-page').style.display = 'block';
+  window.scrollTo(0, 0);
 
-// ── Tickets ───────────────────────────────────────────────
+  const loadingEl = document.getElementById('profile-page-loading');
+  const errorEl = document.getElementById('profile-page-error');
+  const contentEl = document.getElementById('profile-page-content');
+  loadingEl.style.display = 'block';
+  errorEl.style.display = 'none';
+  contentEl.style.display = 'none';
+
+  try {
+    const res = await fetch(`${API}/profile/${encodeURIComponent(username)}`);
+    const data = await res.json();
+    if (!res.ok || data.error) { loadingEl.style.display = 'none'; errorEl.style.display = 'block'; return; }
+
+    document.getElementById('profile-avatar').textContent = (data.username || '?').charAt(0).toUpperCase();
+    document.getElementById('profile-username').textContent = data.username;
+    const flagEl = document.getElementById('profile-flag');
+    const flagUrl = data.badge_country ? flagUrlForCountry(data.badge_country) : null;
+    if (flagUrl) { flagEl.src = flagUrl; flagEl.style.display = 'inline-block'; flagEl.title = data.badge_country; }
+    else flagEl.style.display = 'none';
+    document.getElementById('profile-tier').textContent = `${data.tier_icon} Level ${data.level} — ${data.tier_title}`;
+    document.getElementById('profile-member-since').textContent = data.member_since
+      ? `Member since ${new Date(data.member_since).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}` : '';
+    document.getElementById('profile-level-title').textContent = `Level ${data.level} — ${data.tier_title}`;
+    document.getElementById('profile-xp-text').textContent = `${data.total_xp.toLocaleString()} XP`;
+    const maxLevelXp = 50 * 25 * 25; // matches _gaxMaxLevel/backend's 50*n^2 curve — for a rough fill bar only
+    document.getElementById('profile-level-fill').style.width = Math.min(100, Math.round(100 * data.total_xp / maxLevelXp)) + '%';
+
+    const stats = [
+      ['🔥', data.current_streak, 'Day Streak'],
+      ['💎', data.longest_streak, 'Best Streak'],
+      ['📍', data.contributed, 'Locations Added'],
+      ['🌟', data.times_helped_others, 'Times Helped Others'],
+    ];
+    document.getElementById('profile-stats-grid').innerHTML = stats.map(([icon, num, label]) => `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 8px;text-align:center;">
+        <div style="font-size:20px;margin-bottom:4px;">${icon}</div>
+        <div style="font-size:16px;font-weight:800;">${(num ?? 0).toLocaleString()}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">${label}</div>
+      </div>`).join('');
+
+    document.getElementById('profile-achievements-count').textContent =
+      `(${data.achievements_earned.length}/${data.achievements_total})`;
+    const earnedKeys = new Set(data.achievements_earned.map(a => a.key));
+    const achievementsGrid = document.getElementById('profile-achievements-grid');
+    if (!data.achievements_earned.length) {
+      achievementsGrid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;padding:10px 0;">No achievements earned yet.</div>';
+    } else {
+      achievementsGrid.innerHTML = data.achievements_earned.map(a => `
+        <div style="text-align:center;padding:10px 6px;border-radius:10px;background:rgba(0,201,167,0.1);border:1px solid var(--teal);" title="${escapeHtmlLocal(a.desc)}">
+          <div style="font-size:20px;line-height:1;margin-bottom:6px;">${a.icon}</div>
+          <div style="font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtmlLocal(a.title)}</div>
+        </div>`).join('');
+    }
+
+    loadingEl.style.display = 'none';
+    contentEl.style.display = 'block';
+  } catch(e) {
+    loadingEl.style.display = 'none';
+    errorEl.style.display = 'block';
+  }
+}
+
+function shareProfile(){
+  const user = getUser();
+  if (!user) return;
+  const url = `${window.location.origin}${window.location.pathname}?u=${encodeURIComponent(user.username)}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => toastIdx('Profile link copied ✓'));
+  } else {
+    prompt('Copy your profile link:', url);
+  }
+}
+
+function toastIdx(message){
+  const el = document.createElement('div');
+  el.textContent = message;
+  el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#10101e;border:1px solid var(--teal);color:#eee;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:3000;box-shadow:0 12px 30px rgba(0,0,0,0.4);';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2500);
+}
+
+
 const TICKET_STATUS_STYLE = {
   open:        { label: 'Open',        bg: 'rgba(240,165,0,0.15)',  color: '#f0a500' },
   in_progress: { label: 'In Progress', bg: 'rgba(94,179,255,0.15)', color: '#5eb3ff' },
@@ -2478,6 +2621,7 @@ function showDashboard(user, token) {
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
+  document.getElementById('profile-page').style.display = 'none';
   window.scrollTo(0,0);
   updateNav(user);
   updateNavAvatar();
@@ -3351,6 +3495,7 @@ function logout() {
   document.getElementById('stats-page').style.display = 'none';
   document.getElementById('tickets-page').style.display = 'none';
   document.getElementById('leaderboard-page').style.display = 'none';
+  document.getElementById('profile-page').style.display = 'none';
   resetNav();
   closeUserMenu();
   if (token) {
@@ -3427,7 +3572,14 @@ document.addEventListener('keydown', e => {
 });
 
 // Wake server and check auth
-wakeServer().then(() => checkAuth());
+// If ?u=<username> is present, jump to that public profile once auth has
+// settled — chained AFTER checkAuth (not before) so a logged-in visitor's
+// own showDashboard() call can't stomp on it and silently redirect them
+// to their own dashboard instead of the profile link they actually opened.
+wakeServer().then(() => checkAuth()).then(() => {
+  const profileUsername = urlParams.get('u');
+  if (profileUsername) goToPublicProfile(profileUsername);
+});
 
 // ── Currency ──────────────────────────────────────────────
 const CURRENCIES = {
