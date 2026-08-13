@@ -126,6 +126,7 @@ nav { position:sticky;top:0;z-index:100;background:rgba(8,8,16,0.92);backdrop-fi
 }
 .enlargeable-photo:hover .expand-icon { opacity:1; }
 .enlargeable-photo:hover .expand-icon { background:rgba(0,0,0,0.75); }
+.report-mode-btn.active { background: var(--teal); color: #000; }
 </style>
 </head>
 <body>
@@ -1167,16 +1168,31 @@ function closeLightbox(){
 
 let currentReportCountry = null;
 
+let currentReportMode = 'issue';
 function openReportModal(countryName){
   currentReportCountry = countryName;
   document.getElementById('report-modal-country').textContent = `Guide: ${countryName}`;
   document.getElementById('report-modal-text').value = '';
   document.getElementById('report-modal-error').style.display = 'none';
-  const btn = document.getElementById('report-modal-submit');
-  btn.disabled = false;
-  btn.textContent = 'Submit Report';
+  setReportMode('issue');
   document.getElementById('report-modal-overlay').style.display = 'flex';
   document.body.style.overflow = 'hidden';
+}
+// Same modal, two purposes: flagging something wrong (the original
+// behaviour) vs. proposing a specific clue to ADD. Both land in the
+// same admin review queue - suggestions just get a one-click "insert
+// into guide" action there instead of only resolve/reject, so this
+// doubles as a lightweight way for players to help write guides
+// without needing any kind of editor access.
+function setReportMode(mode){
+  currentReportMode = mode;
+  document.getElementById('report-mode-issue').classList.toggle('active', mode === 'issue');
+  document.getElementById('report-mode-suggestion').classList.toggle('active', mode === 'suggestion');
+  document.getElementById('report-modal-title').textContent = mode === 'suggestion' ? '💡 Suggest a Tip' : '⚠️ Report a Meta Issue';
+  document.getElementById('report-modal-text').placeholder = mode === 'suggestion'
+    ? 'Know a clue that should be in this guide? Describe it here (a specific pole type, sign style, road marking, etc.)'
+    : "What's wrong with this guide? (outdated info, incorrect region, typo, etc.)";
+  document.getElementById('report-modal-submit').textContent = mode === 'suggestion' ? 'Submit Suggestion' : 'Submit Report';
 }
 function closeReportModal(){
   document.getElementById('report-modal-overlay').style.display = 'none';
@@ -1186,39 +1202,50 @@ async function submitMetaReport(){
   const desc = document.getElementById('report-modal-text').value.trim();
   const errEl = document.getElementById('report-modal-error');
   if(!desc){
-    errEl.textContent = 'Please describe the issue.';
+    errEl.textContent = currentReportMode === 'suggestion' ? 'Please describe the tip.' : 'Please describe the issue.';
     errEl.style.display = 'block';
     return;
   }
   const btn = document.getElementById('report-modal-submit');
+  const submittingLabel = currentReportMode === 'suggestion' ? 'Submitting suggestion…' : 'Submitting…';
+  const doneLabel = currentReportMode === 'suggestion' ? 'Suggestion submitted ✓' : 'Submitted ✓';
   btn.disabled = true;
-  btn.textContent = 'Submitting…';
+  btn.textContent = submittingLabel;
   errEl.style.display = 'none';
   try {
     // Optional — same localStorage key index.html stores the auth token
     // under. Anonymous submissions are fine too; the backend just won't
     // attach a user to those (and they won't be able to track it under
     // My Tickets, since there's no account to tie it to).
+    //
+    // Goes through /tickets/create, same as before this mode toggle
+    // existed — meta_reports/​/meta/report is a dead, pre-Tickets table
+    // nothing has written to since Tickets became "the general support
+    // system, replacing the old Meta Reports" (per the admin panel's own
+    // comment). The subject prefix is how the admin panel tells a
+    // suggestion apart from a plain issue report, since tickets have no
+    // dedicated field for it.
     const token = localStorage.getItem('kbl_token') || '';
+    const subjectPrefix = currentReportMode === 'suggestion' ? 'Meta suggestion' : 'Meta issue';
     const res = await fetch(`${API}/tickets/create`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
         category: 'meta',
-        subject: `Meta issue: ${currentReportCountry}`,
+        subject: `${subjectPrefix}: ${currentReportCountry}`,
         message: desc,
         token,
       })
     });
     const data = await res.json();
     if(!res.ok || data.error) throw new Error(data.error || 'Something went wrong');
-    btn.textContent = 'Submitted ✓';
+    btn.textContent = doneLabel;
     setTimeout(() => { closeReportModal(); }, 900);
   } catch(e){
-    errEl.textContent = e.message || 'Could not submit report. Please try again.';
+    errEl.textContent = e.message || 'Could not submit — please try again.';
     errEl.style.display = 'block';
     btn.disabled = false;
-    btn.textContent = 'Submit Report';
+    btn.textContent = currentReportMode === 'suggestion' ? 'Submit Suggestion' : 'Submit Report';
   }
 }
 
@@ -1232,8 +1259,12 @@ document.addEventListener('keydown', (e) => {
 </div>
 <div id="report-modal-overlay" onclick="if(event.target===this) closeReportModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2100;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
-    <div style="font-size:18px;font-weight:800;color:#e0e0f0;margin-bottom:6px;">⚠️ Report a Meta Issue</div>
-    <div id="report-modal-country" style="font-size:13px;color:var(--muted);margin-bottom:16px;"></div>
+    <div id="report-modal-title" style="font-size:18px;font-weight:800;color:#e0e0f0;margin-bottom:6px;">⚠️ Report a Meta Issue</div>
+    <div id="report-modal-country" style="font-size:13px;color:var(--muted);margin-bottom:12px;"></div>
+    <div style="display:flex;gap:6px;background:#0d0d18;border:1px solid var(--border);border-radius:8px;padding:3px;margin-bottom:14px;">
+      <button id="report-mode-issue" class="report-mode-btn active" onclick="setReportMode('issue')" style="flex:1;background:transparent;border:none;color:var(--muted);padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">⚠️ Report Issue</button>
+      <button id="report-mode-suggestion" class="report-mode-btn" onclick="setReportMode('suggestion')" style="flex:1;background:transparent;border:none;color:var(--muted);padding:8px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;">💡 Suggest a Tip</button>
+    </div>
     <textarea id="report-modal-text" placeholder="What's wrong with this guide? (outdated info, incorrect region, typo, etc.)" style="width:100%;min-height:120px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:#e0e0f0;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
     <div id="report-modal-error" style="display:none;color:#ff6b6b;font-size:13px;margin-top:8px;"></div>
     <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end;">
