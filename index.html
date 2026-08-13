@@ -1266,6 +1266,10 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
           <div id="dash-level-fill" style="height:100%;width:0%;background:var(--teal);border-radius:3px;transition:width .6s ease;"></div>
         </div>
       </div>
+      <div id="dash-streak-badge" style="display:none;flex-direction:column;align-items:center;gap:2px;padding:8px 14px;border-radius:10px;background:var(--bg2);flex-shrink:0;">
+        <span id="dash-streak-num" style="font-size:18px;font-weight:800;line-height:1;">🔥 0</span>
+        <span style="font-size:10px;color:var(--muted);white-space:nowrap;">day streak</span>
+      </div>
     </div>
 
     <!-- Level rewards roadmap -->
@@ -2456,6 +2460,18 @@ async function loadDashboardExtras(token){
     renderRewardsRoadmap(level);
     updateNavLevelBadge(tier, level);
 
+    const streak = statsData.daily_streak || {};
+    const streakBadge = document.getElementById('dash-streak-badge');
+    const streakNumEl = document.getElementById('dash-streak-num');
+    if (streakBadge && streakNumEl && (streak.current > 0 || streak.longest > 0)) {
+      streakNumEl.textContent = `🔥 ${streak.current || 0}`;
+      streakBadge.title = streak.current > 0
+        ? `${streak.current}-day streak — play today to keep it going! (Best: ${streak.longest})`
+        : `Streak broken — best was ${streak.longest} days. Play today to start a new one!`;
+      streakBadge.style.opacity = streak.current > 0 ? '1' : '.5';
+      streakBadge.style.display = 'flex';
+    }
+
     // Level-up celebration — fires only when the player's TIER (rank
     // name) has actually gone up since the last time this loaded, not
     // on every single level. First-ever load just silently records a
@@ -2749,6 +2765,7 @@ async function loadFullStats(token){
         ['🔥', o.current_streak, 'Current Streak'],
         ['⚡', o.best_streak, 'Best Streak Ever'],
         ['📅', o.sessions, 'Sessions Played'],
+        ['🗓️', o.daily_streak_current ?? 0, 'Day Streak'],
         ['📍', contrib.contributed ?? 0, 'Locations Contributed'],
         ['🌟', contrib.times_helped_others ?? 0, 'Times Helped Others'],
       ];
