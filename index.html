@@ -839,7 +839,8 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       <button class="btn btn-primary" onclick="getStarted()">Get Started</button>
     </div>
     <div id="nav-auth-user" style="display:none;position:relative;">
-      <button onclick="toggleUserMenu()" style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">
+      <button onclick="toggleUserMenu()" style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;position:relative;">
+        <span id="nav-ticket-unread-dot" style="display:none;position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#ff6b6b;border:2px solid var(--card);"></span>
         <div id="nav-avatar" style="width:24px;height:24px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#080810;"></div>
         <span id="nav-username">Account</span> ▾
       </button>
@@ -854,7 +855,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
         </div>
         <a onclick="goToDashboard()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">📊 Dashboard</a>
         <a onclick="goToStats()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">📈 Stats</a>
-        <a onclick="goToTickets()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🎫 Tickets</a>
+        <a onclick="goToTickets()" style="display:flex;align-items:center;gap:8px;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🎫 Tickets<span id="nav-ticket-unread-count" style="display:none;background:#ff6b6b;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;line-height:1.5;"></span></a>
         <a onclick="showPaymentHistory()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🧾 Payment History</a>
         <a onclick="showPaymentMethods()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">💳 Payment Methods</a>
         <a onclick="showAccountSettings()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">⚙️ Account Settings</a>
@@ -2128,6 +2129,25 @@ const TICKET_CATEGORY_LABEL = {
 
 let currentTicketId = null;
 
+async function loadTicketUnreadBadge(){
+  const dot = document.getElementById('nav-ticket-unread-dot');
+  const countEl = document.getElementById('nav-ticket-unread-count');
+  if (!dot || !countEl) return;
+  const token = getToken();
+  if (!token) { dot.style.display = 'none'; countEl.style.display = 'none'; return; }
+  try {
+    const res = await fetch(`${API}/tickets/unread_count?token=${encodeURIComponent(token)}`);
+    const data = await res.json();
+    const count = data.unread_count || 0;
+    dot.style.display = count > 0 ? 'block' : 'none';
+    countEl.style.display = count > 0 ? 'inline-block' : 'none';
+    countEl.textContent = count;
+  } catch(e) {
+    dot.style.display = 'none';
+    countEl.style.display = 'none';
+  }
+}
+
 async function loadMyTickets(){
   const listEl = document.getElementById('tickets-list');
   const token = getToken();
@@ -2145,16 +2165,22 @@ async function loadMyTickets(){
       const s = TICKET_STATUS_STYLE[t.status] || TICKET_STATUS_STYLE.open;
       const cat = TICKET_CATEGORY_LABEL[t.category] || t.category;
       return `
-        <div onclick="openTicketThread('${t.id}')" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div onclick="openTicketThread('${t.id}')" style="background:var(--card);border:1px solid ${t.unread ? 'var(--teal)' : 'var(--border)'};border-radius:12px;padding:16px 18px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='${t.unread ? 'var(--teal)' : 'var(--border)'}'">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
             <div>
-              <div style="font-weight:600;font-size:14px;">${escapeHtmlIdx(t.subject)}</div>
+              <div style="font-weight:600;font-size:14px;display:flex;align-items:center;gap:7px;">${t.unread ? '<span style="width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0;" title="Unread reply"></span>' : ''}${escapeHtmlIdx(t.subject)}</div>
               <div style="color:var(--muted);font-size:12px;margin-top:4px;">${cat} · Updated ${formatTicketDate(t.updated_at)}</div>
             </div>
             <div style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;background:${s.bg};color:${s.color};">${s.label}</div>
           </div>
         </div>`;
     }).join('');
+    // Opening this list is itself a form of "checking your tickets" but
+    // NOT the same as reading a specific thread — the nav badge should
+    // only clear once a ticket is actually opened (via openTicketThread,
+    // which hits GET /tickets/<id> and marks it read server-side), so
+    // refresh it here in case that just happened.
+    loadTicketUnreadBadge();
   } catch(e) {
     listEl.innerHTML = `<div style="color:#ff6b6b;font-size:13px;text-align:center;padding:30px 0;">${e.message}</div>`;
   }
@@ -2215,6 +2241,7 @@ async function openTicketThread(id){
     document.getElementById('ticket-thread-messages').style.display = 'flex';
     lastKnownTicketMessageCount = (data.messages || []).length;
     setTicketReplyLocked(data.status === 'closed' || data.status === 'resolved');
+    loadTicketUnreadBadge(); // this GET just marked it read server-side
   } catch(e) {
     document.getElementById('ticket-thread-messages').innerHTML = `<div style="color:#ff6b6b;font-size:13px;">${e.message}</div>`;
   }
@@ -2379,7 +2406,7 @@ function updateNav(user) {
   // Dashboard once. loadDashboardExtras itself no-ops safely on any
   // dashboard-only elements that aren't present on the current page.
   const token = getToken();
-  if (token) { loadDashboardExtras(token); loadAchievements(token); }
+  if (token) { loadDashboardExtras(token); loadAchievements(token); loadTicketUnreadBadge(); }
 }
 
 function resetNav() {
