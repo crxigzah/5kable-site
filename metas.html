@@ -968,6 +968,7 @@ async function showCountry(c) {
             <button onclick="showMap()" style="background:#00c9a7;border:none;color:#080810;font-weight:700;padding:10px 24px;border-radius:8px;cursor:pointer;">← Back to World Map</button>
             <div id="guide-request-status" style="font-size:12px;color:var(--muted);margin-top:14px;min-height:16px;"></div>
           </div>`;
+        checkGuideRequestStatus(c.iso);
         return;
       }
       renderGuide(c, data);
@@ -1200,6 +1201,37 @@ function closeReportModal(){
   document.getElementById('report-modal-overlay').style.display = 'none';
   document.body.style.overflow = '';
 }
+// Read-only check so a returning visitor sees "✓ Requested" immediately
+// instead of the button silently resetting to its default state on every
+// reload — the vote itself was always correctly recorded server-side,
+// this just restores what the UI shows for it.
+async function checkGuideRequestStatus(iso){
+  const btn = document.getElementById('guide-request-btn');
+  const status = document.getElementById('guide-request-status');
+  if (!btn) return;
+  try {
+    const token = localStorage.getItem('kbl_token') || '';
+    const res = await fetch(`${API}/guide/request/status`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ iso, token })
+    });
+    const data = await res.json();
+    if (data.error) return;
+    if (data.requested) {
+      btn.disabled = true;
+      btn.textContent = '✓ Requested';
+    }
+    if (status && data.total_requests > 0) {
+      status.textContent = data.requested
+        ? `You've already requested this guide — ${data.total_requests} player${data.total_requests === 1 ? '' : 's'} want it so far.`
+        : `${data.total_requests} player${data.total_requests === 1 ? '' : 's'} have requested this guide so far.`;
+    }
+  } catch(e) {
+    // silent — worst case the button just shows its default state
+  }
+}
+
 async function requestGuide(country, iso){
   const btn = document.getElementById('guide-request-btn');
   const status = document.getElementById('guide-request-status');
