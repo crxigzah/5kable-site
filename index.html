@@ -3493,7 +3493,15 @@ function initHeroGlobe(){
   const heroCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   heroCamera.position.set(0, 0, 2.6);
   const heroRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-  heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  // Capped at 2 previously -- any display with a higher effective pixel
+  // density (many phones, Windows at 150%+ scaling) rendered the WebGL
+  // framebuffer at a genuinely lower resolution than the screen and had
+  // it upscaled to fit, which reads as an overall blurry/soft globe
+  // rather than jagged edges. Raised to 3, which covers the vast
+  // majority of real devices; still capped (not raw devicePixelRatio)
+  // so an extreme outlier display doesn't tank frame rate on what's a
+  // continuously-animating decorative element.
+  heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 3));
 
   function resizeHeroGlobe(){
     const wrap = canvas.parentElement;
