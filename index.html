@@ -3462,6 +3462,47 @@ function initHeroGlobe(){
   const heroTexCtx = heroTexCanvas.getContext('2d');
   const heroPathGen = d3.geoPath(heroProj, heroTexCtx);
 
+  // The texture actually handed to WebGL is this much smaller, pre-
+  // downsampled canvas, not the raw 4096x2048 paint above. Confirmed by
+  // reproducing this exact rendering pipeline outside the browser (with
+  // node-canvas + the real countries-10m.json data) that the source
+  // texture itself is cleanly anti-aliased, but that minifying it at
+  // runtime with no filtering at all (simulating whatever the GPU was
+  // actually doing) reproduces the jagged/staircase look reported --
+  // meaning mipmap generation for this texture wasn't actually taking
+  // effect in the browser, for reasons that didn't reproduce outside it.
+  // Baking a properly-downsampled texture at close to its real on-screen
+  // size sidesteps that entirely: there's very little minification left
+  // for the GPU to get wrong, so the result is smooth regardless of
+  // whatever's going on with mipmap support in the reporter's browser.
+  const BAKED_W = 1024, BAKED_H = 512;
+  const heroBakedCanvas = document.createElement('canvas');
+  heroBakedCanvas.width = BAKED_W; heroBakedCanvas.height = BAKED_H;
+  const heroBakedCtx = heroBakedCanvas.getContext('2d');
+
+  function bakeDownsampledHeroTexture(){
+    // Repeated halving (rather than one giant resize) is what actually
+    // produces a clean result -- verified locally; a single large-ratio
+    // drawImage, even with imageSmoothingQuality:'high', visibly
+    // undersamples fine coastline detail compared to stepping down.
+    let step = heroTexCanvas, w = TEX_W, h = TEX_H;
+    while (w > BAKED_W * 2) {
+      const nw = Math.max(BAKED_W, Math.floor(w / 2));
+      const nh = Math.max(BAKED_H, Math.floor(h / 2));
+      const next = document.createElement('canvas');
+      next.width = nw; next.height = nh;
+      const nctx = next.getContext('2d');
+      nctx.imageSmoothingEnabled = true;
+      nctx.imageSmoothingQuality = 'high';
+      nctx.drawImage(step, 0, 0, w, h, 0, 0, nw, nh);
+      step = next; w = nw; h = nh;
+    }
+    heroBakedCtx.imageSmoothingEnabled = true;
+    heroBakedCtx.imageSmoothingQuality = 'high';
+    heroBakedCtx.clearRect(0, 0, BAKED_W, BAKED_H);
+    heroBakedCtx.drawImage(step, 0, 0, w, h, 0, 0, BAKED_W, BAKED_H);
+  }
+
   function paintHeroTexture(features){
     // Fully opaque fills — the previous 55%-opacity ocean fill on a
     // transparent canvas was very likely why the globe read as washed
@@ -3535,7 +3576,7 @@ function initHeroGlobe(){
   const heroGroup = new THREE.Group();
   heroScene.add(heroGroup);
 
-  const heroTexture = new THREE.CanvasTexture(heroTexCanvas);
+  const heroTexture = new THREE.CanvasTexture(heroBakedCanvas);
   heroTexture.minFilter = THREE.LinearMipmapLinearFilter;
   heroTexture.magFilter = THREE.LinearFilter;
   heroTexture.anisotropy = heroRenderer.capabilities.getMaxAnisotropy();
@@ -3588,6 +3629,7 @@ function initHeroGlobe(){
       return !(b[0][0] === -180 && b[0][1] === -90 && b[1][0] === 180 && b[1][1] === 90);
     });
     paintHeroTexture(features);
+    bakeDownsampledHeroTexture();
     heroTexture.needsUpdate = true;
     resizeHeroGlobe();
     animateHeroGlobe();
