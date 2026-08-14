@@ -3475,15 +3475,18 @@ function initHeroGlobe(){
     heroTexCtx.fillStyle = oceanGrad;
     heroTexCtx.fillRect(0, 0, TEX_W, TEX_H);
 
-    features.forEach(f => {
-      heroTexCtx.beginPath();
-      heroPathGen(f);
-      heroTexCtx.fillStyle = '#00c9a7';
-      heroTexCtx.fill();
-      heroTexCtx.lineWidth = 0.7;
-      heroTexCtx.strokeStyle = '#1a3a3a';
-      heroTexCtx.stroke();
-    });
+    // No per-country stroke — with the 50m dataset's real coastline detail,
+    // stroking every individual country outline draws in every INTERNAL
+    // border too (Brazil/Bolivia/Peru, every European border, etc.), which
+    // is a lot of thin lines packed close together. Minified down onto a
+    // ~500px sphere, that dense linework is exactly the kind of pattern
+    // that aliases into visible noise rather than smoothly disappearing —
+    // what actually read as "pixelated." The fill-to-ocean color contrast
+    // alone is plenty readable at this size without an outline.
+    heroTexCtx.beginPath();
+    features.forEach(f => heroPathGen(f));
+    heroTexCtx.fillStyle = '#00c9a7';
+    heroTexCtx.fill();
   }
 
   const heroScene = new THREE.Scene();
@@ -3519,7 +3522,7 @@ function initHeroGlobe(){
   const heroTexture = new THREE.CanvasTexture(heroTexCanvas);
   heroTexture.minFilter = THREE.LinearMipmapLinearFilter;
   heroTexture.magFilter = THREE.LinearFilter;
-  heroTexture.anisotropy = 4;
+  heroTexture.anisotropy = heroRenderer.capabilities.getMaxAnisotropy();
 
   const globeGeo = new THREE.SphereGeometry(1, 96, 96);
   const globeMat = new THREE.MeshStandardMaterial({
