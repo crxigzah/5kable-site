@@ -3475,7 +3475,18 @@ function initHeroGlobe(){
   // size sidesteps that entirely: there's very little minification left
   // for the GPU to get wrong, so the result is smooth regardless of
   // whatever's going on with mipmap support in the reporter's browser.
-  const BAKED_W = 1024, BAKED_H = 512;
+  // 1024x512 (tried first) turned out too small: it's close to a 1:1
+  // match for the sphere's front-facing hemisphere on a LOW-density
+  // display, but on the 320px-wide wrapper at up to 3x pixelRatio (real
+  // rendered diameter ~960px), that hemisphere is being genuinely
+  // magnified from a ~512px-wide source region -- which reads as blur,
+  // not the jaggedness this was meant to fix. 2048x1024 keeps the same
+  // "close to 1:1, minimal minification left for the GPU" property that
+  // avoids the jaggedness (verified locally under simulated worst-case/
+  // zero-filtering minification), while actually having enough source
+  // detail for the visible hemisphere (~1024px) to look sharp rather
+  // than upscaled at the sphere's largest realistic on-screen size.
+  const BAKED_W = 2048, BAKED_H = 1024;
   const heroBakedCanvas = document.createElement('canvas');
   heroBakedCanvas.width = BAKED_W; heroBakedCanvas.height = BAKED_H;
   const heroBakedCtx = heroBakedCanvas.getContext('2d');
