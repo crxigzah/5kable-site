@@ -2815,6 +2815,23 @@ function renderRewardsRoadmap(level) {
   }).join('');
 }
 
+// showDashboard (and the 15s live-view refresh) fire loadDashboardExtras
+// and loadRegionAccuracy back-to-back, and both used to independently
+// fetch /guess/stats — the same GROUP BY-over-guess_results query hitting
+// the DB twice for one page load. Since both calls happen synchronously
+// before either awaits, memoizing the in-flight promise here means the
+// second caller reuses the first's request instead of firing its own.
+let _gaxStatsPromise = null;
+let _gaxStatsPromiseToken = null;
+function fetchGuessStatsShared(token){
+  if (_gaxStatsPromise && _gaxStatsPromiseToken === token) return _gaxStatsPromise;
+  _gaxStatsPromiseToken = token;
+  _gaxStatsPromise = fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) })
+    .then(res => res.json())
+    .finally(() => { _gaxStatsPromise = null; _gaxStatsPromiseToken = null; });
+  return _gaxStatsPromise;
+}
+
 async function loadDashboardExtras(token){
   const ring = document.getElementById('dash-level-ring');
   const numEl = document.getElementById('dash-level-num');
@@ -2824,8 +2841,7 @@ async function loadDashboardExtras(token){
   const badgeEl = document.getElementById('dash-level-badge');
 
   try {
-    const statsRes = await fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const statsData = await statsRes.json();
+    const statsData = await fetchGuessStatsShared(token);
 
     // Level/XP is now computed server-side (see level_info in the
     // response) rather than recalculated here — keeps the leveling
@@ -3071,8 +3087,7 @@ let _gaxRegionBreakdown = {};
 async function loadRegionAccuracy(token){
   const listEl = document.getElementById('stats-region-accuracy-list');
   try {
-    const res = await fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const data = await res.json();
+    const data = await fetchGuessStatsShared(token);
     if (!data.stats || !data.stats.length) {
       listEl.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;">⏳ Awaiting games played — play some practice rounds with the extension active and this fills in automatically.</div>';
       return;
@@ -3738,8 +3753,7 @@ async function loadCountryProgress(token){
   const grid = document.getElementById('country-progress-grid');
   if (!grid) return;
   try {
-    const res = await fetch(API + '/guess/stats', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const data = await res.json();
+    const data = await fetchGuessStatsShared(token);
     const correctByCountry = {};
     (data.stats || []).forEach(s => { correctByCountry[_gaxNormalizeCountry(s.country)] = s.correct; });
 
