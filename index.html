@@ -892,11 +892,11 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       </div>
 
       <div class="hero-btns">
-        <button class="btn btn-primary" onclick="getStarted()">Start Training Free</button>
-        <button class="btn btn-outline" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">See How It Works</button>
+        <button class="btn btn-primary" style="border-radius:999px;" onclick="getStarted()">Start Training Free</button>
+        <button class="btn btn-outline" style="border-radius:999px;" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">See How It Works</button>
       </div>
       <div style="margin-top:16px;">
-        <a href="/metas" class="btn" style="background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.3);color:#00c9a7;padding:10px 24px;font-size:14px;font-weight:600;border-radius:10px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s;" onmouseover="this.style.background='rgba(0,201,167,0.2)'" onmouseout="this.style.background='rgba(0,201,167,0.1)'">
+        <a href="/metas" class="btn" style="background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.3);color:#00c9a7;padding:10px 24px;font-size:14px;font-weight:600;border-radius:999px;text-decoration:none;display:inline-flex;align-items:center;gap:8px;transition:all .2s;" onmouseover="this.style.background='rgba(0,201,167,0.2)'" onmouseout="this.style.background='rgba(0,201,167,0.1)'">
           🗺️ Country Metas
         </a>
       </div>
@@ -3455,7 +3455,7 @@ function initHeroGlobe(){
   const canvas = document.getElementById('heroGlobeCanvas');
   if (!canvas || !window.THREE || !window.d3 || !window.topojson) return;
 
-  const TEX_W = 2048, TEX_H = 1024;
+  const TEX_W = 4096, TEX_H = 2048;
   const heroProj = d3.geoEquirectangular().scale(TEX_W / (2 * Math.PI)).translate([TEX_W / 2, TEX_H / 2]);
   const heroTexCanvas = document.createElement('canvas');
   heroTexCanvas.width = TEX_W; heroTexCanvas.height = TEX_H;
@@ -3543,7 +3543,14 @@ function initHeroGlobe(){
     heroRenderer.render(heroScene, heroCamera);
   }
 
-  d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json').then(world => {
+  // 50m (1:50,000,000 scale) instead of 110m -- the 110m dataset heavily
+  // simplifies every coastline down to a handful of vertices, which is
+  // what actually made the globe read as low-quality/blocky (not a
+  // texture-resolution or anti-aliasing issue). 50m gives real coastline
+  // detail while staying small enough to fetch/parse instantly for a
+  // decorative hero graphic; the texture resolution above was bumped to
+  // match so the extra vector detail doesn't just get blurred away.
+  d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json').then(world => {
     const features = topojson.feature(world, world.objects.countries).features;
     paintHeroTexture(features);
     heroTexture.needsUpdate = true;
