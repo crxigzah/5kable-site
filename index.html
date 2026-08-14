@@ -3571,7 +3571,22 @@ function initHeroGlobe(){
   // detail -- the texture resolution and internal-border stroke were
   // already addressed separately.
   d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json').then(world => {
-    const features = topojson.feature(world, world.objects.countries).features;
+    // At least one feature in this specific 10m file (Maldives, id 462)
+    // has an inverted ring winding -- confirmed by rendering this exact
+    // dataset locally and checking d3.geoBounds() per feature, which
+    // returned [[-180,-90],[180,90]] (the entire sphere) for it alone.
+    // d3-geo is spherical-aware, so a wrongly-wound ring gets interpreted
+    // as "everything except this tiny island" rather than "just this
+    // tiny island" -- filling that feature paints almost the whole
+    // texture solid, which is what turned the globe into a flat teal
+    // sphere with no visible ocean. Filtering out any feature whose
+    // bounds are a degenerate whole-sphere box (rather than hardcoding
+    // Maldives' id) also guards against any other similarly malformed
+    // feature in this dataset.
+    const features = topojson.feature(world, world.objects.countries).features.filter(f => {
+      const b = d3.geoBounds(f);
+      return !(b[0][0] === -180 && b[0][1] === -90 && b[1][0] === 180 && b[1][1] === 90);
+    });
     paintHeroTexture(features);
     heroTexture.needsUpdate = true;
     resizeHeroGlobe();
