@@ -1,5 +1,5 @@
 {
-  "version": "1.0.7",
+  "version": "1.0.8",
   "download_url": "https://github.com/crxigzah/5kable-releases/releases/latest/download/5kableExtension.zip",
-  "release_notes": "Referral bonuses now notify both sides — a toast for the new player, an email for whoever invited them."
+  "release_notes": "Removed the Analyse button. GeoX chat is now locked until you place your guess, so it can no longer be used to fish for hints beforehand."
 }
