@@ -1474,8 +1474,8 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
           <div style="color:var(--muted);font-size:13px;margin-top:4px;">Reach 1000 correct region guesses in a country to earn Diamond status.</div>
         </div>
         <div style="display:flex;background:#0d0d18;border:1px solid var(--border);border-radius:8px;padding:3px;gap:2px;flex-shrink:0;">
-          <button id="country-progress-filter-all" class="cp-filter-btn active" onclick="setCountryProgressFilter('all')">All 114</button>
-          <button id="country-progress-filter-played" class="cp-filter-btn" onclick="setCountryProgressFilter('played')">Played</button>
+          <button id="country-progress-filter-all" class="cp-filter-btn" onclick="setCountryProgressFilter('all')">All 114</button>
+          <button id="country-progress-filter-played" class="cp-filter-btn active" onclick="setCountryProgressFilter('played')">Played</button>
         </div>
       </div>
       <div id="country-progress-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:20px;">
@@ -3554,7 +3554,7 @@ function initHeroGlobe(){
 
 let _gaxWorldFeatures = null; // cached parsed features, fetched once per session
 let _gaxCountryProgressData = null; // cached [{name, correct}] after last fetch
-let _gaxCountryProgressFilter = 'all'; // 'all' | 'played'
+let _gaxCountryProgressFilter = 'played'; // 'all' | 'played' — defaults to played since the full 114-country grid is a lot of near-empty cards to scroll past
 
 function setCountryProgressFilter(filter) {
   _gaxCountryProgressFilter = filter;
