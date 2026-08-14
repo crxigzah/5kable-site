@@ -1,5 +1,5 @@
 {
-  "version": "1.0.9",
+  "version": "1.1.0",
   "download_url": "https://github.com/crxigzah/5kable-releases/releases/latest/download/5kableExtension.zip",
-  "release_notes": "GeoX chat is now locked whenever you haven't placed a guess yet — including on the home screen and between rounds, not just mid-round."
+  "release_notes": "Removed the standalone GeoX chat panel — chat now lives only inside the post-guess teaching popup, where it always belonged."
 }
