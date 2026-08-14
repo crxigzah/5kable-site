@@ -315,22 +315,6 @@
   }
   .zoom-controls button:hover{ border-color: var(--covered); }
 
-  /* legend */
-  .legend{
-    position:absolute; left:16px; bottom:16px;
-    display:flex; gap:14px;
-    background: rgba(16,22,29,0.85);
-    border:1px solid var(--line);
-    padding:8px 12px;
-    border-radius:6px;
-    font-size:10px;
-    letter-spacing:.04em;
-    color: var(--muted);
-    backdrop-filter: blur(4px);
-  }
-  .legend .item{ display:flex; align-items:center; gap:6px; }
-  .legend .sw{ width:10px; height:10px; border-radius:2px; }
-
   /* coordinate HUD */
   .hud{
     position:absolute; left:16px; top:16px;
@@ -642,15 +626,6 @@
       <div class="zoom-controls">
         <button id="zoomIn">+</button>
         <button id="zoomOut">–</button>
-      </div>
-      <div class="legend">
-        <!-- Hardcoded teal rather than var(--map-land): the globe's covered-country
-             color is painted directly in JS (buildGlobeTextures) and never picks up
-             the "Google Maps style" theme's red override the way the flat SVG map
-             does, so tying this swatch to that same variable made it show red while
-             the globe itself stayed teal regardless of theme. -->
-        <div class="item"><span class="sw" style="background:var(--covered-fill)"></span> Covered</div>
-        <div class="item"><span class="sw" style="background:var(--map-land-nocode);border:1px solid var(--map-land-nocode-stroke)"></span> No coverage</div>
       </div>
     </div>
 
