@@ -1245,9 +1245,9 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
         <span class="dash-tier" id="dash-tier">Free</span>
-        <button class="btn btn-outline" onclick="shareProfile()" style="font-size:12px;padding:6px 14px;">🔗 Share Profile</button>
-        <button class="btn btn-outline" onclick="compareWithFriend()" style="font-size:12px;padding:6px 14px;">⚔️ Compare</button>
-        <button class="btn btn-outline" onclick="logout()" style="font-size:12px;padding:6px 14px;">Sign Out</button>
+        <button class="btn btn-outline" onclick="compareWithFriend()" style="font-size:12px;padding:6px 14px;border-radius:20px;">⚔️ Compare</button>
+        <button class="btn btn-outline" onclick="shareProfile()" style="font-size:12px;padding:6px 14px;border-radius:20px;">🔗 Share Profile</button>
+        <button class="btn btn-outline" onclick="logout()" style="font-size:12px;padding:6px 14px;border-radius:20px;">Sign Out</button>
       </div>
     </div>
 
@@ -1620,6 +1620,23 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     <div class="form-group"><label>Message <span style="color:#ff6b6b;">*</span></label><textarea id="new-ticket-message" rows="5" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:13px;font-family:inherit;resize:vertical;"></textarea></div>
     <button class="btn btn-primary form-btn" id="new-ticket-submit" onclick="submitNewTicket()">Submit Ticket</button>
     <div class="form-error" id="new-ticket-error"></div>
+  </div>
+</div>
+
+<!-- Compare Modal -->
+<div class="modal-overlay" id="compare-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeCompareModal()">✕</button>
+    <h2>⚔️ Compare Stats</h2>
+    <div class="modal-sub">Pick a player to compare yourself against</div>
+    <div class="form-group">
+      <label>Player</label>
+      <select id="compare-select" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:8px;font-size:13px;">
+        <option value="" selected disabled>Loading players…</option>
+      </select>
+    </div>
+    <button class="btn btn-primary form-btn" id="compare-submit" onclick="submitCompare()">Compare</button>
+    <div class="form-error" id="compare-error"></div>
   </div>
 </div>
 
@@ -2312,11 +2329,42 @@ function copyReferralLink(){
   }
 }
 
-function compareWithFriend(){
+// Populates the Compare modal's dropdown from the Top Players leaderboard
+// (already sorted highest level first server-side, capped at 100) rather
+// than making the user type and spell a username correctly from memory.
+async function compareWithFriend(){
   const user = getUser();
   if (!user) return;
-  const opponent = (prompt("Enter a player's username to compare stats with:") || '').trim();
-  if (!opponent) return;
+  const sel = document.getElementById('compare-select');
+  const errEl = document.getElementById('compare-error');
+  errEl.style.display = 'none';
+  sel.innerHTML = '<option value="" selected disabled>Loading players…</option>';
+  document.getElementById('compare-modal').classList.add('active');
+  try {
+    const res = await fetch(`${API}/leaderboard/levels?limit=100`);
+    const data = await res.json();
+    const players = (data.leaderboard || []).filter(p => p.username.toLowerCase() !== user.username.toLowerCase());
+    if (!players.length) {
+      sel.innerHTML = '<option value="" selected disabled>No other players yet</option>';
+      return;
+    }
+    sel.innerHTML = players.map(p =>
+      `<option value="${escapeHtmlIdx(p.username)}">${p.tier_icon || ''} Lv.${p.level} — ${escapeHtmlIdx(p.username)}</option>`
+    ).join('');
+  } catch(e) {
+    sel.innerHTML = '<option value="" selected disabled>Could not load players</option>';
+  }
+}
+function closeCompareModal(){
+  document.getElementById('compare-modal').classList.remove('active');
+}
+function submitCompare(){
+  const user = getUser();
+  if (!user) return;
+  const opponent = document.getElementById('compare-select').value;
+  const errEl = document.getElementById('compare-error');
+  if (!opponent) { errEl.textContent = 'Pick a player first'; errEl.style.display = 'block'; return; }
+  closeCompareModal();
   goToCompare(user.username, opponent);
 }
 
