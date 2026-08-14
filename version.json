@@ -1,5 +1,5 @@
 {
-  "version": "1.0.8",
+  "version": "1.0.9",
   "download_url": "https://github.com/crxigzah/5kable-releases/releases/latest/download/5kableExtension.zip",
-  "release_notes": "Removed the Analyse button. GeoX chat is now locked until you place your guess, so it can no longer be used to fish for hints beforehand."
+  "release_notes": "GeoX chat is now locked whenever you haven't placed a guess yet — including on the home screen and between rounds, not just mid-round."
 }
