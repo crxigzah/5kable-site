@@ -1,5 +1,5 @@
 {
-  "version": "1.1.3",
+  "version": "1.1.4",
   "download_url": "https://github.com/crxigzah/5kable-releases/releases/latest/download/5kableExtension.zip",
-  "release_notes": "Fixed the teaching popup's \"Expand chat\" button doing nothing when clicked."
+  "release_notes": "Fixed F7 captures occasionally failing to upload to the community library (\"pano_id and country required\") during bursts of rapid captures."
 }
