@@ -3475,18 +3475,26 @@ function initHeroGlobe(){
     heroTexCtx.fillStyle = oceanGrad;
     heroTexCtx.fillRect(0, 0, TEX_W, TEX_H);
 
-    // No per-country stroke — with the 50m dataset's real coastline detail,
+    // No per-country stroke — with the 10m dataset's real coastline detail,
     // stroking every individual country outline draws in every INTERNAL
     // border too (Brazil/Bolivia/Peru, every European border, etc.), which
-    // is a lot of thin lines packed close together. Minified down onto a
-    // ~500px sphere, that dense linework is exactly the kind of pattern
-    // that aliases into visible noise rather than smoothly disappearing —
-    // what actually read as "pixelated." The fill-to-ocean color contrast
-    // alone is plenty readable at this size without an outline.
-    heroTexCtx.beginPath();
-    features.forEach(f => heroPathGen(f));
-    heroTexCtx.fillStyle = '#00c9a7';
-    heroTexCtx.fill();
+    // is a lot of thin lines packed close together and aliases into visible
+    // noise when minified onto a ~500px sphere. The fill-to-ocean color
+    // contrast alone is plenty readable at this size without an outline.
+    //
+    // Each feature gets its OWN beginPath()/fill() — batching every
+    // country into a single path+fill (as a previous version of this did)
+    // hits the canvas's default "nonzero" winding rule: with thousands of
+    // separate rings from the 10m dataset, enough of them end up
+    // touching/overlapping after projection that the winding rule fills
+    // the gaps between them too, turning the globe into a solid teal
+    // sphere with no visible ocean at all.
+    features.forEach(f => {
+      heroTexCtx.beginPath();
+      heroPathGen(f);
+      heroTexCtx.fillStyle = '#00c9a7';
+      heroTexCtx.fill();
+    });
   }
 
   const heroScene = new THREE.Scene();
