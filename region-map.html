@@ -1770,12 +1770,27 @@ function showCountriesPanel(){
 }
 
 document.getElementById('selectAllRegionsBtn').onclick = () => {
+  // In gradient mode, "Select All" builds the sequence from every region
+  // currently in the list, in the order they're displayed — for Japan
+  // that's the north-to-south JAPAN_REGION_GROUPS order (see above), so
+  // this reproduces the "darker red at the top, fading to white at the
+  // bottom" look in one click instead of tapping all 47 individually.
+  if (gradientMode) {
+    gradientSequence = Array.from(document.querySelectorAll('#countryRegionsList .region-toggle-item[data-id]')).map(item => item.dataset.id);
+    updateGradientSequenceUI();
+    return;
+  }
   document.querySelectorAll('.region-swatch-row').forEach(row => {
     setRegionColor(row.dataset.id, 'default');
     row.querySelectorAll('.region-swatch').forEach(b => b.classList.toggle('active', b.dataset.key === 'default'));
   });
 };
 document.getElementById('selectNoneRegionsBtn').onclick = () => {
+  if (gradientMode) {
+    gradientSequence = [];
+    updateGradientSequenceUI();
+    return;
+  }
   document.querySelectorAll('.region-swatch-row').forEach(row => {
     setRegionColor(row.dataset.id, 'white');
     row.querySelectorAll('.region-swatch').forEach(b => b.classList.toggle('active', b.dataset.key === 'white'));
