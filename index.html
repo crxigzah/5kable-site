@@ -3514,7 +3514,7 @@ function initHeroGlobe(){
     heroBakedCtx.drawImage(step, 0, 0, w, h, 0, 0, BAKED_W, BAKED_H);
   }
 
-  function paintHeroTexture(features){
+  function paintHeroTexture(features, landGeometries, world){
     // Fully opaque fills — the previous 55%-opacity ocean fill on a
     // transparent canvas was very likely why the globe read as washed
     // out/low-quality rather than solid. A subtle gradient (rather than
@@ -3527,26 +3527,46 @@ function initHeroGlobe(){
     heroTexCtx.fillStyle = oceanGrad;
     heroTexCtx.fillRect(0, 0, TEX_W, TEX_H);
 
-    // No per-country stroke — with the 10m dataset's real coastline detail,
-    // stroking every individual country outline draws in every INTERNAL
-    // border too (Brazil/Bolivia/Peru, every European border, etc.), which
-    // is a lot of thin lines packed close together and aliases into visible
-    // noise when minified onto a ~500px sphere. The fill-to-ocean color
-    // contrast alone is plenty readable at this size without an outline.
+    // No per-country BORDER stroke — with the 10m dataset's real coastline
+    // detail, stroking every individual country outline in a contrasting
+    // color draws in every INTERNAL political border too (Brazil/Bolivia/
+    // Peru, every European border, etc.), which is a lot of thin lines
+    // packed close together and reads as noise once minified.
     //
-    // Each feature gets its OWN beginPath()/fill() — batching every
+    // Each feature still gets its OWN beginPath()/fill() — batching every
     // country into a single path+fill (as a previous version of this did)
     // hits the canvas's default "nonzero" winding rule: with thousands of
     // separate rings from the 10m dataset, enough of them end up
     // touching/overlapping after projection that the winding rule fills
     // the gaps between them too, turning the globe into a solid teal
-    // sphere with no visible ocean at all.
+    // sphere with no visible ocean at all. But two ADJACENT countries'
+    // independently-anti-aliased fill edges don't perfectly compose at
+    // their shared border, leaving a faint 1px seam of ocean color
+    // showing through — invisible once the globe itself was rendering
+    // blurry (a separate bug, now fixed), but visible as "missing"
+    // border definition once it sharpened up. Stroking each fill in the
+    // SAME color as the fill welds that seam shut without drawing a
+    // visible line.
     features.forEach(f => {
       heroTexCtx.beginPath();
       heroPathGen(f);
       heroTexCtx.fillStyle = '#00c9a7';
       heroTexCtx.fill();
+      heroTexCtx.lineWidth = 1.5;
+      heroTexCtx.strokeStyle = '#00c9a7';
+      heroTexCtx.stroke();
     });
+
+    // A single visible coastline outline, drawn once around the whole
+    // landmass merged into one shape (topojson.merge) rather than per
+    // country — merging drops every shared internal border, leaving only
+    // the true exterior coastline. This is what actually gives the
+    // landmass visible edge definition instead of just color contrast.
+    heroTexCtx.beginPath();
+    heroPathGen(topojson.merge(world, landGeometries));
+    heroTexCtx.lineWidth = 2.5;
+    heroTexCtx.strokeStyle = '#0d3d34';
+    heroTexCtx.stroke();
   }
 
   const heroScene = new THREE.Scene();
@@ -3571,7 +3591,24 @@ function initHeroGlobe(){
     heroCamera.aspect = w / h;
     heroCamera.updateProjectionMatrix();
   }
-  window.addEventListener('resize', resizeHeroGlobe);
+  // ResizeObserver, not just a window 'resize' listener -- the wrapper's
+  // box size can change for reasons that never fire a window resize
+  // event, most importantly on the very first layout pass. This used to
+  // only call resizeHeroGlobe() once, synchronously, as soon as the
+  // world-atlas fetch resolved, with no guarantee the page had actually
+  // finished laying out yet (web font swap, other async content shifting
+  // things, etc.) -- if clientWidth/clientHeight were read before layout
+  // settled, the renderer permanently locked in a framebuffer sized for
+  // the wrong (often much smaller) box, and CSS then stretched that
+  // undersized render to fill the real box, which reads as a genuinely
+  // blurry globe no amount of texture-quality tuning can fix. Confirmed
+  // exactly this: opening DevTools (which resizes the viewport, firing a
+  // window resize event) made the globe sharpen immediately, because
+  // that was the first time resizeHeroGlobe() happened to run against
+  // the page's actual settled layout. ResizeObserver fires on any
+  // box-size change to the observed element, including the first layout
+  // pass, so this can't happen again regardless of what triggers it.
+  new ResizeObserver(resizeHeroGlobe).observe(canvas.parentElement);
 
   // Three-point-style lighting for a more premium, less flat look than
   // a single ambient+directional pair: a soft cool ambient fill, a
@@ -3635,11 +3672,19 @@ function initHeroGlobe(){
     // bounds are a degenerate whole-sphere box (rather than hardcoding
     // Maldives' id) also guards against any other similarly malformed
     // feature in this dataset.
-    const features = topojson.feature(world, world.objects.countries).features.filter(f => {
+    // Kept in lockstep (same filter, same order) so landGeometries can be
+    // handed to topojson.merge() below for the single coastline outline —
+    // merge() needs the raw TopoJSON geometry objects, not GeoJSON
+    // features, so this can't just be derived from `features` alone.
+    const allGeometries = world.objects.countries.geometries;
+    const allFeatures = topojson.feature(world, world.objects.countries).features;
+    const keepIdx = allFeatures.map((f, i) => {
       const b = d3.geoBounds(f);
-      return !(b[0][0] === -180 && b[0][1] === -90 && b[1][0] === 180 && b[1][1] === 90);
-    });
-    paintHeroTexture(features);
+      return (b[0][0] === -180 && b[0][1] === -90 && b[1][0] === 180 && b[1][1] === 90) ? -1 : i;
+    }).filter(i => i !== -1);
+    const features = keepIdx.map(i => allFeatures[i]);
+    const landGeometries = keepIdx.map(i => allGeometries[i]);
+    paintHeroTexture(features, landGeometries, world);
     bakeDownsampledHeroTexture();
     heroTexture.needsUpdate = true;
     resizeHeroGlobe();
