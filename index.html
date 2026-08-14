@@ -1742,7 +1742,12 @@ async function checkAuth() {
     }
     // Only the auth keys — an expired/invalid token shouldn't also wipe
     // unrelated local prefs (avatar, currency, quiz streak stats).
-    else { localStorage.removeItem('kbl_token'); localStorage.removeItem('kbl_user'); }
+    else {
+      localStorage.removeItem('kbl_token'); localStorage.removeItem('kbl_user');
+      // Reverts the optimistic cached-login render below if the token
+      // actually turned out to be expired/invalid.
+      resetNav(); goHome();
+    }
   } catch(e) {
     // API offline show cached user if available
     const user = getUser();
@@ -3654,6 +3659,20 @@ document.addEventListener('keydown', e => {
   if (document.getElementById('form-register').style.display !== 'none') register();
   else if (document.getElementById('form-login').style.display !== 'none') login();
 });
+
+// Render the signed-in nav/dashboard immediately from whatever's already
+// cached in localStorage, rather than waiting on wakeServer() + checkAuth()
+// to make their round trips first — that pair used to run in series before
+// the UI updated at all, so a returning user with a perfectly valid session
+// would see the signed-out landing page flash for a couple of seconds
+// before flipping to their dashboard. checkAuth() below still runs and
+// reverts this (see its invalid-token branch) if the cached token turns
+// out to be stale.
+(function() {
+  const token = getToken();
+  const user = getUser();
+  if (token && user) showDashboard(user, token);
+})();
 
 // Wake server and check auth
 // If ?u=<username> is present, jump to that public profile once auth has
