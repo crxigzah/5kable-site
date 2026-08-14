@@ -562,6 +562,7 @@
 <div class="app">
   <button class="panel-toggle-btn" id="panelToggle">
     Countries
+    <span class="badge" id="panelToggleBadge" style="display:none;">0</span>
   </button>
 
   <header>
@@ -1555,7 +1556,10 @@ const selected = new Map(); // id -> {name, centroid}
 
 function renderSelectedPanel(){
   const badge = document.getElementById('panelToggleBadge');
-  if(badge) badge.textContent = selected.size;
+  if(badge){
+    badge.textContent = selected.size;
+    badge.style.display = selected.size > 0 ? 'inline-block' : 'none';
+  }
 }
 
 function toggleCountry(id, name, centroid, forceRemove){
@@ -1952,10 +1956,6 @@ const nameById = new Map(
 );
 let worldFeatureCollection = null;
 
-function worldCountryClass(d){
-  const nm = nameById.get(String(d.id)) || (d.properties && d.properties.name) || '';
-  return coveredSet.has(normalize(nm)) ? 'country covered' : 'country';
-}
 function worldCountryName(d){
   return nameById.get(String(d.id)) || (d.properties && d.properties.name) || '';
 }
