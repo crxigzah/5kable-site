@@ -3546,14 +3546,15 @@ function initHeroGlobe(){
     heroRenderer.render(heroScene, heroCamera);
   }
 
-  // 50m (1:50,000,000 scale) instead of 110m -- the 110m dataset heavily
-  // simplifies every coastline down to a handful of vertices, which is
-  // what actually made the globe read as low-quality/blocky (not a
-  // texture-resolution or anti-aliasing issue). 50m gives real coastline
-  // detail while staying small enough to fetch/parse instantly for a
-  // decorative hero graphic; the texture resolution above was bumped to
-  // match so the extra vector detail doesn't just get blurred away.
-  d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json').then(world => {
+  // 10m (1:10,000,000 scale) -- world-atlas's highest-resolution file.
+  // 50m still visibly simplified small islands into rough angular blobs
+  // (Indonesia/Philippines-style archipelagos are the worst case: lots of
+  // small landmasses, each reduced to only a handful of vertices at 50m).
+  // 10m is a larger one-time download, but it's fetched once, cached by
+  // the browser, and this is the only remaining lever for coastline
+  // detail -- the texture resolution and internal-border stroke were
+  // already addressed separately.
+  d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json').then(world => {
     const features = topojson.feature(world, world.objects.countries).features;
     paintHeroTexture(features);
     heroTexture.needsUpdate = true;
