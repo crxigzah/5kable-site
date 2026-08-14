@@ -4606,11 +4606,21 @@ function showPolicy(key) {
   document.getElementById('policy-content').innerHTML =
     `<h2>${p.title}</h2><div class="policy-date">${p.date}</div>${p.body}`;
   document.getElementById('policy-modal').classList.add('active');
+  if (location.hash !== '#policy=' + key) history.replaceState(null, '', '#policy=' + key);
 }
 
 function closePolicy() {
   document.getElementById('policy-modal').classList.remove('active');
+  if (location.hash.startsWith('#policy=')) history.replaceState(null, '', location.pathname + location.search);
 }
+
+// Deep-link support: 5kable.net/#policy=privacy opens a policy directly on
+// load -- needed for a stable, submittable URL (e.g. the Chrome Web Store
+// listing's Privacy Policy field can't point at a JS-only modal otherwise).
+(function() {
+  const m = location.hash.match(/^#policy=(\w+)$/);
+  if (m && POLICIES[m[1]]) showPolicy(m[1]);
+})();
 
 (function() {
   const policyModal = document.getElementById('policy-modal');
