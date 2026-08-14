@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.1",
   "download_url": "https://github.com/crxigzah/5kable-releases/releases/latest/download/5kableExtension.zip",
-  "release_notes": "Removed the standalone GeoX chat panel — chat now lives only inside the post-guess teaching popup, where it always belonged."
+  "release_notes": "Fixed F7 captures occasionally failing to reach the community library when the location lookup got rate-limited — now retries automatically instead of silently giving up."
 }
