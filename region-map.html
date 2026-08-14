@@ -285,7 +285,7 @@
   }
   .annotate-btn:hover{ border-color: var(--covered); }
   .annotate-btn.active{ border-color: var(--covered); background: rgba(0,201,167,0.15); }
-  #annotateColor{
+  #annotateColor, #gradientEndColor{
     width:32px; height:32px;
     border:1px solid var(--line);
     border-radius:6px;
@@ -499,23 +499,6 @@
   .region-swatch-custom::-webkit-color-swatch{ border:none; border-radius:50%; }
   .region-swatch-custom::-moz-color-swatch{ border:none; border-radius:50%; }
 
-  /* Gradient tool: region rows become click-to-add-to-sequence targets
-     instead of showing the color swatch row. */
-  .region-toggle-item.gradient-target{ cursor:pointer; }
-  .region-toggle-item.gradient-selected{ background: var(--panel-2); }
-  .gradient-seq-badge{
-    width:18px; height:18px;
-    border-radius:50%;
-    background:transparent;
-    border:1.5px solid var(--line);
-    color:#08080f;
-    font-size:10px; font-weight:800;
-    display:flex; align-items:center; justify-content:center;
-    flex-shrink:0;
-  }
-  .gradient-seq-badge.filled{ background: var(--covered); border-color: var(--covered); }
-  #gradientModeBtn.active{ background:rgba(0,201,167,0.15); border-color:#00c9a7; color:#00c9a7; }
-
   .subdivision.dimmed{
     fill: var(--map-land-nocode);
     stroke: var(--map-land-nocode-stroke);
@@ -618,7 +601,9 @@
         <button class="annotate-btn" id="selectToolBtn" title="Select & drag drawings">🖐️</button>
         <button class="annotate-btn" id="drawToolBtn" title="Draw">✏️</button>
         <button class="annotate-btn" id="fillToolBtn" title="Click a shape to fill it">🪣</button>
-        <input type="color" id="annotateColor" value="#ff4136" title="Pen / fill color">
+        <button class="annotate-btn" id="gradientToolBtn" title="Drag across regions to paint a gradient, dark to light">🌈</button>
+        <input type="color" id="annotateColor" value="#ff4136" title="Pen / fill / gradient start color">
+        <input type="color" id="gradientEndColor" value="#ffffff" title="Gradient end color" style="display:none;">
         <input type="range" id="annotateThickness" min="1" max="15" value="3" title="Pen thickness">
         <button class="annotate-btn" id="undoAnnotateBtn" title="Undo (Ctrl+Z)">↩️</button>
         <button class="annotate-btn" id="clearAnnotateBtn" title="Clear all drawings">🗑️</button>
@@ -638,29 +623,10 @@
 
       <div class="panel-section" id="countryRegionsPanelHeader" style="display:none;border-bottom:none;padding-bottom:6px;">
         <h2 id="countryRegionsTitle">Regions</h2>
-        <div class="selected-empty" id="regionsModeHint" style="margin-top:-2px;margin-bottom:8px;">Click a color swatch to assign that region a group, or ✕ to hide it.</div>
+        <div class="selected-empty" style="margin-top:-2px;margin-bottom:8px;">Click a color swatch to assign that region a group, or ✕ to hide it.</div>
         <div style="display:flex;gap:8px;margin-top:8px;">
           <button class="btn" id="selectAllRegionsBtn" style="flex:1;">Select All</button>
           <button class="btn" id="selectNoneRegionsBtn" style="flex:1;">Select None</button>
-        </div>
-        <button class="btn" id="gradientModeBtn" style="width:100%;margin-top:8px;">🎨 Gradient Tool</button>
-        <!-- Gradient sequence-builder — a start/end color pair, applied
-             across whatever regions get clicked in the list below (in
-             click order), interpolated linearly. Built for exactly the
-             "Hokkaido dark red fading to white by Kyushu" look, without
-             hand-picking each region's shade from the fixed palette one
-             at a time. -->
-        <div id="gradientToolBar" style="display:none;background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:10px;margin-top:8px;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <input type="color" id="gradientStartColor" value="#8b1e1a" title="Start color" style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);padding:0;-webkit-appearance:none;appearance:none;overflow:hidden;">
-            <div id="gradientPreviewBar" style="flex:1;height:8px;border-radius:4px;"></div>
-            <input type="color" id="gradientEndColor" value="#ffffff" title="End color" style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,0.5);padding:0;-webkit-appearance:none;appearance:none;overflow:hidden;">
-          </div>
-          <div class="selected-empty" style="margin-top:8px;">Click regions in the list below, in order — the first click gets the start color, the last gets the end color, and everything between is interpolated.</div>
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <button class="btn" id="gradientApplyBtn" style="flex:1;" disabled>Apply Gradient (0 selected)</button>
-            <button class="btn" id="gradientClearBtn" title="Clear sequence">Clear</button>
-          </div>
         </div>
         <button class="btn" id="exportAllBadgesBtn" style="width:100%;margin-top:8px;background:rgba(0,201,167,0.1);border-color:rgba(0,201,167,0.3);color:#00c9a7;">📦 Export All Region Badges</button>
         <div id="exportProgress" style="display:none;font-size:11px;color:var(--muted);margin-top:6px;text-align:center;"></div>
@@ -1303,15 +1269,21 @@ document.getElementById('labelsBtn').onclick = () => {
 };
 applyLabelsVisibility(localStorage.getItem('kbl_region_map_labels_hidden') === '1');
 
-// ── Annotation tool: select/drag, freehand pen, and click-to-fill ──
+// ── Annotation tool: select/drag, freehand pen, click-to-fill, and
+// drag-to-paint-a-gradient ──
 // All drawing happens directly inside annotationLayer (a child of the
 // zoomable <g>), using map-space coordinates via toSvgPoint — so every
-// stroke is genuinely attached to the map content, not the screen.
-let annotateMode = null; // null | 'select' | 'draw' | 'fill'
+// stroke is genuinely attached to the map content, not the screen. The
+// gradient tool is the exception: it paints the actual region <path>
+// elements in countryLayer (same ones setRegionColor/setRegionCustomColor
+// already target from the sidebar swatch picker), not the annotation
+// overlay, since a gradient IS region coloring, not a drawing on top of it.
+let annotateMode = null; // null | 'select' | 'draw' | 'fill' | 'gradient'
 let currentDrawPath = null;
 let dragTarget = null;
 let dragStart = null;
 let annotateColor = document.getElementById('annotateColor').value;
+let gradientEndColor = document.getElementById('gradientEndColor').value;
 let annotateThickness = document.getElementById('annotateThickness').value;
 const mapStageEl = document.getElementById('mapStage');
 
@@ -1320,16 +1292,22 @@ function setAnnotateMode(mode){
   document.getElementById('selectToolBtn').classList.toggle('active', annotateMode === 'select');
   document.getElementById('drawToolBtn').classList.toggle('active', annotateMode === 'draw');
   document.getElementById('fillToolBtn').classList.toggle('active', annotateMode === 'fill');
+  document.getElementById('gradientToolBtn').classList.toggle('active', annotateMode === 'gradient');
+  document.getElementById('gradientEndColor').style.display = annotateMode === 'gradient' ? '' : 'none';
   // Paths inherit pointer-events from this parent group, so toggling it
   // here is what lets clicks pass through to countries underneath when
   // no annotation tool is active, and become clickable/draggable when one is.
-  annotationLayer.style('pointer-events', annotateMode ? 'all' : 'none');
-  mapStageEl.style.cursor = annotateMode === 'draw' ? 'crosshair' : annotateMode === 'fill' ? 'pointer' : annotateMode === 'select' ? 'grab' : 'default';
+  annotationLayer.style('pointer-events', annotateMode && annotateMode !== 'gradient' ? 'all' : 'none');
+  mapStageEl.style.cursor = annotateMode === 'draw' ? 'crosshair'
+    : (annotateMode === 'fill' || annotateMode === 'gradient') ? 'pointer'
+    : annotateMode === 'select' ? 'grab' : 'default';
 }
 document.getElementById('selectToolBtn').onclick = () => setAnnotateMode('select');
 document.getElementById('drawToolBtn').onclick = () => setAnnotateMode('draw');
 document.getElementById('fillToolBtn').onclick = () => setAnnotateMode('fill');
+document.getElementById('gradientToolBtn').onclick = () => setAnnotateMode('gradient');
 document.getElementById('annotateColor').addEventListener('input', (e) => { annotateColor = e.target.value; });
+document.getElementById('gradientEndColor').addEventListener('input', (e) => { gradientEndColor = e.target.value; });
 
 // Safety net: if anything about the annotation tools ever leaves the page
 // feeling unresponsive to clicks, Escape immediately forces every tool off.
@@ -1356,6 +1334,8 @@ function undo(){
     if (d) { d.tx = action.prevTx; d.ty = action.prevTy; }
   } else if (action.type === 'clear'){
     action.nodes.forEach(n => annotationLayer.node().appendChild(n));
+  } else if (action.type === 'gradient-batch'){
+    action.items.forEach(it => { it.node.style.fill = it.prevFill; });
   }
 }
 document.getElementById('undoAnnotateBtn').onclick = undo;
@@ -1432,7 +1412,77 @@ function endInteraction(){
   dragTarget = null;
   dragStart = null;
   panLastPoint = null;
+  endGradientDrag();
   if (annotateMode === 'select') mapStageEl.style.cursor = 'grab';
+}
+
+// ── Gradient tool ─────────────────────────────────────────
+// Paints countryLayer's actual region <path> elements directly (the same
+// ones setRegionColor/setRegionCustomColor already target from the
+// sidebar swatch picker), via a drag gesture instead of picking regions
+// from a list — press down on a region, drag across others, and each one
+// visited (in drag order) gets a linearly-interpolated shade between the
+// start (annotateColor) and end (gradientEndColor) pickers. Recomputed
+// across the whole sequence-so-far on every new region entered, so the
+// gradient stays evenly spaced as the drag grows and paints live instead
+// of only resolving on release.
+let gradientDragActive = false;
+let gradientDragSequence = []; // region ids, in the order the cursor entered them this drag
+let gradientDragUndoItems = []; // {node, prevFill}, captured once per region on first entry
+
+function hexToRgb(hex){
+  const n = parseInt(hex.replace('#',''), 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function rgbToHex(r, g, b){
+  return '#' + [r, g, b].map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+}
+function lerpColor(hexA, hexB, t){
+  const [r1, g1, b1] = hexToRgb(hexA), [r2, g2, b2] = hexToRgb(hexB);
+  return rgbToHex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
+}
+
+// Works for both mouse events (whose e.target already tracks whatever's
+// under the pointer) and a synthetic {target: elementFromPoint(...)}
+// object built for touchmove, which doesn't update e.target on its own.
+function regionPathUnderEvent(e){
+  const el = e.target;
+  return (el && el.tagName === 'path' && el.closest('.country-layer') && el.getAttribute('data-id')) ? el : null;
+}
+
+function addRegionToGradientDrag(pathEl){
+  const id = pathEl.getAttribute('data-id');
+  if (gradientDragSequence.includes(id)) return;
+  gradientDragSequence.push(id);
+  gradientDragUndoItems.push({ node: pathEl, prevFill: pathEl.style.fill });
+  const n = gradientDragSequence.length;
+  if (n === 1){
+    setRegionCustomColor(id, annotateColor);
+    return;
+  }
+  gradientDragSequence.forEach((rid, i) => {
+    setRegionCustomColor(rid, lerpColor(annotateColor, gradientEndColor, i / (n - 1)));
+  });
+}
+
+function startGradientDrag(pathEl){
+  gradientDragActive = true;
+  gradientDragSequence = [];
+  gradientDragUndoItems = [];
+  addRegionToGradientDrag(pathEl);
+}
+
+// One undo entry per drag (not per region) — Ctrl+Z reverts the whole
+// gradient paint in a single step, matching the single gesture that
+// created it.
+function endGradientDrag(){
+  if (!gradientDragActive) return;
+  gradientDragActive = false;
+  if (gradientDragUndoItems.length){
+    pushUndo({ type:'gradient-batch', items: gradientDragUndoItems });
+  }
+  gradientDragSequence = [];
+  gradientDragUndoItems = [];
 }
 
 mapStageEl.addEventListener('mousedown', (e) => {
@@ -1444,12 +1494,19 @@ mapStageEl.addEventListener('mousedown', (e) => {
     if (e.target.tagName === 'path' && e.target.closest('.annotation-layer')) startDrag(d3.select(e.target), e.clientX, e.clientY);
     else startPan(e.clientX, e.clientY);
     e.preventDefault();
+  } else if (annotateMode === 'gradient'){
+    const pathEl = regionPathUnderEvent(e);
+    if (pathEl){ startGradientDrag(pathEl); e.preventDefault(); }
   }
 });
 mapStageEl.addEventListener('mousemove', (e) => {
   moveDraw(e.clientX, e.clientY);
   moveDrag(e.clientX, e.clientY);
   movePan(e.clientX, e.clientY);
+  if (gradientDragActive){
+    const pathEl = regionPathUnderEvent(e);
+    if (pathEl) addRegionToGradientDrag(pathEl);
+  }
 });
 mapStageEl.addEventListener('mouseup', endInteraction);
 mapStageEl.addEventListener('mouseleave', endInteraction);
@@ -1462,6 +1519,9 @@ mapStageEl.addEventListener('touchstart', (e) => {
   } else if (annotateMode === 'select'){
     if (e.target.tagName === 'path' && e.target.closest('.annotation-layer')) startDrag(d3.select(e.target), t.clientX, t.clientY);
     else startPan(t.clientX, t.clientY);
+  } else if (annotateMode === 'gradient'){
+    const pathEl = regionPathUnderEvent(e);
+    if (pathEl) startGradientDrag(pathEl);
   }
   e.preventDefault();
 }, { passive:false });
@@ -1471,6 +1531,13 @@ mapStageEl.addEventListener('touchmove', (e) => {
   moveDraw(t.clientX, t.clientY);
   moveDrag(t.clientX, t.clientY);
   movePan(t.clientX, t.clientY);
+  if (gradientDragActive){
+    // touch events don't update e.target to whatever's currently under
+    // the finger the way mousemove does — elementFromPoint is needed to
+    // find the region actually being dragged over.
+    const pathEl = regionPathUnderEvent({ target: document.elementFromPoint(t.clientX, t.clientY) });
+    if (pathEl) addRegionToGradientDrag(pathEl);
+  }
   e.preventDefault();
 }, { passive:false });
 mapStageEl.addEventListener('touchend', endInteraction);
@@ -1595,106 +1662,15 @@ const JAPAN_REGION_GROUPS = [
   { region: 'Kyushu', prefectures: ['Fukuoka','Saga','Nagasaki','Kumamoto','Oita','Miyazaki','Kagoshima','Okinawa'] },
 ];
 
-// ── Gradient tool ─────────────────────────────────────────
-// A separate mode from the per-region swatch picker above: instead of
-// hand-picking each region's shade from the fixed palette one at a time
-// (the only way to reproduce a north-to-south fade before this), click
-// regions in the list in order to build a sequence, pick a start/end
-// color, and every region in between gets a linearly interpolated shade.
-let gradientMode = false;
-let gradientSequence = []; // region ids, in click order
-
-function hexToRgb(hex){
-  const n = parseInt(hex.replace('#',''), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-function rgbToHex(r, g, b){
-  return '#' + [r, g, b].map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
-}
-function lerpColor(hexA, hexB, t){
-  const [r1, g1, b1] = hexToRgb(hexA), [r2, g2, b2] = hexToRgb(hexB);
-  return rgbToHex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
-}
-
-function updateGradientPreviewBar(){
-  const start = document.getElementById('gradientStartColor').value;
-  const end = document.getElementById('gradientEndColor').value;
-  document.getElementById('gradientPreviewBar').style.background = `linear-gradient(90deg, ${start}, ${end})`;
-}
-
-function toggleRegionInSequence(id){
-  const idx = gradientSequence.indexOf(id);
-  if (idx === -1) gradientSequence.push(id);
-  else gradientSequence.splice(idx, 1);
-  updateGradientSequenceUI();
-}
-
-function updateGradientSequenceUI(){
-  document.querySelectorAll('#countryRegionsList .region-toggle-item[data-id]').forEach(item => {
-    const idx = gradientSequence.indexOf(item.dataset.id);
-    const badge = item.querySelector('.gradient-seq-badge');
-    item.classList.toggle('gradient-selected', idx !== -1);
-    if (badge) {
-      badge.textContent = idx === -1 ? '' : String(idx + 1);
-      badge.classList.toggle('filled', idx !== -1);
-    }
-  });
-  const applyBtn = document.getElementById('gradientApplyBtn');
-  applyBtn.textContent = `Apply Gradient (${gradientSequence.length} selected)`;
-  applyBtn.disabled = gradientSequence.length < 2;
-}
-
-function applyGradient(){
-  const n = gradientSequence.length;
-  if (n < 2) return;
-  const start = document.getElementById('gradientStartColor').value;
-  const end = document.getElementById('gradientEndColor').value;
-  gradientSequence.forEach((id, i) => {
-    setRegionCustomColor(id, lerpColor(start, end, i / (n - 1)));
-  });
-}
-
-function toggleGradientMode(){
-  gradientMode = !gradientMode;
-  gradientSequence = [];
-  document.getElementById('gradientModeBtn').classList.toggle('active', gradientMode);
-  document.getElementById('gradientToolBar').style.display = gradientMode ? '' : 'none';
-  document.getElementById('regionsModeHint').textContent = gradientMode
-    ? 'Click regions below, in order, to add them to the gradient sequence — click again to remove.'
-    : 'Click a color swatch to assign that region a group, or ✕ to hide it.';
-  if (currentLabelData) buildCountryRegionsList(currentLabelData);
-  updateGradientSequenceUI();
-}
-
-document.getElementById('gradientModeBtn').onclick = toggleGradientMode;
-document.getElementById('gradientApplyBtn').onclick = applyGradient;
-document.getElementById('gradientClearBtn').onclick = () => { gradientSequence = []; updateGradientSequenceUI(); };
-document.getElementById('gradientStartColor').addEventListener('input', updateGradientPreviewBar);
-document.getElementById('gradientEndColor').addEventListener('input', updateGradientPreviewBar);
-updateGradientPreviewBar();
-
 function renderRegionToggleItem(listEl, l){
   const item = document.createElement('div');
   item.className = 'region-toggle-item';
-  item.dataset.id = l.id;
-  if (gradientMode){
-    const idx = gradientSequence.indexOf(l.id);
-    item.classList.add('gradient-target');
-    if (idx !== -1) item.classList.add('gradient-selected');
-    item.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div class="region-toggle-name">${l.name}</div>
-        <div class="gradient-seq-badge${idx === -1 ? '' : ' filled'}">${idx === -1 ? '' : idx + 1}</div>
-      </div>`;
-    item.addEventListener('click', () => toggleRegionInSequence(l.id));
-  } else {
-    item.innerHTML = `
-      <div class="region-toggle-name">${l.name}</div>
-      <div class="region-swatch-row" data-id="${l.id}">
-        ${REGION_PALETTE.map(p => `<button class="region-swatch${p.key==='default' ? ' active' : ''}" data-id="${l.id}" data-key="${p.key}" title="${p.label}" style="background:${p.swatchBg || p.color};">${p.key==='hide' ? '✕' : ''}</button>`).join('')}
-        <input type="color" class="region-swatch region-swatch-custom" data-id="${l.id}" data-key="custom" title="Pick any color" value="#d1443a">
-      </div>`;
-  }
+  item.innerHTML = `
+    <div class="region-toggle-name">${l.name}</div>
+    <div class="region-swatch-row" data-id="${l.id}">
+      ${REGION_PALETTE.map(p => `<button class="region-swatch${p.key==='default' ? ' active' : ''}" data-id="${l.id}" data-key="${p.key}" title="${p.label}" style="background:${p.swatchBg || p.color};">${p.key==='hide' ? '✕' : ''}</button>`).join('')}
+      <input type="color" class="region-swatch region-swatch-custom" data-id="${l.id}" data-key="custom" title="Pick any color" value="#d1443a">
+    </div>`;
   listEl.appendChild(item);
 }
 
@@ -1770,27 +1746,12 @@ function showCountriesPanel(){
 }
 
 document.getElementById('selectAllRegionsBtn').onclick = () => {
-  // In gradient mode, "Select All" builds the sequence from every region
-  // currently in the list, in the order they're displayed — for Japan
-  // that's the north-to-south JAPAN_REGION_GROUPS order (see above), so
-  // this reproduces the "darker red at the top, fading to white at the
-  // bottom" look in one click instead of tapping all 47 individually.
-  if (gradientMode) {
-    gradientSequence = Array.from(document.querySelectorAll('#countryRegionsList .region-toggle-item[data-id]')).map(item => item.dataset.id);
-    updateGradientSequenceUI();
-    return;
-  }
   document.querySelectorAll('.region-swatch-row').forEach(row => {
     setRegionColor(row.dataset.id, 'default');
     row.querySelectorAll('.region-swatch').forEach(b => b.classList.toggle('active', b.dataset.key === 'default'));
   });
 };
 document.getElementById('selectNoneRegionsBtn').onclick = () => {
-  if (gradientMode) {
-    gradientSequence = [];
-    updateGradientSequenceUI();
-    return;
-  }
   document.querySelectorAll('.region-swatch-row').forEach(row => {
     setRegionColor(row.dataset.id, 'white');
     row.querySelectorAll('.region-swatch').forEach(b => b.classList.toggle('active', b.dataset.key === 'white'));
