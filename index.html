@@ -1347,7 +1347,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
         <div style="font-weight:700;margin-bottom:8px;">⭐ Upgrade to Pro</div>
         <div id="trial-banner" style="display:none;background:rgba(0,201,167,0.1);border:1px solid var(--teal);color:var(--teal);font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:12px;text-align:center;"></div>
         <div style="color:var(--muted);font-size:13px;margin-bottom:16px;">Priority AI, advanced comparisons, export your library and more.</div>
-        <button id="start-trial-btn" onclick="startTrial()" style="display:none;width:100%;padding:11px;margin-bottom:8px;background:rgba(0,201,167,0.1);border:1px solid var(--teal);color:var(--teal);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🎁 Start Your Free 5-Day Trial</button>
+        <button id="start-trial-btn" onclick="startTrial()" style="display:none;width:100%;padding:11px;margin-bottom:8px;background:rgba(0,201,167,0.1);border:1px solid var(--teal);color:var(--teal);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🎁 Start Your Free 3-Day Trial</button>
         <button class="btn btn-primary" onclick="upgradeToPro()" style="width:100%;padding:11px;">Upgrade Now <span class="price-display" data-gbp="9.99">£9.99</span>/mo</button>
         <div id="upgrade-msg" style="font-size:12px;margin-top:8px;text-align:center;"></div>
       </div>
@@ -2826,7 +2826,7 @@ async function startTrial() {
     await checkAuth();
   } catch(e) {
     btn.disabled = false;
-    btn.textContent = '🎁 Start Your Free 5-Day Trial';
+    btn.textContent = '🎁 Start Your Free 3-Day Trial';
     alert('Could not start trial: ' + e.message);
   }
 }
