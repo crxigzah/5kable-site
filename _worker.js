@@ -19,6 +19,15 @@ export default {
       url.pathname = '/metas';
       return env.ASSETS.fetch(new Request(url, request));
     }
+    // Discord's OAuth redirect lands here with ?code=...&state=... in the
+    // query string — served by the main SPA itself (index.html), which
+    // checks its own path on load and handles the exchange client-side.
+    // No separate page needed; same reasoning as /metas/ above, just
+    // pointed at index instead.
+    if (url.pathname === '/discord/callback') {
+      url.pathname = '/';
+      return env.ASSETS.fetch(new Request(url, request));
+    }
     // Everything else: identical to Cloudflare Pages' own default behavior
     // (this is the same asset server it would have used automatically).
     return env.ASSETS.fetch(request);
