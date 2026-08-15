@@ -1367,9 +1367,16 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       <div style="font-size:26px;font-weight:800;" id="leaderboard-page-title">🏆 Top Players</div>
       <div style="color:var(--muted);font-size:13px;margin-top:6px;" id="leaderboard-page-subtitle">Ranked by total XP across every game mode. Play rounds with the extension active to climb the board.</div>
     </div>
-    <div style="display:flex;gap:6px;justify-content:center;margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;max-width:340px;margin-left:auto;margin-right:auto;">
+    <div style="display:flex;gap:6px;justify-content:center;margin-bottom:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;max-width:340px;margin-left:auto;margin-right:auto;">
       <button id="leaderboard-tab-players" class="leaderboard-tab-btn" onclick="switchLeaderboardTab('players')" style="flex:1;background:var(--teal);color:#080810;border:none;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">🏆 Top Players</button>
       <button id="leaderboard-tab-contributors" class="leaderboard-tab-btn" onclick="switchLeaderboardTab('contributors')" style="flex:1;background:transparent;color:var(--muted);border:none;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">📍 Top Contributors</button>
+    </div>
+    <div id="leaderboard-period-row" style="display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:20px;">
+      <div style="display:flex;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;">
+        <button id="leaderboard-period-season" class="leaderboard-period-btn" onclick="switchLeaderboardPeriod('season')" style="background:var(--teal);color:#080810;border:none;padding:7px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">This Season</button>
+        <button id="leaderboard-period-alltime" class="leaderboard-period-btn" onclick="switchLeaderboardPeriod('alltime')" style="background:transparent;color:var(--muted);border:none;padding:7px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">All Time</button>
+      </div>
+      <select id="leaderboard-season-picker" onchange="onSeasonPickerChange(this.value)" style="display:none;background:#0d0d18;border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;"></select>
     </div>
     <div id="leaderboard-my-rank" style="display:none;margin-bottom:16px;background:rgba(0,201,167,0.08);border:1px solid var(--teal);border-radius:14px;padding:14px 18px;align-items:center;gap:14px;">
       <div id="leaderboard-my-rank-icon" style="font-size:28px;line-height:1;flex-shrink:0;">⭐</div>
@@ -2140,6 +2147,10 @@ function goToLeaderboard() {
 }
 
 let currentLeaderboardTab = 'players';
+let currentLeaderboardPeriod = 'season';
+let currentSeasonYear = null;
+let currentSeasonMonth = null;
+let _seasonPickerLoaded = false;
 
 function switchLeaderboardTab(tab){
   currentLeaderboardTab = tab;
@@ -2150,17 +2161,84 @@ function switchLeaderboardTab(tab){
     btn.style.color = active ? '#080810' : 'var(--muted)';
   });
 
+  const periodRow = document.getElementById('leaderboard-period-row');
   if (tab === 'players') {
     document.getElementById('leaderboard-page-title').textContent = '🏆 Top Players';
-    document.getElementById('leaderboard-page-subtitle').textContent = 'Ranked by total XP across every game mode. Play rounds with the extension active to climb the board.';
+    periodRow.style.display = 'flex';
+    document.getElementById('leaderboard-season-picker').style.display = currentLeaderboardPeriod === 'season' ? 'block' : 'none';
+    updateLeaderboardSubtitle();
+    if (!_seasonPickerLoaded) loadSeasonPicker();
     loadTopPlayersLeaderboard();
     loadMyRank();
   } else {
     document.getElementById('leaderboard-page-title').textContent = '📍 Top Contributors';
     document.getElementById('leaderboard-page-subtitle').textContent = "Ranked by locations added to the scene library — the players actually building out 5kable's map coverage.";
+    periodRow.style.display = 'none';
     document.getElementById('leaderboard-my-rank').style.display = 'none'; // XP-specific; no contributor-rank lookup yet
     loadTopContributorsLeaderboard();
   }
+}
+
+function updateLeaderboardSubtitle(){
+  const el = document.getElementById('leaderboard-page-subtitle');
+  if (!el) return;
+  if (currentLeaderboardPeriod === 'season') {
+    const label = currentSeasonYear
+      ? new Date(currentSeasonYear, currentSeasonMonth - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'})
+      : 'this month';
+    el.textContent = `Ranked by correct guesses in ${label}. Resets every month, so everyone's got a fresh shot.`;
+  } else {
+    el.textContent = 'Ranked by total XP across every game mode, all time. Play rounds with the extension active to climb the board.';
+  }
+}
+
+function switchLeaderboardPeriod(period){
+  currentLeaderboardPeriod = period;
+  const seasonBtn = document.getElementById('leaderboard-period-season');
+  const alltimeBtn = document.getElementById('leaderboard-period-alltime');
+  [[seasonBtn, period === 'season'], [alltimeBtn, period === 'alltime']].forEach(([btn, active]) => {
+    btn.style.background = active ? 'var(--teal)' : 'transparent';
+    btn.style.color = active ? '#080810' : 'var(--muted)';
+  });
+  document.getElementById('leaderboard-season-picker').style.display = period === 'season' ? 'block' : 'none';
+  updateLeaderboardSubtitle();
+  loadTopPlayersLeaderboard();
+  loadMyRank();
+}
+
+async function loadSeasonPicker(){
+  _seasonPickerLoaded = true;
+  const picker = document.getElementById('leaderboard-season-picker');
+  if (!picker) return;
+  const now = new Date();
+  currentSeasonYear = now.getUTCFullYear();
+  currentSeasonMonth = now.getUTCMonth() + 1;
+  try {
+    const res = await fetch(`${API}/leaderboard/season/available`);
+    const data = await res.json();
+    let seasons = data.seasons || [];
+    // Always include the current month even if nobody's played yet this
+    // month, so the picker never opens on an empty/missing selection.
+    if (!seasons.some(s => s.year === currentSeasonYear && s.month === currentSeasonMonth)) {
+      seasons = [{year: currentSeasonYear, month: currentSeasonMonth}, ...seasons];
+    }
+    picker.innerHTML = seasons.map(s => {
+      const label = new Date(s.year, s.month - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'});
+      return `<option value="${s.year}-${s.month}">${label}</option>`;
+    }).join('');
+    picker.value = `${currentSeasonYear}-${currentSeasonMonth}`;
+  } catch(e) {
+    picker.innerHTML = `<option value="${currentSeasonYear}-${currentSeasonMonth}">${new Date(currentSeasonYear, currentSeasonMonth - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'})}</option>`;
+  }
+}
+
+function onSeasonPickerChange(value){
+  const [year, month] = value.split('-').map(Number);
+  currentSeasonYear = year;
+  currentSeasonMonth = month;
+  updateLeaderboardSubtitle();
+  loadTopPlayersLeaderboard();
+  loadMyRank();
 }
 
 async function loadMyRank(){
@@ -2168,14 +2246,18 @@ async function loadMyRank(){
   if (!el) return;
   const token = getToken();
   if (!token) { el.style.display = 'none'; return; }
+  const usingSeason = currentLeaderboardPeriod === 'season';
+  const url = usingSeason ? API + '/leaderboard/season/my_rank' : API + '/leaderboard/my_rank';
+  const body = usingSeason ? {token, year: currentSeasonYear, month: currentSeasonMonth} : {token};
   try {
-    const res = await fetch(API + '/leaderboard/my_rank', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
     const data = await res.json();
     if (data.error) { el.style.display = 'none'; return; }
-    document.getElementById('leaderboard-my-rank-icon').textContent = data.tier_icon || '⭐';
+    document.getElementById('leaderboard-my-rank-icon').textContent = usingSeason ? '📅' : (data.tier_icon || '⭐');
     document.getElementById('leaderboard-my-rank-num').textContent = `#${data.rank.toLocaleString()}`;
-    document.getElementById('leaderboard-my-rank-detail').textContent =
-      `of ${data.total_players.toLocaleString()} players — Lv.${data.level} ${data.tier_title}, ${data.total_xp.toLocaleString()} XP`;
+    document.getElementById('leaderboard-my-rank-detail').textContent = usingSeason
+      ? `of ${data.total_players.toLocaleString()} players this season — ${data.season_xp.toLocaleString()} correct guesses`
+      : `of ${data.total_players.toLocaleString()} players — Lv.${data.level} ${data.tier_title}, ${data.total_xp.toLocaleString()} XP`;
     el.style.display = 'flex';
   } catch(e) {
     el.style.display = 'none';
@@ -2185,28 +2267,34 @@ async function loadMyRank(){
 async function loadTopPlayersLeaderboard(){
   const el = document.getElementById('leaderboard-page-list');
   if (!el) return;
+  const usingSeason = currentLeaderboardPeriod === 'season';
+  const url = usingSeason
+    ? `${API}/leaderboard/season?limit=50&year=${currentSeasonYear}&month=${currentSeasonMonth}`
+    : `${API}/leaderboard/levels?limit=50`;
   try {
-    const res = await fetch(`${API}/leaderboard/levels?limit=50`);
+    const res = await fetch(url);
     const data = await res.json();
     const rows = data.leaderboard || [];
     if (!rows.length) {
-      el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No players yet — be the first on the board!</div>`;
+      el.innerHTML = usingSeason
+        ? `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No one's played in this season yet — be the first on the board!</div>`
+        : `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No players yet — be the first on the board!</div>`;
       return;
     }
     const me = getUser();
     el.innerHTML = rows.map((row, i) => {
       const isMe = me && row.user_id === me.id;
       const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+      const scoreBlock = usingSeason
+        ? `<div style="font-size:13px;font-weight:700;">${row.season_xp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted);">correct</div>`
+        : `<div style="font-size:13px;font-weight:700;">Lv.${row.level}</div><div style="font-size:10px;color:var(--muted);">${row.total_xp.toLocaleString()} XP</div>`;
       return `
         <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;${isMe ? 'background:rgba(0,201,167,0.1);border:1px solid var(--teal);' : ''}">
           <div style="width:32px;text-align:center;font-size:${i < 3 ? '18px' : '13px'};font-weight:700;color:${i < 3 ? '#fff' : 'var(--muted)'};flex-shrink:0;">${medal}</div>
           ${renderBadgeImg(row.badge_country, 20)}
           <div style="font-size:20px;flex-shrink:0;" title="${escapeHtmlLocal(row.tier_title)}">${row.tier_icon}</div>
           <div style="flex:1;min-width:0;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlLocal(row.username)}${isMe ? ' <span style="color:var(--teal);font-weight:400;">(you)</span>' : ''}</div>
-          <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:13px;font-weight:700;">Lv.${row.level}</div>
-            <div style="font-size:10px;color:var(--muted);">${row.total_xp.toLocaleString()} XP</div>
-          </div>
+          <div style="text-align:right;flex-shrink:0;">${scoreBlock}</div>
         </div>`;
     }).join('');
   } catch(e) {
