@@ -5128,14 +5128,22 @@ async function confirmCancelSubscription() {
     const res = await fetch(API + '/stripe/cancel-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
     const d = await res.json();
     if (d.error) throw new Error(d.error);
-    // Re-verify so the nav badge, dashboard, and this menu item all drop
-    // back to Free consistently, same pattern as everywhere else tier
-    // changes (starting a trial, a Stripe checkout success redirect).
+    // Re-verify so the nav badge, dashboard, and this menu item all reflect
+    // the real tier, same pattern as everywhere else tier changes (starting
+    // a trial, a Stripe checkout success redirect). A trial cancellation
+    // drops straight to Free; a paid subscription keeps Pro until the
+    // period already paid for actually ends, so tier stays 'pro' here.
     await checkAuth();
+    const periodEndDate = d.current_period_end
+      ? new Date(d.current_period_end * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'})
+      : null;
+    const message = d.immediate
+      ? "You're back on the Free plan. You're welcome back anytime."
+      : `You won't be charged again. You'll keep Pro access until${periodEndDate ? ` ${periodEndDate}` : ' the end of your current billing period'}.`;
     body.innerHTML = `
       <div style="text-align:center;padding:6px 0;">
         <div style="font-weight:700;margin-bottom:6px;">Subscription cancelled</div>
-        <div style="color:var(--muted);font-size:13px;margin-bottom:18px;">You're back on the Free plan. You're welcome back anytime.</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:18px;">${message}</div>
         <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Done</button>
       </div>`;
   } catch(e) {
