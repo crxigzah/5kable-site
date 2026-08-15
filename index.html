@@ -2746,11 +2746,6 @@ document.addEventListener('click', e => {
   if (menu && !menu.contains(e.target)) closeUserMenu();
 });
 
-function showPaymentHistory() {
-  closeUserMenu();
-  alert('Payment history coming soon will show all your subscription payments via Stripe.');
-}
-
 function showPaymentMethods() {
   closeUserMenu();
   alert('Payment methods coming soon manage your saved cards via the Stripe customer portal.');
@@ -4193,24 +4188,29 @@ function showAccountSettings() {
 
       <!-- Billing -->
       <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
-        <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:10px;">💳 BILLING</label>
-
-        <div style="font-size:12px;font-weight:700;color:#c0c0d8;margin-bottom:8px;">Payment Methods</div>
-        <div id="settings-payment-methods-list" style="margin-bottom:10px;"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
-        <button id="add-card-toggle-btn" onclick="toggleAddCardForm()" style="width:100%;padding:9px;background:none;border:1px dashed #2a2a3e;color:#8888aa;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:16px;">+ Add a card</button>
-        <div id="add-card-form" style="display:none;background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:14px;margin-bottom:16px;">
-          <div id="stripe-card-element" style="padding:10px 4px;"></div>
-          <div id="stripe-card-errors" style="color:var(--red);font-size:11px;margin-top:6px;min-height:14px;"></div>
-          <div style="display:flex;gap:8px;margin-top:10px;">
-            <button onclick="saveNewCard()" id="save-card-btn" style="flex:1;padding:9px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Save Card</button>
-            <button onclick="toggleAddCardForm()" style="padding:9px 14px;background:none;border:1px solid #1e1e35;color:#eee;border-radius:8px;font-size:12px;cursor:pointer;">Cancel</button>
-          </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleBillingSection()">
+          <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">💳 BILLING</label>
+          <span id="billing-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
         </div>
+        <div id="billing-section" style="display:none;margin-top:12px;">
+          <div style="font-size:12px;font-weight:700;color:#c0c0d8;margin-bottom:8px;">Payment Methods</div>
+          <div id="settings-payment-methods-list" style="margin-bottom:10px;"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
+          <button id="add-card-toggle-btn" onclick="toggleAddCardForm()" style="width:100%;padding:9px;background:none;border:1px dashed #2a2a3e;color:#8888aa;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:16px;">+ Add a card</button>
+          <div id="add-card-form" style="display:none;background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:14px;margin-bottom:16px;">
+            <div id="stripe-card-element" style="padding:10px 4px;"></div>
+            <div id="stripe-card-errors" style="color:var(--red);font-size:11px;margin-top:6px;min-height:14px;"></div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button onclick="saveNewCard()" id="save-card-btn" style="flex:1;padding:9px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Save Card</button>
+              <button onclick="toggleAddCardForm()" style="padding:9px 14px;background:none;border:1px solid #1e1e35;color:#eee;border-radius:8px;font-size:12px;cursor:pointer;">Cancel</button>
+            </div>
+          </div>
 
-        <div style="font-size:12px;font-weight:700;color:#c0c0d8;margin-bottom:8px;">Payment History</div>
-        <div id="settings-payment-history-list" style="margin-bottom:16px;"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
-
-        ${user.tier === 'pro' ? `<button onclick="openCancelSubscriptionModal()" style="width:100%;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:10px;font-size:13px;cursor:pointer;">❌ Cancel Subscription</button>` : ''}
+          ${user.tier === 'pro' ? `
+          <div style="display:flex;gap:8px;">
+            <button onclick="openManageSubscriptionModal()" style="flex:1;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid #1e1e35;color:#c0c0d8;border-radius:10px;font-size:13px;cursor:pointer;">📋 Manage Subscription</button>
+            <button onclick="openCancelSubscriptionModal()" style="flex:1;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:10px;font-size:13px;cursor:pointer;">❌ Cancel Subscription</button>
+          </div>` : ''}
+        </div>
       </div>
 
       <!-- Change Password -->
@@ -4277,7 +4277,6 @@ function showAccountSettings() {
   loadLevelIntoSettings();
   loadNotificationPrefsIntoSettings();
   loadPaymentMethodsIntoSettings();
-  loadPaymentHistoryIntoSettings();
 }
 
 async function loadNotificationPrefsIntoSettings(){
@@ -4482,36 +4481,6 @@ async function setDefaultPaymentMethodCard(pmId){
   }
 }
 
-async function loadPaymentHistoryIntoSettings(){
-  const el = document.getElementById('settings-payment-history-list');
-  if (!el) return;
-  const token = getToken();
-  if (!token) { el.innerHTML = ''; return; }
-  try {
-    const res = await fetch(API + '/stripe/payment-history', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    const invoices = data.invoices || [];
-    if (!invoices.length) {
-      el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">No payments yet.</div>';
-      return;
-    }
-    el.innerHTML = invoices.map(inv => {
-      const date = new Date(inv.date * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
-      const statusColor = inv.status === 'paid' ? '#00c9a7' : inv.status === 'open' ? '#f0a500' : '#ff6b6b';
-      return `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1e1e35;font-size:12px;">
-        <div style="color:#c0c0d8;">${date}</div>
-        <div style="font-weight:700;">${inv.currency === 'GBP' ? '£' : inv.currency + ' '}${inv.amount.toFixed(2)}</div>
-        <div style="color:${statusColor};text-transform:capitalize;font-weight:600;">${escapeHtmlLocal(inv.status)}</div>
-        ${inv.hosted_invoice_url ? `<a href="${inv.hosted_invoice_url}" target="_blank" rel="noopener" style="color:var(--teal);text-decoration:none;">Receipt</a>` : '<span></span>'}
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">Couldn\'t load payment history right now.</div>';
-  }
-}
-
 async function loadLevelIntoSettings(){
   const el = document.getElementById('settings-level-display');
   if (!el) return;
@@ -4577,6 +4546,15 @@ function updateNavAvatar() {
 function togglePasswordSection() {
   const sec = document.getElementById('password-section');
   const icon = document.getElementById('pwd-toggle-icon');
+  if (!sec) return;
+  const open = sec.style.display !== 'none';
+  sec.style.display = open ? 'none' : 'block';
+  if (icon) icon.textContent = open ? '▼' : '▲';
+}
+
+function toggleBillingSection() {
+  const sec = document.getElementById('billing-section');
+  const icon = document.getElementById('billing-toggle-icon');
   if (!sec) return;
   const open = sec.style.display !== 'none';
   sec.style.display = open ? 'none' : 'block';
@@ -4859,24 +4837,6 @@ async function loadStatsBadges(){
   }
 }
 
-function showPaymentHistory() {
-  closeUserMenu();
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:center;justify-content:center;';
-  overlay.innerHTML = `<div style="background:#10101e;border:1px solid #1e1e35;border-radius:16px;padding:36px;width:420px;max-width:95vw;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div style="font-size:18px;font-weight:700;">Payment History</div>
-      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:#6a6a9a;font-size:20px;cursor:pointer;">✕</button>
-    </div>
-    <div style="color:#6a6a9a;font-size:13px;text-align:center;padding:32px 0;">
-      <div style="font-size:32px;margin-bottom:12px;">🧾</div>
-      Payment history will appear here once you have an active subscription.
-    </div>
-  </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
-}
-
 // Swaps the static thumbnail facade for a real YouTube iframe on click,
 // with autoplay — deferring the iframe until interaction means the site
 // isn't loading YouTube's player JS on every visit just to show a thumbnail,
@@ -4958,6 +4918,71 @@ function showPaymentMethods() {
       console.error('Stripe portal fetch error:', e);
     }
   })();
+}
+
+// ── Manage Subscription (read-only details, in-app) ──
+function closeManageSubscriptionModal() {
+  document.getElementById('gax-manage-sub-modal')?.remove();
+}
+
+async function openManageSubscriptionModal() {
+  closeUserMenu();
+  const token = getToken();
+  if (!token) { showModal('login'); return; }
+  document.getElementById('gax-manage-sub-modal')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'gax-manage-sub-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2100;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+  overlay.innerHTML = `
+    <div style="background:#10101e;border:1px solid #1e1e35;border-radius:20px;padding:32px;width:440px;max-width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.8);" onclick="event.stopPropagation()">
+      <div style="font-size:18px;font-weight:800;margin-bottom:14px;">Your Subscription</div>
+      <div id="manage-sub-body"><div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center;">Loading...</div></div>
+      <button onclick="closeManageSubscriptionModal()" style="width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;margin-top:14px;">Close</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', closeManageSubscriptionModal);
+
+  const body = document.getElementById('manage-sub-body');
+  try {
+    const res = await fetch(API + '/stripe/subscription-details', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    const sub = d.subscription;
+    if (!body) return;
+    if (!sub) {
+      body.innerHTML = '<div style="color:var(--muted);font-size:13px;">No active subscription found.</div>';
+      return;
+    }
+    const priceLine = sub.amount != null
+      ? `${sub.currency === 'GBP' ? '£' : sub.currency + ' '}${sub.amount.toFixed(2)} / ${sub.interval}`
+      : '—';
+    let statusLine;
+    if (sub.status === 'trialing' && sub.trial_end) {
+      const trialEndDate = new Date(sub.trial_end * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+      statusLine = sub.cancel_at_period_end
+        ? `Your free trial ends and access stops on <b>${trialEndDate}</b>. You won't be charged.`
+        : `You're on a free trial. Your card will be charged automatically on <b>${trialEndDate}</b> unless you cancel first.`;
+    } else if (sub.cancel_at_period_end && sub.current_period_end) {
+      const endDate = new Date(sub.current_period_end * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+      statusLine = `Your subscription is set to cancel on <b>${endDate}</b>. You'll keep Pro access until then.`;
+    } else if (sub.current_period_end) {
+      const renewDate = new Date(sub.current_period_end * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+      statusLine = `Renews automatically on <b>${renewDate}</b>.`;
+    } else {
+      statusLine = '';
+    }
+    body.innerHTML = `
+      <div style="background:#0d0d18;border:1px solid #1e1e35;border-radius:12px;padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="font-weight:700;font-size:14px;">5kable Pro</div>
+          <div style="font-weight:700;font-size:14px;color:var(--teal);">${priceLine}</div>
+        </div>
+        <div style="color:var(--muted);font-size:12px;line-height:1.5;">${statusLine}</div>
+      </div>`;
+  } catch(e) {
+    if (body) body.innerHTML = `<div style="color:var(--red);font-size:13px;">Couldn't load subscription details: ${e.message}</div>`;
+  }
 }
 
 // ── Cancel Subscription (custom flow, not Stripe's hosted portal) ──
