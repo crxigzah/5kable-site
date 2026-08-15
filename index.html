@@ -1880,8 +1880,8 @@ async function register() {
   errEl.style.display = 'none';
   errEl.style.color='var(--muted)'; errEl.style.display='block';
   let secs = 0;
-  const timer = setInterval(() => { secs++; errEl.textContent = 'Waking server... ' + secs + 's (free tier takes up to 50s)'; }, 1000);
-  errEl.textContent = 'Waking server... 0s (free tier takes up to 50s)';
+  const timer = setInterval(() => { secs++; errEl.textContent = 'Connecting to server... ' + secs + 's'; }, 1000);
+  errEl.textContent = 'Connecting to server...';
   await wakeServer();
   clearInterval(timer);
   errEl.style.display = 'none';
@@ -1954,8 +1954,8 @@ async function login() {
   errEl.style.display = 'none';
   errEl.style.color='var(--muted)'; errEl.style.display='block';
   let secs2 = 0;
-  const timer2 = setInterval(() => { secs2++; errEl.textContent = 'Waking server... ' + secs2 + 's (free tier takes up to 50s)'; }, 1000);
-  errEl.textContent = 'Waking server... 0s (free tier takes up to 50s)';
+  const timer2 = setInterval(() => { secs2++; errEl.textContent = 'Connecting to server... ' + secs2 + 's'; }, 1000);
+  errEl.textContent = 'Connecting to server...';
   await wakeServer();
   clearInterval(timer2);
   errEl.style.display = 'none';
@@ -3922,7 +3922,7 @@ async function upgradeToPro() {
       console.error('Stripe checkout error:', data);
     }
   } catch(e) {
-    msgs.forEach(m => { m.style.color = 'var(--red)'; m.textContent = 'Could not connect to server is Render awake?'; });
+    msgs.forEach(m => { m.style.color = 'var(--red)'; m.textContent = 'Could not connect to server — please try again.'; });
     console.error('Stripe fetch error:', e);
   }
 }
@@ -4695,7 +4695,7 @@ function showPaymentMethods() {
       }
     } catch(e) {
       statusEl.style.color = 'var(--red)';
-      statusEl.textContent = 'Could not connect to server — is Render awake?';
+      statusEl.textContent = 'Could not connect to server — please try again.';
       console.error('Stripe portal fetch error:', e);
     }
   })();
