@@ -1013,7 +1013,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   <div class="section" id="pricing">
     <div class="section-label" style="text-align:center;">Pricing</div>
     <h2 style="font-size:30px;font-weight:800;text-align:center;margin-bottom:32px;">Start free, upgrade when ready</h2>
-    <p style="text-align:center;color:var(--muted);margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto;">Start free with unlimited F7 captures and 5 daily training guides, or try Pro free for 3 days.</p>
+    <p style="text-align:center;color:var(--muted);margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto;">Start free with unlimited F7 captures and 3 daily training guides, or try Pro free for 3 days.</p>
     <div class="pricing">
       <div class="price-card">
         <div class="price-name">Free</div>
@@ -1021,7 +1021,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
         <div class="price-desc">Get a taste of AI-powered training</div>
         <ul class="price-features">
           <li>114 Country Meta Guides</li>
-          <li>5 Training Guides Per Day</li>
+          <li>3 Training Guides Per Day</li>
           <li>Unlimited F7 scene captures</li>
           <li class="no">5K live chat ask anything</li>
           <li class="no">Early access to new features</li>
@@ -1071,7 +1071,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
           </tr>
           <tr style="border-bottom:1px solid #1e1e35;background:rgba(255,255,255,0.02);">
             <td style="padding:12px 16px;">Training Guides</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">5 / day</td>
+            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">3 / day</td>
             <td style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;">Unlimited</td>
           </tr>
           <tr style="border-bottom:1px solid #1e1e35;">
@@ -3298,7 +3298,7 @@ async function loadDashboardUsage(token){
     }
     const f7Used = usage.f7_used || 0;
     const tUsed  = usage.teachings_used || 0;
-    const limit  = usage.limit || 5; // teachings-only limit; F7 is uncapped
+    const limit  = usage.limit || 3; // teachings-only limit; F7 is uncapped
     labelEl.innerHTML = `📸 ${f7Used} scenes captured today — unlimited &nbsp;·&nbsp; 📖 ${tUsed}/${limit} training guides used today`;
     const pct = Math.round((tUsed / limit) * 100);
     fillEl.style.width = pct + '%';
