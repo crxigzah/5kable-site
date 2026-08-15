@@ -1353,7 +1353,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
         <div id="trial-banner" style="display:none;background:rgba(0,201,167,0.1);border:1px solid var(--teal);color:var(--teal);font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:12px;text-align:center;"></div>
         <div id="upgrade-desc" style="color:var(--muted);font-size:13px;margin-bottom:16px;">Priority AI, advanced comparisons, export your library and more.</div>
         <button id="start-trial-btn" onclick="startTrial()" style="display:none;width:100%;padding:11px;margin-bottom:8px;background:rgba(0,201,167,0.1);border:1px solid var(--teal);color:var(--teal);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🎁 Start Your Free 3-Day Trial</button>
-        <button id="upgrade-now-btn" class="btn btn-primary" onclick="upgradeToPro()" style="width:100%;padding:11px;">Upgrade Now <span class="price-display" data-gbp="9.99">£9.99</span>/mo</button>
+        <button id="upgrade-now-btn" class="btn btn-primary" onclick="openUpgradeModal()" style="width:100%;padding:11px;">Upgrade Now <span class="price-display" data-gbp="9.99">£9.99</span>/mo</button>
         <button id="manage-billing-btn" onclick="showPaymentMethods()" style="display:none;width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Manage Billing</button>
         <div id="upgrade-msg" style="font-size:12px;margin-top:8px;text-align:center;"></div>
       </div>
@@ -4492,6 +4492,169 @@ async function saveNewCard(){
   } finally {
     btn.disabled = false;
     btn.textContent = 'Save Card';
+  }
+}
+
+// ── In-app Pro upgrade (calls Stripe's Subscription API directly instead
+// of redirecting to a hosted Checkout Session) ──
+let _stripeUpgradeElements = null;
+let _stripeUpgradeCardElement = null;
+
+function closeUpgradeModal() {
+  document.getElementById('gax-upgrade-modal')?.remove();
+  _stripeUpgradeElements = null;
+  _stripeUpgradeCardElement = null;
+}
+
+function openUpgradeModal() {
+  closeUserMenu();
+  const token = getToken();
+  if (!token) { showModal('login'); return; }
+  document.getElementById('gax-upgrade-modal')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'gax-upgrade-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2100;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+  overlay.innerHTML = `
+    <div style="background:#10101e;border:1px solid #1e1e35;border-radius:20px;padding:32px;width:440px;max-width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.8);" onclick="event.stopPropagation()">
+      <div style="font-size:18px;font-weight:800;margin-bottom:4px;">⭐ Upgrade to Pro</div>
+      <div style="color:var(--muted);font-size:13px;margin:6px 0 18px;">Priority AI, advanced comparisons, export your library and more. £9.99/mo, cancel anytime.</div>
+      <div id="upgrade-modal-body"><div style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px;">Loading...</div></div>
+      <button onclick="closeUpgradeModal()" id="upgrade-modal-close-btn" style="width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;margin-top:14px;">Cancel</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', closeUpgradeModal);
+  loadUpgradeModalBody();
+}
+
+async function loadUpgradeModalBody() {
+  const body = document.getElementById('upgrade-modal-body');
+  if (!body) return;
+  const token = getToken();
+  try {
+    const res = await fetch(API + '/stripe/payment-methods', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const methods = data.methods || [];
+    let html = '';
+    if (methods.length) {
+      html += `<div style="font-size:12px;font-weight:700;color:#c0c0d8;margin-bottom:8px;">Pay with</div>`;
+      html += methods.map(m => `
+        <div onclick="submitUpgradeWithPaymentMethod('${m.id}')" style="display:flex;align-items:center;justify-content:space-between;background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='#00c9a7'" onmouseout="this.style.borderColor='#1e1e35'">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span>${CARD_BRAND_ICON[m.brand] || '💳'}</span>
+            <div>
+              <div style="font-size:13px;font-weight:600;text-transform:capitalize;">${escapeHtmlLocal(m.brand)} •••• ${escapeHtmlLocal(m.last4)}</div>
+              <div style="font-size:11px;color:#7a7a9a;">Expires ${String(m.exp_month).padStart(2,'0')}/${m.exp_year}${m.id === data.default_id ? ' · Default' : ''}</div>
+            </div>
+          </div>
+          <span style="color:var(--teal);font-size:12px;font-weight:700;">Use this card</span>
+        </div>`).join('');
+      html += `<button onclick="toggleUpgradeNewCardForm()" id="upgrade-add-card-toggle-btn" style="width:100%;padding:9px;background:none;border:1px dashed #2a2a3e;color:#8888aa;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;margin-top:2px;">+ Use a different card</button>`;
+    } else {
+      html += `<div style="font-size:12px;font-weight:700;color:#c0c0d8;margin-bottom:8px;">Card details</div>`;
+    }
+    html += `
+      <div id="upgrade-new-card-form" style="${methods.length ? 'display:none;margin-top:12px;' : ''}">
+        <div style="background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:14px;">
+          <div id="upgrade-card-element" style="padding:10px 4px;"></div>
+          <div id="upgrade-card-errors" style="color:var(--red);font-size:11px;margin-top:6px;min-height:14px;"></div>
+        </div>
+        <button onclick="submitUpgradeWithNewCard()" id="upgrade-submit-btn" style="width:100%;padding:11px;margin-top:10px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Upgrade Now £9.99/mo</button>
+      </div>`;
+    body.innerHTML = html;
+    if (!methods.length) mountUpgradeCardElement();
+  } catch(e) {
+    body.innerHTML = `<div style="color:var(--red);font-size:13px;">Couldn't load payment methods: ${e.message}</div>`;
+  }
+}
+
+function toggleUpgradeNewCardForm() {
+  const form = document.getElementById('upgrade-new-card-form');
+  const btn = document.getElementById('upgrade-add-card-toggle-btn');
+  if (!form) return;
+  const opening = form.style.display === 'none';
+  form.style.display = opening ? 'block' : 'none';
+  if (btn) btn.style.display = opening ? 'none' : 'block';
+  if (opening && !_stripeUpgradeCardElement) mountUpgradeCardElement();
+}
+
+async function mountUpgradeCardElement() {
+  const errEl = document.getElementById('upgrade-card-errors');
+  try {
+    const stripeJs = await getStripeJs();
+    _stripeUpgradeElements = stripeJs.elements();
+    _stripeUpgradeCardElement = _stripeUpgradeElements.create('card', {
+      style: {
+        base: {
+          color: '#eee',
+          fontSize: '14px',
+          '::placeholder': { color: '#5a5a7a' },
+        },
+        invalid: { color: '#ff6b6b' },
+      },
+    });
+    _stripeUpgradeCardElement.mount('#upgrade-card-element');
+    _stripeUpgradeCardElement.on('change', (event) => {
+      if (errEl) errEl.textContent = event.error ? event.error.message : '';
+    });
+  } catch(e) {
+    if (errEl) errEl.textContent = 'Could not load card form: ' + e.message;
+  }
+}
+
+async function submitUpgradeWithNewCard() {
+  const btn = document.getElementById('upgrade-submit-btn');
+  const errEl = document.getElementById('upgrade-card-errors');
+  if (!_stripeJs || !_stripeUpgradeCardElement) return;
+  btn.disabled = true;
+  btn.textContent = 'Processing...';
+  try {
+    const { paymentMethod, error } = await _stripeJs.createPaymentMethod({ type: 'card', card: _stripeUpgradeCardElement });
+    if (error) throw new Error(error.message);
+    await submitUpgradeWithPaymentMethod(paymentMethod.id);
+  } catch(e) {
+    if (errEl) errEl.textContent = e.message;
+    btn.disabled = false;
+    btn.textContent = 'Upgrade Now £9.99/mo';
+  }
+}
+
+async function submitUpgradeWithPaymentMethod(pmId) {
+  const body = document.getElementById('upgrade-modal-body');
+  const closeBtn = document.getElementById('upgrade-modal-close-btn');
+  if (body) body.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px;">Processing payment...</div>';
+  if (closeBtn) closeBtn.style.display = 'none';
+  const token = getToken();
+  try {
+    const res = await fetch(API + '/stripe/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token, payment_method_id: pmId}) });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    if (d.status === 'requires_action') {
+      const stripeJs = await getStripeJs();
+      const confirmResult = await stripeJs.confirmCardPayment(d.client_secret);
+      if (confirmResult.error) throw new Error(confirmResult.error.message);
+    }
+    // tier itself only ever changes via the customer.subscription.created
+    // webhook (see /stripe/create-subscription on the backend), same
+    // invariant as every other billing flow — checkAuth() re-verifies so
+    // the nav badge, dashboard, and this modal all reflect the real tier.
+    await checkAuth();
+    if (document.getElementById('gax-settings-modal')) showAccountSettings();
+    if (body) body.innerHTML = `
+      <div style="text-align:center;padding:6px 0;">
+        <div style="font-size:32px;margin-bottom:10px;">🎉</div>
+        <div style="font-weight:700;margin-bottom:6px;">You're on Pro!</div>
+        <div style="color:var(--muted);font-size:13px;">Welcome to 5kable Pro. Enjoy priority AI, advanced comparisons, and more.</div>
+      </div>`;
+    setTimeout(closeUpgradeModal, 1800);
+  } catch(e) {
+    if (closeBtn) closeBtn.style.display = 'block';
+    if (body) body.innerHTML = `
+      <div style="text-align:center;padding:6px 0;">
+        <div style="color:var(--red);font-size:13px;margin-bottom:14px;">${e.message}</div>
+        <button onclick="loadUpgradeModalBody()" style="width:100%;padding:11px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Try again</button>
+      </div>`;
   }
 }
 
