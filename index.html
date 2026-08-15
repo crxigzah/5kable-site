@@ -864,6 +864,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
         <a onclick="goToTickets()" style="display:flex;align-items:center;gap:8px;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🎫 Tickets<span id="nav-ticket-unread-count" style="display:none;background:#ff6b6b;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;line-height:1.5;"></span></a>
         <a onclick="showPaymentHistory()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🧾 Payment History</a>
         <a onclick="showPaymentMethods()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">💳 Payment Methods</a>
+        <a id="nav-cancel-sub-link" onclick="openCancelSubscriptionModal()" style="display:none;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">❌ Cancel Subscription</a>
         <a onclick="showAccountSettings()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">⚙️ Account Settings</a>
         <div style="border-top:1px solid var(--border);">
           <a onclick="logout()" style="display:block;padding:11px 16px;color:var(--red);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🚪 Sign Out</a>
@@ -2767,6 +2768,8 @@ function updateNav(user) {
     dt.textContent = user.tier === 'pro' ? '⭐ Pro' : 'Free';
     if (user.tier === 'pro') { dt.style.background='rgba(240,165,0,0.15)'; dt.style.borderColor='#f0a500'; dt.style.color='#f0a500'; }
   }
+  const cancelLink = document.getElementById('nav-cancel-sub-link');
+  if (cancelLink) cancelLink.style.display = (user.tier === 'pro') ? 'block' : 'none';
   // Runs on every page (not just the dashboard) so the level badge in
   // the nav dropdown is populated everywhere, not just after visiting
   // Dashboard once. loadDashboardExtras itself no-ops safely on any
@@ -4737,6 +4740,96 @@ function showPaymentMethods() {
   })();
 }
 
+// ── Cancel Subscription (custom flow, not Stripe's hosted portal) ──
+// Stripe's own Customer Portal cancellation screen shows a retention
+// offer too, but its copy/design is fixed by Stripe's template — this
+// is the same £4.99-first-month offer, just built on our own page so we
+// control every word. Still calls Stripe's API underneath for the
+// actual cancel/discount action; tier itself only ever changes via the
+// existing webhook handler, not from this modal directly.
+function closeCancelSubscriptionModal() {
+  document.getElementById('gax-cancel-modal')?.remove();
+}
+
+function openCancelSubscriptionModal() {
+  closeUserMenu();
+  const token = getToken();
+  if (!token) { showModal('login'); return; }
+  document.getElementById('gax-cancel-modal')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'gax-cancel-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2100;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
+  overlay.innerHTML = `
+    <div style="background:#10101e;border:1px solid #1e1e35;border-radius:20px;padding:32px;width:440px;max-width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.8);" onclick="event.stopPropagation()">
+      <div style="font-size:18px;font-weight:800;margin-bottom:4px;">Cancel your subscription?</div>
+      <div id="cancel-modal-body">
+        <div style="color:var(--muted);font-size:13px;margin:14px 0 18px;">You'll lose unlimited training guides, 5K live chat, and your Pro badge right away.</div>
+        <div style="background:rgba(0,201,167,0.08);border:1px solid var(--teal);border-radius:12px;padding:18px;margin-bottom:18px;">
+          <div style="font-weight:800;font-size:16px;color:var(--teal);margin-bottom:4px;">Stay for £4.99 next month</div>
+          <div style="color:var(--muted);font-size:12px;margin-bottom:14px;">One-time discount on your next invoice — back to £9.99/mo after that. Cancel anytime.</div>
+          <button onclick="redeemRetentionOffer()" style="width:100%;padding:11px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Take the discount</button>
+        </div>
+        <button onclick="confirmCancelSubscription()" style="width:100%;padding:11px;background:none;border:1px solid var(--red);color:var(--red);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:8px;">Cancel subscription anyway</button>
+        <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Never mind, keep Pro</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', closeCancelSubscriptionModal);
+}
+
+async function redeemRetentionOffer() {
+  const body = document.getElementById('cancel-modal-body');
+  if (!body) return;
+  body.innerHTML = '<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px;">Applying discount...</div>';
+  const token = getToken();
+  try {
+    const res = await fetch(API + '/stripe/redeem-retention-offer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    body.innerHTML = `
+      <div style="text-align:center;padding:6px 0;">
+        <div style="font-size:32px;margin-bottom:10px;">🎉</div>
+        <div style="font-weight:700;margin-bottom:6px;">Discount applied!</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:18px;">Your next invoice will be £4.99. Thanks for staying with 5kable.</div>
+        <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Done</button>
+      </div>`;
+  } catch(e) {
+    body.innerHTML = `
+      <div style="text-align:center;padding:6px 0;">
+        <div style="color:var(--red);font-size:13px;margin-bottom:18px;">Could not apply discount: ${e.message}</div>
+        <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Close</button>
+      </div>`;
+  }
+}
+
+async function confirmCancelSubscription() {
+  const body = document.getElementById('cancel-modal-body');
+  if (!body) return;
+  body.innerHTML = '<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px;">Cancelling...</div>';
+  const token = getToken();
+  try {
+    const res = await fetch(API + '/stripe/cancel-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    // Re-verify so the nav badge, dashboard, and this menu item all drop
+    // back to Free consistently, same pattern as everywhere else tier
+    // changes (starting a trial, a Stripe checkout success redirect).
+    await checkAuth();
+    body.innerHTML = `
+      <div style="text-align:center;padding:6px 0;">
+        <div style="font-weight:700;margin-bottom:6px;">Subscription cancelled</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:18px;">You're back on the Free plan. You're welcome back anytime.</div>
+        <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Done</button>
+      </div>`;
+  } catch(e) {
+    body.innerHTML = `
+      <div style="text-align:center;padding:6px 0;">
+        <div style="color:var(--red);font-size:13px;margin-bottom:18px;">Could not cancel: ${e.message}</div>
+        <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Close</button>
+      </div>`;
+  }
+}
 
 // ── Nav dropdowns (Script + Tools) — JS-based to fix hover gap ──
 (function() {
