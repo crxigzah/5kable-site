@@ -1044,7 +1044,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
           <li>Unlimited F7 scene captures</li>
           <li>Unlimited training guides</li>
         </ul>
-        <button class="btn btn-primary" id="pricing-pro-btn" onclick="upgradeToPro()" style="margin-top:auto;">Upgrade to Pro</button>
+        <button class="btn btn-primary" id="pricing-pro-btn" onclick="proCtaClick(this)" style="margin-top:auto;">Start Free Trial</button>
       </div>
     </div>
 
@@ -1100,7 +1100,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
           <tr>
             <td style="padding:16px;"></td>
             <td style="text-align:center;padding:16px;"><button class="btn btn-outline" onclick="getStarted()" style="padding:8px 20px;font-size:13px;">Free Forever</button></td>
-            <td style="text-align:center;padding:16px;"><button class="btn btn-primary" onclick="upgradeToPro()" style="padding:8px 20px;font-size:13px;">Get Pro</button></td>
+            <td style="text-align:center;padding:16px;"><button class="btn" id="compare-pro-btn" onclick="proCtaClick(this)" style="padding:8px 20px;font-size:13px;background:linear-gradient(135deg,#f0c02e,var(--gold));color:#080810;font-weight:700;">Start Free Trial</button></td>
           </tr>
         </tfoot>
       </table>
@@ -1786,26 +1786,28 @@ async function checkAuth() {
 function updatePricingButtons() {
   const freeBtn = document.getElementById('pricing-free-btn');
   const proBtn  = document.getElementById('pricing-pro-btn');
+  const compareProBtn = document.getElementById('compare-pro-btn');
   if (!freeBtn || !proBtn) return;
+  const proBtns = compareProBtn ? [proBtn, compareProBtn] : [proBtn];
   const user = getUser();
   const token = getToken();
   if (!user || !token) {
-    // Logged out — restore defaults
+    // Logged out — restore defaults. "Start Free Trial" here is honest:
+    // proCtaClick() below opens the login/register modal first (same as
+    // upgradeToPro() always did with no token), and eligibility gets
+    // decided for real once they're actually signed in.
     freeBtn.textContent = 'Get Started Free';
     freeBtn.disabled = false;
     freeBtn.onclick = getStarted;
-    proBtn.textContent = 'Upgrade to Pro';
-    proBtn.disabled = false;
-    proBtn.onclick = upgradeToPro;
+    proBtns.forEach(b => { b.textContent = 'Start Free Trial'; b.disabled = false; b.onclick = () => proCtaClick(b); });
     return;
   }
   // Real billing tier, not the trial-boosted user.tier — a trialing user
   // should still be able to convert to an actual subscription from here,
   // so the button must not disable itself as if they already were Pro.
-  if ((user.real_tier ?? user.tier) === 'pro') {
-    proBtn.textContent = "You're on Pro ⭐";
-    proBtn.disabled = true;
-    proBtn.onclick = null;
+  const realTier = user.real_tier ?? user.tier;
+  if (realTier === 'pro') {
+    proBtns.forEach(b => { b.textContent = "You're on Pro ⭐"; b.disabled = true; b.onclick = null; });
     freeBtn.textContent = 'Current Plan: Pro';
     freeBtn.disabled = true;
     freeBtn.onclick = null;
@@ -1813,9 +1815,30 @@ function updatePricingButtons() {
     freeBtn.textContent = 'Current Plan';
     freeBtn.disabled = true;
     freeBtn.onclick = null;
-    proBtn.textContent = user.trial_active ? 'Upgrade to Pro (trial active)' : 'Upgrade to Pro';
-    proBtn.disabled = false;
-    proBtn.onclick = upgradeToPro;
+    // Only offer the trial CTA if there's an actual trial left to start —
+    // once it's active or already used, this is a real upgrade button.
+    const trialAvailable = !user.trial_active && !user.trial_used;
+    proBtns.forEach(b => {
+      b.textContent = user.trial_active ? 'Upgrade to Pro (trial active)' : trialAvailable ? 'Start Free Trial' : 'Upgrade to Pro';
+      b.disabled = false;
+      b.onclick = () => proCtaClick(b);
+    });
+  }
+}
+
+// Routes the pricing page's Pro CTA to whichever action is actually
+// correct for this visitor — starting the trial for someone eligible,
+// or straight to Stripe checkout otherwise — rather than always sending
+// a "Start Free Trial"-labelled button to a paid checkout page.
+function proCtaClick(btnEl) {
+  const token = getToken();
+  if (!token) { showModal('login'); return; }
+  const user = getUser();
+  const realTier = user?.real_tier ?? user?.tier;
+  if (realTier !== 'pro' && user && !user.trial_active && !user.trial_used) {
+    startTrial(btnEl);
+  } else {
+    upgradeToPro();
   }
 }
 
@@ -2810,10 +2833,15 @@ function renderTrialUI(user) {
   }
 }
 
-async function startTrial() {
-  const btn = document.getElementById('start-trial-btn');
+// btnEl lets this be triggered from more than one place (the dashboard's
+// own trial button, or the pricing page's Pro CTA via proCtaClick()) and
+// give feedback on whichever button was actually clicked, defaulting to
+// the dashboard button when called with no argument.
+async function startTrial(btnEl) {
+  const btn = btnEl || document.getElementById('start-trial-btn');
   const token = getToken();
   if (!token || !btn) return;
+  const originalText = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Starting trial...';
   try {
@@ -2827,7 +2855,7 @@ async function startTrial() {
     await checkAuth();
   } catch(e) {
     btn.disabled = false;
-    btn.textContent = '🎁 Start Your Free 3-Day Trial';
+    btn.textContent = originalText;
     alert('Could not start trial: ' + e.message);
   }
 }
