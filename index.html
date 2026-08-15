@@ -5025,7 +5025,18 @@ async function loadDiscordStatus(){
     } else {
       body.innerHTML = `
         <div style="color:#5a5a7a;font-size:11px;margin-bottom:10px;">Link your Discord account to get a role that matches your in-app level, kept up to date automatically as you level up.</div>
-        <button onclick="connectDiscord()" style="width:100%;padding:9px;background:#5865F2;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Connect Discord</button>`;
+        <button onclick="connectDiscord()" style="width:100%;padding:9px;background:#5865F2;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:12px;">Connect Discord</button>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <div style="flex:1;height:1px;background:#1e1e35;"></div>
+          <div style="font-size:10px;color:#5a5a7a;text-transform:uppercase;letter-spacing:.5px;">or</div>
+          <div style="flex:1;height:1px;background:#1e1e35;"></div>
+        </div>
+        <div style="color:#5a5a7a;font-size:11px;margin-bottom:8px;">Already ran <code style="background:#0d0d18;padding:1px 5px;border-radius:4px;">/link</code> in Discord? Enter the code it gave you:</div>
+        <div style="display:flex;gap:8px;">
+          <input id="discord-link-code-input" type="text" maxlength="6" placeholder="ABC123" style="flex:1;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:9px 12px;border-radius:8px;font-size:14px;letter-spacing:2px;text-transform:uppercase;outline:none;" onfocus="this.style.borderColor='#00c9a7'" onblur="this.style.borderColor='#1e1e35'"/>
+          <button onclick="redeemDiscordCode()" id="discord-link-code-btn" style="background:var(--teal);color:#080810;border:none;border-radius:8px;padding:9px 16px;font-weight:700;font-size:12px;cursor:pointer;">Link</button>
+        </div>
+        <div id="discord-link-code-msg" style="font-size:11px;margin-top:6px;min-height:14px;"></div>`;
     }
   } catch(e) {
     body.innerHTML = `<div style="color:#7a7a9a;font-size:12px;">Couldn't load Discord status right now.</div>`;
@@ -5042,6 +5053,28 @@ async function connectDiscord(){
     window.location.href = data.authorize_url;
   } catch(e) {
     alert('Could not start the Discord connect flow. Please try again.');
+  }
+}
+
+async function redeemDiscordCode(){
+  const input = document.getElementById('discord-link-code-input');
+  const btn = document.getElementById('discord-link-code-btn');
+  const msg = document.getElementById('discord-link-code-msg');
+  const code = (input?.value || '').trim();
+  if (!code) { if (msg) { msg.style.color = 'var(--red)'; msg.textContent = 'Enter the code from Discord first.'; } return; }
+  const token = getToken();
+  if (!token) return;
+  btn.disabled = true;
+  btn.textContent = 'Linking...';
+  try {
+    const res = await fetch(API + '/discord/link/redeem-code', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token, code}) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    loadDiscordStatus();
+  } catch(e) {
+    if (msg) { msg.style.color = 'var(--red)'; msg.textContent = e.message; }
+    btn.disabled = false;
+    btn.textContent = 'Link';
   }
 }
 
