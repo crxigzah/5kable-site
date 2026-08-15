@@ -4352,6 +4352,10 @@ async function loadPaymentMethodsIntoSettings(){
       el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">No saved cards yet.</div>';
       return;
     }
+    // Blocking removal of the only card while subscribed is enforced
+    // server-side (the real guard) — this just hides the button ahead
+    // of time so nobody hits that error message needlessly.
+    const isOnlyCardWhileSubscribed = methods.length === 1 && getUser()?.tier === 'pro';
     el.innerHTML = methods.map(m => {
       const isDefault = m.id === data.default_id;
       return `
@@ -4365,7 +4369,9 @@ async function loadPaymentMethodsIntoSettings(){
         </div>
         <div style="display:flex;gap:6px;">
           ${!isDefault ? `<button onclick="setDefaultPaymentMethodCard('${m.id}')" style="background:none;border:1px solid #2a2a3e;color:#8888aa;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">Set default</button>` : ''}
-          <button onclick="removePaymentMethodCard('${m.id}')" style="background:none;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">Remove</button>
+          ${isOnlyCardWhileSubscribed
+            ? `<span title="Cancel your subscription first to remove your only card" style="color:#5a5a7a;font-size:11px;padding:5px 2px;">Cancel subscription to remove</span>`
+            : `<button onclick="removePaymentMethodCard('${m.id}')" style="background:none;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">Remove</button>`}
         </div>
       </div>`;
     }).join('');
