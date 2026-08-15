@@ -1746,6 +1746,34 @@ const API = 'https://api.5kable.net';
 
 // API already defined above
 
+// ── Discord OAuth callback landing ──────────────────────────
+// Discord redirects the browser to /discord/callback?code=...&state=...
+// after the user approves the Connect Discord flow (see _worker.js for
+// the rewrite that serves this same index.html at that path). Runs as
+// early as possible since nothing else on the page matters until this
+// either finishes or bails out back to a clean URL.
+if (window.location.pathname === '/discord/callback') {
+  (async () => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get('code');
+    const state = params.get('state');
+    if (params.get('error') || !code || !state) {
+      window.location.replace('/?discord=error');
+      return;
+    }
+    try {
+      const res = await fetch(API + '/discord/oauth/callback', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({code, state}),
+      });
+      const d = await res.json();
+      window.location.replace(d.error ? '/?discord=error' : '/?discord=connected');
+    } catch(e) {
+      window.location.replace('/?discord=error');
+    }
+  })();
+}
+
 // ── Auth state ────────────────────────────────────────────
 function getToken() { return localStorage.getItem('kbl_token'); }
 
@@ -4071,6 +4099,21 @@ if (urlParams.get('upgrade') === 'success') {
   });
 }
 
+// Handle Discord Connect redirect back (see the /discord/callback
+// handler at the top of this script, which does the actual token
+// exchange before ever getting here).
+if (urlParams.get('discord') === 'connected') {
+  history.replaceState(null, '', window.location.pathname);
+  wakeServer().then(() => checkAuth()).then(() => {
+    showAccountSettings();
+    switchSettingsTab('security');
+    toggleDiscordSection();
+  });
+} else if (urlParams.get('discord') === 'error') {
+  history.replaceState(null, '', window.location.pathname);
+  alert('Could not connect your Discord account. Please try again from Account Settings.');
+}
+
 // A referral link (?ref=<code>) opens straight to the signup form with a
 // banner confirming it worked — but only for a visitor who isn't already
 // logged in; an existing user clicking a friend's link shouldn't get
@@ -4385,6 +4428,17 @@ function showAccountSettings() {
                 <button onclick="regenerateBackupCodes()" style="background:transparent;color:#b388ff;border:1px solid #7c3aed;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">🔄 Regenerate backup codes</button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Discord -->
+        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
+          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleDiscordSection()">
+            <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">🎮 DISCORD</label>
+            <span id="discord-section-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
+          </div>
+          <div id="discord-section" style="display:none;margin-top:12px;">
+            <div id="discord-status-body"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
           </div>
         </div>
       </div>
@@ -4934,6 +4988,72 @@ function toggle2FASection() {
   const open = sec.style.display !== 'none';
   sec.style.display = open ? 'none' : 'block';
   if (icon) icon.textContent = open ? '▼' : '▲';
+}
+
+function toggleDiscordSection() {
+  const sec = document.getElementById('discord-section');
+  const icon = document.getElementById('discord-section-toggle-icon');
+  if (!sec) return;
+  const open = sec.style.display !== 'none';
+  sec.style.display = open ? 'none' : 'block';
+  if (icon) icon.textContent = open ? '▼' : '▲';
+  if (!open) loadDiscordStatus();
+}
+
+async function loadDiscordStatus(){
+  const body = document.getElementById('discord-status-body');
+  if (!body) return;
+  const token = getToken();
+  if (!token) { body.innerHTML = ''; return; }
+  try {
+    const res = await fetch(API + '/discord/status', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    if (!data.configured) {
+      body.innerHTML = `<div style="color:#7a7a9a;font-size:12px;">Discord role sync is not set up on our end yet.</div>`;
+      return;
+    }
+    if (data.linked) {
+      body.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:10px 12px;">
+          <div style="font-size:13px;color:#c0c0d8;">
+            <span style="color:#10b981;">✓ Connected</span>${data.discord_username ? ` as <b>${escapeHtmlLocal(data.discord_username)}</b>` : ''}
+          </div>
+          <button onclick="unlinkDiscord()" style="background:none;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">Disconnect</button>
+        </div>
+        <div style="color:#5a5a7a;font-size:11px;margin-top:8px;">Your server role updates automatically as your level tier changes.</div>`;
+    } else {
+      body.innerHTML = `
+        <div style="color:#5a5a7a;font-size:11px;margin-bottom:10px;">Link your Discord account to get a role that matches your in-app level, kept up to date automatically as you level up.</div>
+        <button onclick="connectDiscord()" style="width:100%;padding:9px;background:#5865F2;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">Connect Discord</button>`;
+    }
+  } catch(e) {
+    body.innerHTML = `<div style="color:#7a7a9a;font-size:12px;">Couldn't load Discord status right now.</div>`;
+  }
+}
+
+async function connectDiscord(){
+  const token = getToken();
+  if (!token) return;
+  try {
+    const res = await fetch(API + '/discord/link/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const data = await res.json();
+    if (data.error) { alert(data.error); return; }
+    window.location.href = data.authorize_url;
+  } catch(e) {
+    alert('Could not start the Discord connect flow. Please try again.');
+  }
+}
+
+async function unlinkDiscord(){
+  if (!confirm('Disconnect your Discord account? Your server role will be removed.')) return;
+  const token = getToken();
+  try {
+    await fetch(API + '/discord/unlink', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    loadDiscordStatus();
+  } catch(e) {
+    alert('Could not disconnect right now. Please try again.');
+  }
 }
 
 function toggleNotificationsSection() {
