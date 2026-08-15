@@ -1526,6 +1526,13 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       </div>
     </div>
 
+    <!-- Weakest Regions -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:16px;">
+      <div style="font-weight:700;margin-bottom:4px;">📉 Weakest Regions</div>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:16px;">Your 10 worst performing regions across every country you've played (min 3 attempts each). Exactly where to focus practice next.</div>
+      <div id="stats-weak-regions-list"><div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;">Loading...</div></div>
+    </div>
+
     <!-- Coin-Flip Countries -->
     <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-top:16px;">
       <div style="font-weight:700;margin-bottom:4px;">🪙 Coin-Flip Countries</div>
@@ -2096,6 +2103,7 @@ function goToStats() {
   if (token) {
     loadRegionAccuracy(token);
     loadGuessInsights(token);
+    loadWeakRegions(token);
     loadFullStats(token);
     loadStatsBadges(token);
     loadCountryProgress(token);
@@ -3243,6 +3251,34 @@ function toggleCountryRegions(rowId, country){
     }).join('');
   }
   el.style.display = 'block';
+}
+
+async function loadWeakRegions(token){
+  const listEl = document.getElementById('stats-weak-regions-list');
+  if (!listEl) return;
+  try {
+    const res = await fetch(API + '/guess/weak-regions', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const regions = data.weak_regions || [];
+    if (!regions.length) {
+      listEl.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;">⏳ Not enough data yet. You need at least ${data.min_attempts || 3} guesses in a region before it shows up here.</div>`;
+      return;
+    }
+    listEl.innerHTML = regions.map(r => {
+      const color = r.pct >= 80 ? 'var(--teal)' : r.pct >= 50 ? '#f0a500' : '#ff6b6b';
+      const label = `${escapeHtmlLocal(r.region)} <span style="color:var(--muted);font-size:12px;font-weight:400;">(${escapeHtmlLocal(r.country)})</span>`;
+      return `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="width:220px;font-size:13px;font-weight:600;flex-shrink:0;">${statsCountryLink(r.country, label)}</div>
+        <div style="flex:1;background:var(--bg2);border-radius:6px;height:8px;overflow:hidden;">
+          <div style="width:${r.pct}%;height:100%;background:${color};"></div>
+        </div>
+        <div style="width:100px;text-align:right;font-size:12px;color:var(--muted);flex-shrink:0;">${r.pct}% <span style="opacity:.6">(${r.correct}/${r.total})</span></div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    listEl.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;">Couldn't load weak regions right now.</div>`;
+  }
 }
 
 async function loadGuessInsights(token){
@@ -5642,6 +5678,7 @@ function startLiveViewRefresh(){
     } else if (currentView === 'stats') {
       loadRegionAccuracy(token);
       loadGuessInsights(token);
+      loadWeakRegions(token);
       loadFullStats(token);
       loadStatsBadges(token);
       loadCountryProgress(token);
