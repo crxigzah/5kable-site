@@ -4154,10 +4154,15 @@ function showAccountSettings() {
       </div>
 
       <!-- Display Name -->
-      <div style="margin-bottom:16px;">
-        <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">DISPLAY NAME</label>
-        <input id="settings-displayname" type="text" value="${currentName}" maxlength="20" placeholder="Your display name" style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:11px 14px;border-radius:10px;font-size:14px;outline:none;" onfocus="this.style.borderColor='#00c9a7';this.style.boxShadow='0 0 0 3px rgba(0,201,167,0.1)'" onblur="this.style.borderColor='#1e1e35';this.style.boxShadow='none'"/>
-        <div style="color:#5a5a7a;font-size:11px;margin-top:4px;">Max 20 characters · No offensive language</div>
+      <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleDisplayNameSection()">
+          <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">🏷️ DISPLAY NAME</label>
+          <span id="displayname-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
+        </div>
+        <div id="displayname-section" style="display:none;margin-top:12px;">
+          <input id="settings-displayname" type="text" value="${currentName}" maxlength="20" placeholder="Your display name" style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:11px 14px;border-radius:10px;font-size:14px;outline:none;" onfocus="this.style.borderColor='#00c9a7';this.style.boxShadow='0 0 0 3px rgba(0,201,167,0.1)'" onblur="this.style.borderColor='#1e1e35';this.style.boxShadow='none'"/>
+          <div style="color:#5a5a7a;font-size:11px;margin-top:4px;">Max 20 characters · No offensive language</div>
+        </div>
       </div>
 
       <!-- Country Badge -->
@@ -4562,6 +4567,15 @@ function updateNavAvatar() {
 function togglePasswordSection() {
   const sec = document.getElementById('password-section');
   const icon = document.getElementById('pwd-toggle-icon');
+  if (!sec) return;
+  const open = sec.style.display !== 'none';
+  sec.style.display = open ? 'none' : 'block';
+  if (icon) icon.textContent = open ? '▼' : '▲';
+}
+
+function toggleDisplayNameSection() {
+  const sec = document.getElementById('displayname-section');
+  const icon = document.getElementById('displayname-toggle-icon');
   if (!sec) return;
   const open = sec.style.display !== 'none';
   sec.style.display = open ? 'none' : 'block';
