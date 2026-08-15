@@ -4169,8 +4169,13 @@ function showAccountSettings() {
 
       <!-- Email (readonly) -->
       <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
-        <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">EMAIL</label>
-        <input type="email" value="${user.email||''}" disabled style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#7a7a9a;padding:11px 14px;border-radius:10px;font-size:14px;cursor:not-allowed;"/>
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleEmailSection()">
+          <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">✉️ EMAIL</label>
+          <span id="email-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
+        </div>
+        <div id="email-section" style="display:none;margin-top:12px;">
+          <input type="email" value="${user.email||''}" disabled style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#7a7a9a;padding:11px 14px;border-radius:10px;font-size:14px;cursor:not-allowed;"/>
+        </div>
       </div>
 
       ${user.phone_number ? `
@@ -4557,6 +4562,15 @@ function updateNavAvatar() {
 function togglePasswordSection() {
   const sec = document.getElementById('password-section');
   const icon = document.getElementById('pwd-toggle-icon');
+  if (!sec) return;
+  const open = sec.style.display !== 'none';
+  sec.style.display = open ? 'none' : 'block';
+  if (icon) icon.textContent = open ? '▼' : '▲';
+}
+
+function toggleEmailSection() {
+  const sec = document.getElementById('email-section');
+  const icon = document.getElementById('email-toggle-icon');
   if (!sec) return;
   const open = sec.style.display !== 'none';
   sec.style.display = open ? 'none' : 'block';
