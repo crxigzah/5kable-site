@@ -4227,45 +4227,56 @@ function showAccountSettings() {
       </div>
 
       <!-- 2FA -->
-      <div style="margin-bottom:24px;padding:16px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:12px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">
-          <div>
-            <div style="font-size:13px;font-weight:700;margin-bottom:2px;">🔐 Two-Factor Authentication</div>
-            <div style="font-size:12px;color:#6a6a9a;">Use Google Authenticator or Authy for extra security</div>
-          </div>
-          <button onclick="toggle2FA()" id="twofa-toggle-btn" style="display:${user.totp_enabled ? 'none' : ''};background:linear-gradient(135deg,#7c3aed,#7c3aed);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">Enable</button>
+      <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggle2FASection()">
+          <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">🔐 2FA</label>
+          <span id="twofa-section-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
         </div>
-        <div id="twofa-setup" style="display:none;margin-top:16px;">
-          <div style="font-size:12px;color:#aaa;margin-bottom:10px;">1. Scan this QR code with Google Authenticator or Authy</div>
-          <div id="twofa-qr" style="text-align:center;margin-bottom:12px;"></div>
-          <div style="font-size:12px;color:#aaa;margin-bottom:8px;">2. Enter the 6-digit code to confirm</div>
-          <div style="display:flex;gap:8px;">
-            <input id="twofa-code" type="text" maxlength="6" placeholder="000000" style="flex:1;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:9px 12px;border-radius:8px;font-size:16px;letter-spacing:6px;text-align:center;outline:none;" onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#1e1e35'"/>
-            <button onclick="confirm2FA()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;">Verify</button>
+        <div id="twofa-section" style="display:none;margin-top:12px;padding:16px;background:rgba(124,58,237,0.06);border:1px solid rgba(124,58,237,0.2);border-radius:12px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0;">
+            <div>
+              <div style="font-size:13px;font-weight:700;margin-bottom:2px;">🔐 Two-Factor Authentication</div>
+              <div style="font-size:12px;color:#6a6a9a;">Use Google Authenticator or Authy for extra security</div>
+            </div>
+            <button onclick="toggle2FA()" id="twofa-toggle-btn" style="display:${user.totp_enabled ? 'none' : ''};background:linear-gradient(135deg,#7c3aed,#7c3aed);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;">Enable</button>
           </div>
-          <div id="twofa-msg" style="font-size:11px;margin-top:6px;text-align:center;"></div>
-        </div>
-        <div id="twofa-enabled-view" style="display:${user.totp_enabled ? 'block' : 'none'};margin-top:12px;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-            <span style="color:#10b981;font-size:13px;">✓ 2FA is active on your account</span>
+          <div id="twofa-setup" style="display:none;margin-top:16px;">
+            <div style="font-size:12px;color:#aaa;margin-bottom:10px;">1. Scan this QR code with Google Authenticator or Authy</div>
+            <div id="twofa-qr" style="text-align:center;margin-bottom:12px;"></div>
+            <div style="font-size:12px;color:#aaa;margin-bottom:8px;">2. Enter the 6-digit code to confirm</div>
+            <div style="display:flex;gap:8px;">
+              <input id="twofa-code" type="text" maxlength="6" placeholder="000000" style="flex:1;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:9px 12px;border-radius:8px;font-size:16px;letter-spacing:6px;text-align:center;outline:none;" onfocus="this.style.borderColor='#7c3aed'" onblur="this.style.borderColor='#1e1e35'"/>
+              <button onclick="confirm2FA()" style="background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;">Verify</button>
+            </div>
+            <div id="twofa-msg" style="font-size:11px;margin-top:6px;text-align:center;"></div>
           </div>
-          <div style="font-size:12px;color:#6a6a9a;margin-bottom:8px;">Enter your authenticator code to disable (a backup code also works):</div>
-          <div style="display:flex;gap:8px;">
-            <input id="twofa-disable-code" type="text" maxlength="10" placeholder="000000" style="flex:1;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:9px 12px;border-radius:8px;font-size:16px;letter-spacing:6px;text-align:center;outline:none;"/>
-            <button onclick="disable2FA()" style="background:#ff4c6a;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;">Disable</button>
-          </div>
-          <div id="twofa-disable-msg" style="font-size:11px;margin-top:6px;text-align:center;"></div>
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #1e1e35;">
-            <div style="font-size:12px;color:#6a6a9a;margin-bottom:8px;">Lost your backup codes? Regenerate a fresh set of 10 (invalidates the old ones):</div>
-            <button onclick="regenerateBackupCodes()" style="background:transparent;color:#b388ff;border:1px solid #7c3aed;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">🔄 Regenerate backup codes</button>
+          <div id="twofa-enabled-view" style="display:${user.totp_enabled ? 'block' : 'none'};margin-top:12px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+              <span style="color:#10b981;font-size:13px;">✓ 2FA is active on your account</span>
+            </div>
+            <div style="font-size:12px;color:#6a6a9a;margin-bottom:8px;">Enter your authenticator code to disable (a backup code also works):</div>
+            <div style="display:flex;gap:8px;">
+              <input id="twofa-disable-code" type="text" maxlength="10" placeholder="000000" style="flex:1;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:9px 12px;border-radius:8px;font-size:16px;letter-spacing:6px;text-align:center;outline:none;"/>
+              <button onclick="disable2FA()" style="background:#ff4c6a;color:#fff;border:none;border-radius:8px;padding:9px 16px;font-weight:700;cursor:pointer;">Disable</button>
+            </div>
+            <div id="twofa-disable-msg" style="font-size:11px;margin-top:6px;text-align:center;"></div>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid #1e1e35;">
+              <div style="font-size:12px;color:#6a6a9a;margin-bottom:8px;">Lost your backup codes? Regenerate a fresh set of 10 (invalidates the old ones):</div>
+              <button onclick="regenerateBackupCodes()" style="background:transparent;color:#b388ff;border:1px solid #7c3aed;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;">🔄 Regenerate backup codes</button>
+            </div>
           </div>
         </div>
       </div>
 
       <!-- Notifications -->
-      <div style="margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid #1e1e35;">
-        <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:10px;">🔔 NOTIFICATIONS</label>
-        <div id="settings-notification-prefs"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
+      <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleNotificationsSection()">
+          <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">🔔 NOTIFICATIONS</label>
+          <span id="notif-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
+        </div>
+        <div id="notifications-section" style="display:none;margin-top:12px;">
+          <div id="settings-notification-prefs"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
+        </div>
       </div>
 
       <button onclick="saveAccountSettings()" style="width:100%;padding:13px;background:linear-gradient(135deg,#00c9a7,#00a87d);color:#080810;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">Save Changes</button>
@@ -4555,6 +4566,24 @@ function togglePasswordSection() {
 function toggleBillingSection() {
   const sec = document.getElementById('billing-section');
   const icon = document.getElementById('billing-toggle-icon');
+  if (!sec) return;
+  const open = sec.style.display !== 'none';
+  sec.style.display = open ? 'none' : 'block';
+  if (icon) icon.textContent = open ? '▼' : '▲';
+}
+
+function toggle2FASection() {
+  const sec = document.getElementById('twofa-section');
+  const icon = document.getElementById('twofa-section-toggle-icon');
+  if (!sec) return;
+  const open = sec.style.display !== 'none';
+  sec.style.display = open ? 'none' : 'block';
+  if (icon) icon.textContent = open ? '▼' : '▲';
+}
+
+function toggleNotificationsSection() {
+  const sec = document.getElementById('notifications-section');
+  const icon = document.getElementById('notif-toggle-icon');
   if (!sec) return;
   const open = sec.style.display !== 'none';
   sec.style.display = open ? 'none' : 'block';
