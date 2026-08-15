@@ -4325,18 +4325,6 @@ function showAccountSettings() {
 
       <!-- Profile tab -->
       <div id="settings-tab-panel-profile">
-        <!-- Display Name -->
-        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
-          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleDisplayNameSection()">
-            <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">🏷️ DISPLAY NAME</label>
-            <span id="displayname-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
-          </div>
-          <div id="displayname-section" style="display:none;margin-top:12px;">
-            <input id="settings-displayname" type="text" value="${currentName}" maxlength="20" placeholder="Your display name" style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:11px 14px;border-radius:10px;font-size:14px;outline:none;" onfocus="this.style.borderColor='#00c9a7';this.style.boxShadow='0 0 0 3px rgba(0,201,167,0.1)'" onblur="this.style.borderColor='#1e1e35';this.style.boxShadow='none'"/>
-            <div style="color:#5a5a7a;font-size:11px;margin-top:4px;">Max 20 characters · No offensive language</div>
-          </div>
-        </div>
-
         <!-- Country Badge -->
         <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
           <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleCountryBadgeSection()">
@@ -4348,47 +4336,22 @@ function showAccountSettings() {
             <div id="settings-badges-list"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
           </div>
         </div>
+
+        <!-- Display Name -->
+        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
+          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleDisplayNameSection()">
+            <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">🏷️ DISPLAY NAME</label>
+            <span id="displayname-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
+          </div>
+          <div id="displayname-section" style="display:none;margin-top:12px;">
+            <input id="settings-displayname" type="text" value="${currentName}" maxlength="20" placeholder="Your display name" style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:11px 14px;border-radius:10px;font-size:14px;outline:none;" onfocus="this.style.borderColor='#00c9a7';this.style.boxShadow='0 0 0 3px rgba(0,201,167,0.1)'" onblur="this.style.borderColor='#1e1e35';this.style.boxShadow='none'"/>
+            <div style="color:#5a5a7a;font-size:11px;margin-top:4px;">Max 20 characters · No offensive language</div>
+          </div>
+        </div>
       </div>
 
       <!-- Security tab -->
       <div id="settings-tab-panel-security" style="display:none;">
-        <!-- Email (readonly) -->
-        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
-          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleEmailSection()">
-            <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">✉️ EMAIL</label>
-            <span id="email-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
-          </div>
-          <div id="email-section" style="display:none;margin-top:12px;">
-            <input type="email" value="${user.email||''}" disabled style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#7a7a9a;padding:11px 14px;border-radius:10px;font-size:14px;cursor:not-allowed;"/>
-          </div>
-        </div>
-
-        ${user.phone_number ? `
-        <!-- Phone Number (readonly) -->
-        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
-          <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">PHONE NUMBER</label>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <input type="tel" value="${user.phone_number}" disabled style="flex:1;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#7a7a9a;padding:11px 14px;border-radius:10px;font-size:14px;cursor:not-allowed;"/>
-            ${user.phone_verified
-              ? `<span style="background:rgba(0,201,167,0.12);border:1px solid rgba(0,201,167,0.3);color:#00c9a7;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;white-space:nowrap;">✓ Verified</span>`
-              : `<span style="background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;white-space:nowrap;">✗ Unverified</span>`}
-          </div>
-        </div>
-        ` : ''}
-
-        <!-- Change Password -->
-        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
-          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="togglePasswordSection()">
-            <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">🔒 CHANGE PASSWORD</label>
-            <span id="pwd-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
-          </div>
-          <div id="password-section" style="display:none;margin-top:12px;">
-            <input id="settings-current-pwd" type="password" placeholder="Current password" style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:10px 14px;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;" onfocus="this.style.borderColor='#00c9a7'" onblur="this.style.borderColor='#1e1e35'"/>
-            <input id="settings-new-pwd" type="password" placeholder="New password (min 6 chars)" style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:10px 14px;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;" onfocus="this.style.borderColor='#00c9a7'" onblur="this.style.borderColor='#1e1e35'"/>
-            <input id="settings-confirm-pwd" type="password" placeholder="Confirm new password" style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:10px 14px;border-radius:10px;font-size:13px;outline:none;" onfocus="this.style.borderColor='#00c9a7'" onblur="this.style.borderColor='#1e1e35'"/>
-          </div>
-        </div>
-
         <!-- 2FA -->
         <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
           <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggle2FASection()">
@@ -4431,6 +4394,19 @@ function showAccountSettings() {
           </div>
         </div>
 
+        <!-- Change Password -->
+        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
+          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="togglePasswordSection()">
+            <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">🔒 CHANGE PASSWORD</label>
+            <span id="pwd-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
+          </div>
+          <div id="password-section" style="display:none;margin-top:12px;">
+            <input id="settings-current-pwd" type="password" placeholder="Current password" style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:10px 14px;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;" onfocus="this.style.borderColor='#00c9a7'" onblur="this.style.borderColor='#1e1e35'"/>
+            <input id="settings-new-pwd" type="password" placeholder="New password (min 6 chars)" style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:10px 14px;border-radius:10px;font-size:13px;outline:none;margin-bottom:8px;" onfocus="this.style.borderColor='#00c9a7'" onblur="this.style.borderColor='#1e1e35'"/>
+            <input id="settings-confirm-pwd" type="password" placeholder="Confirm new password" style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#eee;padding:10px 14px;border-radius:10px;font-size:13px;outline:none;" onfocus="this.style.borderColor='#00c9a7'" onblur="this.style.borderColor='#1e1e35'"/>
+          </div>
+        </div>
+
         <!-- Discord -->
         <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
           <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleDiscordSection()">
@@ -4441,6 +4417,30 @@ function showAccountSettings() {
             <div id="discord-status-body"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
           </div>
         </div>
+
+        <!-- Email (readonly) -->
+        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
+          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleEmailSection()">
+            <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">✉️ EMAIL</label>
+            <span id="email-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
+          </div>
+          <div id="email-section" style="display:none;margin-top:12px;">
+            <input type="email" value="${user.email||''}" disabled style="width:100%;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#7a7a9a;padding:11px 14px;border-radius:10px;font-size:14px;cursor:not-allowed;"/>
+          </div>
+        </div>
+
+        ${user.phone_number ? `
+        <!-- Phone Number (readonly) -->
+        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
+          <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">PHONE NUMBER</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <input type="tel" value="${user.phone_number}" disabled style="flex:1;box-sizing:border-box;background:#0d0d18;border:1px solid #1e1e35;color:#7a7a9a;padding:11px 14px;border-radius:10px;font-size:14px;cursor:not-allowed;"/>
+            ${user.phone_verified
+              ? `<span style="background:rgba(0,201,167,0.12);border:1px solid rgba(0,201,167,0.3);color:#00c9a7;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;white-space:nowrap;">✓ Verified</span>`
+              : `<span style="background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.3);color:#ff6b6b;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;white-space:nowrap;">✗ Unverified</span>`}
+          </div>
+        </div>
+        ` : ''}
       </div>
 
       <!-- Billing tab -->
