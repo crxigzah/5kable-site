@@ -780,6 +780,12 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <!-- Stripe recommends always loading Elements straight from their own
+       CDN rather than self-hosting/bundling it — that's part of how it
+       stays PCI-compliant and gets their fraud-detection updates. Only
+       actually initialized (see getStripeJs()) the first time someone
+       opens the in-app "Add a card" form, not on every page load. -->
+  <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
 
@@ -4188,11 +4194,23 @@ function showAccountSettings() {
       <!-- Billing -->
       <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
         <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:10px;">💳 BILLING</label>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <button onclick="showPaymentMethods()" style="width:100%;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid #1e1e35;color:#eee;border-radius:10px;font-size:13px;cursor:pointer;">💳 Payment Methods</button>
-          <button onclick="showPaymentHistory()" style="width:100%;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid #1e1e35;color:#eee;border-radius:10px;font-size:13px;cursor:pointer;">🧾 Payment History</button>
-          ${user.tier === 'pro' ? `<button onclick="openCancelSubscriptionModal()" style="width:100%;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:10px;font-size:13px;cursor:pointer;">❌ Cancel Subscription</button>` : ''}
+
+        <div style="font-size:12px;font-weight:700;color:#c0c0d8;margin-bottom:8px;">Payment Methods</div>
+        <div id="settings-payment-methods-list" style="margin-bottom:10px;"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
+        <button id="add-card-toggle-btn" onclick="toggleAddCardForm()" style="width:100%;padding:9px;background:none;border:1px dashed #2a2a3e;color:#8888aa;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:16px;">+ Add a card</button>
+        <div id="add-card-form" style="display:none;background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:14px;margin-bottom:16px;">
+          <div id="stripe-card-element" style="padding:10px 4px;"></div>
+          <div id="stripe-card-errors" style="color:var(--red);font-size:11px;margin-top:6px;min-height:14px;"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button onclick="saveNewCard()" id="save-card-btn" style="flex:1;padding:9px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Save Card</button>
+            <button onclick="toggleAddCardForm()" style="padding:9px 14px;background:none;border:1px solid #1e1e35;color:#eee;border-radius:8px;font-size:12px;cursor:pointer;">Cancel</button>
+          </div>
         </div>
+
+        <div style="font-size:12px;font-weight:700;color:#c0c0d8;margin-bottom:8px;">Payment History</div>
+        <div id="settings-payment-history-list" style="margin-bottom:16px;"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
+
+        ${user.tier === 'pro' ? `<button onclick="openCancelSubscriptionModal()" style="width:100%;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:10px;font-size:13px;cursor:pointer;">❌ Cancel Subscription</button>` : ''}
       </div>
 
       <!-- Change Password -->
@@ -4258,6 +4276,8 @@ function showAccountSettings() {
   loadBadgesIntoSettings();
   loadLevelIntoSettings();
   loadNotificationPrefsIntoSettings();
+  loadPaymentMethodsIntoSettings();
+  loadPaymentHistoryIntoSettings();
 }
 
 async function loadNotificationPrefsIntoSettings(){
@@ -4294,6 +4314,195 @@ async function loadNotificationPrefsIntoSettings(){
     `;
   } catch(e) {
     el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">Couldn\'t load preferences right now.</div>';
+  }
+}
+
+// ── In-app payment methods & history (Account Settings → Billing) ──
+// Card brand → emoji, purely cosmetic so the list doesn't read as a
+// bare wall of "visa"/"mastercard" strings.
+const CARD_BRAND_ICON = { visa:'💳', mastercard:'💳', amex:'💳', discover:'💳', diners:'💳', jcb:'💳', unionpay:'💳' };
+
+let _stripeJs = null;
+let _stripeElements = null;
+let _stripeCardElement = null;
+
+// Lazily loads and caches the Stripe.js instance using the publishable
+// key from our own backend (never hardcoded in this file), so switching
+// between test/live only ever needs an env var change server-side.
+async function getStripeJs() {
+  if (_stripeJs) return _stripeJs;
+  const res = await fetch(API + '/stripe/config');
+  const data = await res.json();
+  if (!data.publishable_key) throw new Error('Stripe is not configured');
+  _stripeJs = Stripe(data.publishable_key);
+  return _stripeJs;
+}
+
+async function loadPaymentMethodsIntoSettings(){
+  const el = document.getElementById('settings-payment-methods-list');
+  if (!el) return;
+  const token = getToken();
+  if (!token) { el.innerHTML = ''; return; }
+  try {
+    const res = await fetch(API + '/stripe/payment-methods', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const methods = data.methods || [];
+    if (!methods.length) {
+      el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">No saved cards yet.</div>';
+      return;
+    }
+    el.innerHTML = methods.map(m => {
+      const isDefault = m.id === data.default_id;
+      return `
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span>${CARD_BRAND_ICON[m.brand] || '💳'}</span>
+          <div>
+            <div style="font-size:13px;font-weight:600;text-transform:capitalize;">${escapeHtmlLocal(m.brand)} •••• ${escapeHtmlLocal(m.last4)}</div>
+            <div style="font-size:11px;color:#7a7a9a;">Expires ${String(m.exp_month).padStart(2,'0')}/${m.exp_year}${isDefault ? ' · Default' : ''}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          ${!isDefault ? `<button onclick="setDefaultPaymentMethodCard('${m.id}')" style="background:none;border:1px solid #2a2a3e;color:#8888aa;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">Set default</button>` : ''}
+          <button onclick="removePaymentMethodCard('${m.id}')" style="background:none;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">Remove</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">Couldn\'t load payment methods right now.</div>';
+  }
+}
+
+async function toggleAddCardForm(){
+  const form = document.getElementById('add-card-form');
+  const toggleBtn = document.getElementById('add-card-toggle-btn');
+  if (!form) return;
+  const opening = form.style.display === 'none';
+  form.style.display = opening ? 'block' : 'none';
+  if (toggleBtn) toggleBtn.style.display = opening ? 'none' : 'block';
+  if (!opening) return;
+
+  const errEl = document.getElementById('stripe-card-errors');
+  if (errEl) errEl.textContent = '';
+
+  // Only mount the card Element once — reopening the form after closing
+  // it reuses the same mounted Element rather than creating a duplicate.
+  if (_stripeCardElement) return;
+  try {
+    const stripeJs = await getStripeJs();
+    _stripeElements = stripeJs.elements();
+    _stripeCardElement = _stripeElements.create('card', {
+      style: {
+        base: {
+          color: '#eee',
+          fontSize: '14px',
+          '::placeholder': { color: '#5a5a7a' },
+        },
+        invalid: { color: '#ff6b6b' },
+      },
+    });
+    _stripeCardElement.mount('#stripe-card-element');
+    _stripeCardElement.on('change', (event) => {
+      if (errEl) errEl.textContent = event.error ? event.error.message : '';
+    });
+  } catch(e) {
+    if (errEl) errEl.textContent = 'Could not load card form: ' + e.message;
+  }
+}
+
+async function saveNewCard(){
+  const btn = document.getElementById('save-card-btn');
+  const errEl = document.getElementById('stripe-card-errors');
+  const token = getToken();
+  if (!token || !_stripeJs || !_stripeCardElement) return;
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+  try {
+    // Was this the customer's first card? If so, make it the default
+    // automatically once saved — otherwise leave whatever's already
+    // marked default alone, since adding a second card shouldn't
+    // silently switch what gets charged.
+    const beforeRes = await fetch(API + '/stripe/payment-methods', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const beforeData = await beforeRes.json();
+    const wasFirstCard = !(beforeData.methods || []).length;
+
+    const intentRes = await fetch(API + '/stripe/create-setup-intent', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const intentData = await intentRes.json();
+    if (intentData.error) throw new Error(intentData.error);
+
+    const result = await _stripeJs.confirmCardSetup(intentData.client_secret, {
+      payment_method: { card: _stripeCardElement },
+    });
+    if (result.error) throw new Error(result.error.message);
+
+    if (wasFirstCard && result.setupIntent?.payment_method) {
+      await fetch(API + '/stripe/set-default-payment-method', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token, payment_method_id: result.setupIntent.payment_method}) });
+    }
+
+    _stripeCardElement.clear();
+    toggleAddCardForm();
+    loadPaymentMethodsIntoSettings();
+  } catch(e) {
+    if (errEl) errEl.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save Card';
+  }
+}
+
+async function removePaymentMethodCard(pmId){
+  if (!confirm('Remove this card?')) return;
+  const token = getToken();
+  try {
+    const res = await fetch(API + '/stripe/remove-payment-method', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token, payment_method_id: pmId}) });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    loadPaymentMethodsIntoSettings();
+  } catch(e) {
+    alert('Could not remove card: ' + e.message);
+  }
+}
+
+async function setDefaultPaymentMethodCard(pmId){
+  const token = getToken();
+  try {
+    const res = await fetch(API + '/stripe/set-default-payment-method', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token, payment_method_id: pmId}) });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    loadPaymentMethodsIntoSettings();
+  } catch(e) {
+    alert('Could not set default card: ' + e.message);
+  }
+}
+
+async function loadPaymentHistoryIntoSettings(){
+  const el = document.getElementById('settings-payment-history-list');
+  if (!el) return;
+  const token = getToken();
+  if (!token) { el.innerHTML = ''; return; }
+  try {
+    const res = await fetch(API + '/stripe/payment-history', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    const invoices = data.invoices || [];
+    if (!invoices.length) {
+      el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">No payments yet.</div>';
+      return;
+    }
+    el.innerHTML = invoices.map(inv => {
+      const date = new Date(inv.date * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
+      const statusColor = inv.status === 'paid' ? '#00c9a7' : inv.status === 'open' ? '#f0a500' : '#ff6b6b';
+      return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #1e1e35;font-size:12px;">
+        <div style="color:#c0c0d8;">${date}</div>
+        <div style="font-weight:700;">${inv.currency === 'GBP' ? '£' : inv.currency + ' '}${inv.amount.toFixed(2)}</div>
+        <div style="color:${statusColor};text-transform:capitalize;font-weight:600;">${escapeHtmlLocal(inv.status)}</div>
+        ${inv.hosted_invoice_url ? `<a href="${inv.hosted_invoice_url}" target="_blank" rel="noopener" style="color:var(--teal);text-decoration:none;">Receipt</a>` : '<span></span>'}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">Couldn\'t load payment history right now.</div>';
   }
 }
 
