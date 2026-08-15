@@ -862,9 +862,6 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
         <a onclick="goToDashboard()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">📊 Dashboard</a>
         <a onclick="goToStats()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">📈 Stats</a>
         <a onclick="goToTickets()" style="display:flex;align-items:center;gap:8px;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🎫 Tickets<span id="nav-ticket-unread-count" style="display:none;background:#ff6b6b;color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;line-height:1.5;"></span></a>
-        <a onclick="showPaymentHistory()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🧾 Payment History</a>
-        <a onclick="showPaymentMethods()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">💳 Payment Methods</a>
-        <a id="nav-cancel-sub-link" onclick="openCancelSubscriptionModal()" style="display:none;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">❌ Cancel Subscription</a>
         <a onclick="showAccountSettings()" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">⚙️ Account Settings</a>
         <div style="border-top:1px solid var(--border);">
           <a onclick="logout()" style="display:block;padding:11px 16px;color:var(--red);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🚪 Sign Out</a>
@@ -2768,8 +2765,6 @@ function updateNav(user) {
     dt.textContent = user.tier === 'pro' ? '⭐ Pro' : 'Free';
     if (user.tier === 'pro') { dt.style.background='rgba(240,165,0,0.15)'; dt.style.borderColor='#f0a500'; dt.style.color='#f0a500'; }
   }
-  const cancelLink = document.getElementById('nav-cancel-sub-link');
-  if (cancelLink) cancelLink.style.display = (user.tier === 'pro') ? 'block' : 'none';
   // Runs on every page (not just the dashboard) so the level badge in
   // the nav dropdown is populated everywhere, not just after visiting
   // Dashboard once. loadDashboardExtras itself no-ops safely on any
@@ -4189,6 +4184,16 @@ function showAccountSettings() {
         </div>
       </div>
       ` : ''}
+
+      <!-- Billing -->
+      <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
+        <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:10px;">💳 BILLING</label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button onclick="showPaymentMethods()" style="width:100%;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid #1e1e35;color:#eee;border-radius:10px;font-size:13px;cursor:pointer;">💳 Payment Methods</button>
+          <button onclick="showPaymentHistory()" style="width:100%;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid #1e1e35;color:#eee;border-radius:10px;font-size:13px;cursor:pointer;">🧾 Payment History</button>
+          ${user.tier === 'pro' ? `<button onclick="openCancelSubscriptionModal()" style="width:100%;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:10px;font-size:13px;cursor:pointer;">❌ Cancel Subscription</button>` : ''}
+        </div>
+      </div>
 
       <!-- Change Password -->
       <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
