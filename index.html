@@ -3930,10 +3930,21 @@ async function upgradeToPro() {
 // Handle Stripe redirect back
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('upgrade') === 'success') {
-  // Re-verify token to get updated tier
+  // Re-verify token to get the real tier rather than assuming success from
+  // the redirect alone — the backend webhook can still reject a trial
+  // checkout after Stripe's own page said it went fine (e.g. the card's
+  // already been used for a trial on a different account), so check what
+  // actually landed before claiming Pro is active.
   checkAuth().then(() => {
     const msg = document.getElementById('upgrade-msg');
-    if (msg) { msg.style.color = 'var(--teal)'; msg.textContent = '✓ Upgrade successful! Welcome to Pro.'; }
+    if (!msg) return;
+    if (getUser()?.tier === 'pro') {
+      msg.style.color = 'var(--teal)';
+      msg.textContent = '✓ Upgrade successful! Welcome to Pro.';
+    } else {
+      msg.style.color = 'var(--red)';
+      msg.textContent = 'Checkout completed, but we couldn\'t activate Pro on your account. Contact support@5kable.net if this persists.';
+    }
   });
 }
 
