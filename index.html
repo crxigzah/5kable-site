@@ -5129,6 +5129,12 @@ async function confirmCancelSubscription() {
     // drops straight to Free; a paid subscription keeps Pro until the
     // period already paid for actually ends, so tier stays 'pro' here.
     await checkAuth();
+    // The Account Settings modal (if that's where this cancel was started
+    // from) rendered its Billing section from the tier at open time and
+    // won't pick up checkAuth()'s update on its own -- rebuild it so the
+    // Manage/Cancel Subscription buttons and card controls reflect the
+    // new tier immediately instead of staying stale underneath this modal.
+    if (document.getElementById('gax-settings-modal')) showAccountSettings();
     const periodEndDate = d.current_period_end
       ? new Date(d.current_period_end * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'})
       : null;
