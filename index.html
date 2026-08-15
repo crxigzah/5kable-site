@@ -1345,7 +1345,9 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       </div>
       <div id="upgrade-section" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;">
         <div style="font-weight:700;margin-bottom:8px;">⭐ Upgrade to Pro</div>
+        <div id="trial-banner" style="display:none;background:rgba(0,201,167,0.1);border:1px solid var(--teal);color:var(--teal);font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:12px;text-align:center;"></div>
         <div style="color:var(--muted);font-size:13px;margin-bottom:16px;">Priority AI, advanced comparisons, export your library and more.</div>
+        <button id="start-trial-btn" onclick="startTrial()" style="display:none;width:100%;padding:11px;margin-bottom:8px;background:rgba(0,201,167,0.1);border:1px solid var(--teal);color:var(--teal);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🎁 Start Your Free 5-Day Trial</button>
         <button class="btn btn-primary" onclick="upgradeToPro()" style="width:100%;padding:11px;">Upgrade Now <span class="price-display" data-gbp="9.99">£9.99</span>/mo</button>
         <div id="upgrade-msg" style="font-size:12px;margin-top:8px;text-align:center;"></div>
       </div>
@@ -1796,7 +1798,10 @@ function updatePricingButtons() {
     proBtn.onclick = upgradeToPro;
     return;
   }
-  if (user.tier === 'pro') {
+  // Real billing tier, not the trial-boosted user.tier — a trialing user
+  // should still be able to convert to an actual subscription from here,
+  // so the button must not disable itself as if they already were Pro.
+  if ((user.real_tier ?? user.tier) === 'pro') {
     proBtn.textContent = "You're on Pro ⭐";
     proBtn.disabled = true;
     proBtn.onclick = null;
@@ -1807,7 +1812,7 @@ function updatePricingButtons() {
     freeBtn.textContent = 'Current Plan';
     freeBtn.disabled = true;
     freeBtn.onclick = null;
-    proBtn.textContent = 'Upgrade to Pro';
+    proBtn.textContent = user.trial_active ? 'Upgrade to Pro (trial active)' : 'Upgrade to Pro';
     proBtn.disabled = false;
     proBtn.onclick = upgradeToPro;
   }
@@ -2761,14 +2766,69 @@ function showDashboard(user, token) {
   const tierText = user.tier === 'pro' ? '⭐ Pro' : 'Free';
   if (tierEl) { tierEl.textContent = tierText; if (user.tier === 'pro') tierEl.classList.add('pro'); }
   if (tierDisplayEl) tierDisplayEl.textContent = tierText;
+  // Real (billing) tier, not the trial-boosted effective tier in
+  // user.tier — a trialing user is still on Free billing, so the
+  // upgrade card needs to stay visible (with trial-aware copy) rather
+  // than hiding itself as if they were already a paying subscriber.
+  const realTier = user.real_tier ?? user.tier;
   const upgradeSection = document.getElementById('upgrade-section');
-  if (upgradeSection) upgradeSection.style.display = (user.tier === 'pro') ? 'none' : '';
+  if (upgradeSection) upgradeSection.style.display = (realTier === 'pro') ? 'none' : '';
+  renderTrialUI(user);
   if (user.created_at) {
     document.getElementById('dash-joined').textContent = new Date(user.created_at).toLocaleDateString('en-AU', {month:'short', year:'numeric'});
   }
   loadRegionAccuracy(token);
   loadGuessInsights(token);
   loadDashboardUsage(token);
+}
+
+// Shows/hides the "Start Your Free Trial" button and the trial-countdown
+// banner on the Upgrade to Pro card, based on where this user is in the
+// one-time trial lifecycle (never started / active / already used).
+function renderTrialUI(user) {
+  const startBtn = document.getElementById('start-trial-btn');
+  const banner = document.getElementById('trial-banner');
+  if (!startBtn || !banner) return;
+  const realTier = user.real_tier ?? user.tier;
+  if (realTier === 'pro') {
+    startBtn.style.display = 'none';
+    banner.style.display = 'none';
+    return;
+  }
+  if (user.trial_active && user.trial_ends_at) {
+    const daysLeft = Math.max(1, Math.ceil((new Date(user.trial_ends_at) - new Date()) / 86400000));
+    banner.textContent = `🎁 Pro trial active — ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
+    banner.style.display = 'block';
+    startBtn.style.display = 'none';
+  } else if (!user.trial_used) {
+    banner.style.display = 'none';
+    startBtn.style.display = 'block';
+  } else {
+    banner.style.display = 'none';
+    startBtn.style.display = 'none';
+  }
+}
+
+async function startTrial() {
+  const btn = document.getElementById('start-trial-btn');
+  const token = getToken();
+  if (!token || !btn) return;
+  btn.disabled = true;
+  btn.textContent = 'Starting trial...';
+  try {
+    const res = await fetch(API + '/trial/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
+    const d = await res.json();
+    if (d.error) throw new Error(d.error);
+    // Re-verify so user.tier, trial_active, etc. all refresh consistently
+    // in one place, same as how a Stripe upgrade's success redirect
+    // re-syncs state — cheaper and less error-prone than patching every
+    // affected UI element (badges, usage limits, this card) by hand.
+    await checkAuth();
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '🎁 Start Your Free 5-Day Trial';
+    alert('Could not start trial: ' + e.message);
+  }
 }
 
 // ── Level / XP + GeoX mascot + seasonal banner ──────────────────
