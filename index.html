@@ -4167,9 +4167,14 @@ function showAccountSettings() {
 
       <!-- Country Badge -->
       <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
-        <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:6px;">🏳️ COUNTRY BADGE</label>
-        <div style="color:#5a5a7a;font-size:11px;margin-bottom:10px;">Earn a country's flag by getting 1000 region guesses correct in it (Diamond status). Shown next to your name.</div>
-        <div id="settings-badges-list"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleCountryBadgeSection()">
+          <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">🏳️ COUNTRY BADGE</label>
+          <span id="badge-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
+        </div>
+        <div id="country-badge-section" style="display:none;margin-top:12px;">
+          <div style="color:#5a5a7a;font-size:11px;margin-bottom:10px;">Earn a country's flag by getting 1000 region guesses correct in it (Diamond status). Shown next to your name.</div>
+          <div id="settings-badges-list"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
+        </div>
       </div>
 
       <!-- Email (readonly) -->
@@ -4567,6 +4572,15 @@ function updateNavAvatar() {
 function togglePasswordSection() {
   const sec = document.getElementById('password-section');
   const icon = document.getElementById('pwd-toggle-icon');
+  if (!sec) return;
+  const open = sec.style.display !== 'none';
+  sec.style.display = open ? 'none' : 'block';
+  if (icon) icon.textContent = open ? '▼' : '▲';
+}
+
+function toggleCountryBadgeSection() {
+  const sec = document.getElementById('country-badge-section');
+  const icon = document.getElementById('badge-toggle-icon');
   if (!sec) return;
   const open = sec.style.display !== 'none';
   sec.style.display = open ? 'none' : 'block';
