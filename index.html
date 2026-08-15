@@ -2190,18 +2190,16 @@ function switchLeaderboardTab(tab){
   });
 
   const periodRow = document.getElementById('leaderboard-period-row');
+  periodRow.style.display = 'flex';
+  document.getElementById('leaderboard-season-picker').style.display = currentLeaderboardPeriod === 'season' ? 'block' : 'none';
+  updateLeaderboardSubtitle();
+  if (!_seasonPickerLoaded) loadSeasonPicker();
   if (tab === 'players') {
     document.getElementById('leaderboard-page-title').textContent = '🏆 Top Players';
-    periodRow.style.display = 'flex';
-    document.getElementById('leaderboard-season-picker').style.display = currentLeaderboardPeriod === 'season' ? 'block' : 'none';
-    updateLeaderboardSubtitle();
-    if (!_seasonPickerLoaded) loadSeasonPicker();
     loadTopPlayersLeaderboard();
     loadMyRank();
   } else {
     document.getElementById('leaderboard-page-title').textContent = '📍 Top Contributors';
-    document.getElementById('leaderboard-page-subtitle').textContent = "Ranked by locations added to the scene library — the players actually building out 5kable's map coverage.";
-    periodRow.style.display = 'none';
     document.getElementById('leaderboard-my-rank').style.display = 'none'; // XP-specific; no contributor-rank lookup yet
     loadTopContributorsLeaderboard();
   }
@@ -2210,13 +2208,17 @@ function switchLeaderboardTab(tab){
 function updateLeaderboardSubtitle(){
   const el = document.getElementById('leaderboard-page-subtitle');
   if (!el) return;
-  if (currentLeaderboardPeriod === 'season') {
-    const label = currentSeasonYear
-      ? new Date(currentSeasonYear, currentSeasonMonth - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'})
-      : 'this month';
-    el.textContent = `Ranked by correct guesses in ${label}. Resets every month, so everyone's got a fresh shot.`;
+  const label = currentSeasonYear
+    ? new Date(currentSeasonYear, currentSeasonMonth - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'})
+    : 'this month';
+  if (currentLeaderboardTab === 'players') {
+    el.textContent = currentLeaderboardPeriod === 'season'
+      ? `Ranked by correct guesses in ${label}. Resets every month, so everyone's got a fresh shot.`
+      : 'Ranked by total XP across every game mode, all time. Play rounds with the extension active to climb the board.';
   } else {
-    el.textContent = 'Ranked by total XP across every game mode, all time. Play rounds with the extension active to climb the board.';
+    el.textContent = currentLeaderboardPeriod === 'season'
+      ? `Ranked by locations added to the scene library in ${label}. Resets every month, so everyone's got a fresh shot.`
+      : "Ranked by locations added to the scene library, all time — the players actually building out 5kable's map coverage.";
   }
 }
 
@@ -2230,8 +2232,12 @@ function switchLeaderboardPeriod(period){
   });
   document.getElementById('leaderboard-season-picker').style.display = period === 'season' ? 'block' : 'none';
   updateLeaderboardSubtitle();
-  loadTopPlayersLeaderboard();
-  loadMyRank();
+  if (currentLeaderboardTab === 'players') {
+    loadTopPlayersLeaderboard();
+    loadMyRank();
+  } else {
+    loadTopContributorsLeaderboard();
+  }
 }
 
 async function loadSeasonPicker(){
@@ -2265,8 +2271,12 @@ function onSeasonPickerChange(value){
   currentSeasonYear = year;
   currentSeasonMonth = month;
   updateLeaderboardSubtitle();
-  loadTopPlayersLeaderboard();
-  loadMyRank();
+  if (currentLeaderboardTab === 'players') {
+    loadTopPlayersLeaderboard();
+    loadMyRank();
+  } else {
+    loadTopContributorsLeaderboard();
+  }
 }
 
 async function loadMyRank(){
@@ -2333,12 +2343,18 @@ async function loadTopPlayersLeaderboard(){
 async function loadTopContributorsLeaderboard(){
   const el = document.getElementById('leaderboard-page-list');
   if (!el) return;
+  const usingSeason = currentLeaderboardPeriod === 'season';
+  const url = usingSeason
+    ? `${API}/leaderboard/contributors/season?limit=50&year=${currentSeasonYear}&month=${currentSeasonMonth}`
+    : `${API}/leaderboard/contributors?limit=50`;
   try {
-    const res = await fetch(`${API}/leaderboard/contributors?limit=50`);
+    const res = await fetch(url);
     const data = await res.json();
     const rows = data.leaderboard || [];
     if (!rows.length) {
-      el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No contributions yet — be the first to add a location!</div>`;
+      el.innerHTML = usingSeason
+        ? `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No contributions in this season yet — be the first to add a location!</div>`
+        : `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No contributions yet — be the first to add a location!</div>`;
       return;
     }
     const me = getUser();
