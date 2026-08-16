@@ -28,6 +28,14 @@ export default {
       url.pathname = '/';
       return env.ASSETS.fetch(new Request(url, request));
     }
+    // /download is meant as a shareable shortcut straight to the "Install
+    // 5kable" section (id="download" in index.html) -- has to be an actual
+    // browser redirect, not an internal rewrite like /metas/ above, since
+    // URL fragments never reach the server at all; only the browser can
+    // act on one after it lands on the real page.
+    if (url.pathname === '/download' || url.pathname === '/download/') {
+      return Response.redirect(`${url.origin}/#download`, 302);
+    }
     // Everything else: identical to Cloudflare Pages' own default behavior
     // (this is the same asset server it would have used automatically).
     return env.ASSETS.fetch(request);
