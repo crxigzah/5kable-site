@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Install 5kable</title>
+<meta name="description" content="Install the 5kable Chrome extension in 2 steps and start training in singleplayer practice rounds.">
+<meta property="og:title" content="Install 5kable">
+<meta property="og:description" content="Install the 5kable Chrome extension in 2 steps and start training in singleplayer practice rounds.">
+<meta property="og:image" content="https://5kable.net/apple-touch-icon.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Install 5kable">
+<meta name="twitter:description" content="Install the 5kable Chrome extension in 2 steps and start training in singleplayer practice rounds.">
+<meta name="twitter:image" content="https://5kable.net/apple-touch-icon.png">
+<style>
+:root {
+  --bg: #080810;
+  --bg2: #0d0d18;
+  --card: #10101e;
+  --card2: #14142a;
+  --border: #1e1e35;
+  --teal: #00c9a7;
+  --teal2: #00a87d;
+  --purple: #7c3aed;
+  --text: #e8e8f5;
+  --muted: #6a6a9a;
+  --red: #ff4c6a;
+  --gold: #f0a500;
+}
+.gax-toggle { position:relative; display:inline-block; width:38px; height:22px; flex-shrink:0; }
+.gax-toggle input { opacity:0; width:0; height:0; }
+.gax-toggle-slider { position:absolute; cursor:pointer; inset:0; background:#1e1e35; border:1px solid #2a2a45; border-radius:22px; transition:.2s; }
+.gax-toggle-slider::before { content:""; position:absolute; height:16px; width:16px; left:2px; top:2px; background:#8888aa; border-radius:50%; transition:.2s; }
+.gax-toggle input:checked + .gax-toggle-slider { background:rgba(0,201,167,0.25); border-color:#00c9a7; }
+.gax-toggle input:checked + .gax-toggle-slider::before { transform:translateX(16px); background:#00c9a7; }
+* { box-sizing:border-box;margin:0;padding:0; }
+body { background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;line-height:1.6;overflow-x:hidden; }
+
+/* Rich layered background */
+body::before {
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 70% 55% at 8% 18%, rgba(0,201,167,0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 45% at 92% 8%, rgba(124,58,237,0.09) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 38% at 50% 85%, rgba(0,168,125,0.06) 0%, transparent 58%),
+    radial-gradient(ellipse 38% 30% at 78% 62%, rgba(124,58,237,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 30% 25% at 25% 60%, rgba(0,201,167,0.04) 0%, transparent 45%);
+  pointer-events:none;z-index:0;animation:bgShift 22s ease-in-out infinite alternate;
+}
+@keyframes bgShift {
+  0%   { opacity: 0.75; transform: scale(1) translateY(0); }
+  50%  { opacity: 0.95; transform: scale(1.02) translateY(-6px); }
+  100% { opacity: 1;   transform: scale(1.05) translateY(4px); }
+}
+
+/* Fine grid + noise overlay */
+body::after {
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,201,167,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,201,167,0.025) 1px, transparent 1px),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 48px 48px, 48px 48px, 200px 200px;
+  pointer-events:none;z-index:0;
+  mask-image:radial-gradient(ellipse 110% 110% at 50% 50%, black 20%, transparent 100%);
+}
+
+/* Animated aurora scan lines */
+.aurora-lines {
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+}
+.aurora-lines::before {
+  content:'';position:absolute;
+  width:200%;height:3px;
+  background:linear-gradient(90deg, transparent, rgba(0,201,167,0.08), rgba(124,58,237,0.06), transparent);
+  top:30%;left:-50%;
+  animation:auroraSweep 14s ease-in-out infinite;
+  filter:blur(2px);
+}
+.aurora-lines::after {
+  content:'';position:absolute;
+  width:200%;height:2px;
+  background:linear-gradient(90deg, transparent, rgba(124,58,237,0.06), rgba(0,201,167,0.08), transparent);
+  top:65%;left:-50%;
+  animation:auroraSweep 20s ease-in-out infinite reverse;
+  filter:blur(2px);
+}
+@keyframes auroraSweep {
+  0%   { transform: translateX(-10%) skewX(-8deg); opacity:0; }
+  20%  { opacity:1; }
+  80%  { opacity:1; }
+  100% { transform: translateX(60%) skewX(-8deg); opacity:0; }
+}
+
+nav {
+  display:flex;align-items:center;justify-content:space-between;padding:14px 40px;
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
+}
+/* The frosted-glass effect lives on a pseudo-element behind nav's content,
+   not on `nav` itself. backdrop-filter (like transform/filter/perspective/
+   will-change:transform) makes its element the CONTAINING BLOCK for any
+   position:fixed descendant, instead of the real viewport — that broke the
+   mobile off-canvas nav-links panel further down, whose top:0/bottom:0 was
+   silently resolving against nav's own ~96px height instead of the full
+   screen, squashing the whole slide-out menu into a sliver near the top.
+   Moving the blur to ::before keeps the exact same visual (painted behind
+   nav's real content either way) without nav itself tripping that rule. */
+nav::before {
+  content:'';position:absolute;inset:0;
+  background:rgba(8,8,16,0.92);backdrop-filter:blur(20px);z-index:-1;
+}
+.nav-logo {
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  color:var(--text);font-size:17px;font-weight:700;letter-spacing:0.5px;text-decoration:none;
+}
+.nav-logo img { width:38px;height:38px;object-fit:contain; }
+.nav-logo span { background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+.nav-links { display:flex;gap:20px;align-items:center; }
+.nav-links a { color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s; }
+.nav-links a:hover { color:var(--text); }
+.nav-socials { display:flex;align-items:center;gap:14px; }
+.nav-discord { color:var(--muted);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:5px;transition:color .2s; }
+.nav-discord:hover { color:#5865F2; }
+.btn { padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s; }
+.btn-outline { background:transparent;border:1px solid rgba(0,201,167,0.4);color:var(--teal); }
+.btn-outline:hover { background:var(--teal);color:#080810; }
+.btn-primary { background:linear-gradient(135deg,#00c9a7,#00a87d);color:#080810;font-weight:700; }
+.btn-primary:hover { opacity:0.9;transform:translateY(-1px); }
+
+/* Currency selector */
+.currency-picker {
+  display:flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:4px;
+}
+.currency-btn {
+  padding:3px 8px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600;
+  background:transparent;color:var(--muted);transition:all .2s;
+}
+
+/* Hero */
+.hero { text-align:center;padding:120px 40px 80px;max-width:860px;margin:0 auto;position:relative;z-index:1; }
+.hero-badge {
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.25);
+  color:var(--teal);padding:5px 16px;border-radius:20px;font-size:12px;font-weight:600;margin-bottom:28px;
+}
+.hero h1 { font-size:58px;font-weight:800;line-height:1.1;margin-bottom:22px;letter-spacing:-1px; }
+.hero h1 .grad { background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+.hero p { font-size:18px;color:var(--muted);margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto; }
+.hero-btns { display:flex;gap:12px;justify-content:center;flex-wrap:wrap; }
+.hero-btns .btn { padding:13px 30px;font-size:15px; }
+
+/* Glow orbs */
+.orb { position:absolute;border-radius:50%;filter:blur(80px);opacity:0.18;pointer-events:none; }
+.orb1 { width:500px;height:500px;background:#00c9a7;top:-80px;left:-160px; }
+.orb2 { width:420px;height:420px;background:#7c3aed;top:20px;right:-140px; }
+.orb3 { width:320px;height:320px;background:#00c9a7;top:200px;left:-80px;opacity:0.08;filter:blur(120px); }
+.orb4 { width:280px;height:280px;background:#7c3aed;top:160px;right:-60px;opacity:0.08;filter:blur(120px); }
+
+/* Stats */
+.stats {
+  display:flex;justify-content:center;gap:0;flex-wrap:wrap;
+  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  background:var(--card);position:relative;z-index:1;
+}
+.stat { padding:28px 48px;text-align:center;border-right:1px solid var(--border); }
+.stat:last-child { border-right:none; }
+.stat-num { font-size:36px;font-weight:800;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+.stat-label { font-size:12px;color:var(--muted);margin-top:2px;font-weight:500; }
+
+/* Countries marquee */
+.countries-band {
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:16px 0;overflow:hidden;position:relative;z-index:1;
+}
+.countries-track {
+  display:flex;gap:32px;animation:scroll 30s linear infinite;white-space:nowrap;
+}
+@keyframes scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+.country-tag {
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(0,201,167,0.06);border:1px solid rgba(0,201,167,0.15);
+  border-radius:20px;padding:4px 14px;font-size:12px;color:var(--muted);white-space:nowrap;
+}
+
+/* Sections */
+.section { padding:80px 40px;max-width:1200px;margin:0 auto;position:relative;z-index:1; }
+.section-label {
+  color:var(--teal);font-size:11px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;margin-bottom:14px;display:block;
+}
+.section-heading {
+  font-size:38px;font-weight:800;letter-spacing:-0.5px;line-height:1.15;
+  margin-bottom:12px;
+}
+.section h2 { font-size:38px;font-weight:800;margin-bottom:14px;letter-spacing:-0.5px; }
+.section > p { color:var(--muted);font-size:16px;margin-bottom:52px;max-width:600px; }
+
+/* Feature cards */
+.features { display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px; }
+.feature-card {
+  background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;
+  transition:all .3s;position:relative;overflow:hidden;
+}
+.feature-card::before {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,201,167,0.04),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.feature-card:hover { border-color:rgba(0,201,167,0.3);transform:translateY(-2px); }
+.feature-card:hover::before { opacity:1; }
+.feature-icon { font-size:30px;margin-bottom:14px; }
+.feature-card h3 { font-size:16px;font-weight:700;margin-bottom:8px; }
+.feature-card p { font-size:13px;color:var(--muted);line-height:1.6; }
+
+/* How it works */
+.how-section {
+  padding:80px 40px;
+  background:linear-gradient(180deg,transparent,rgba(124,58,237,0.04),transparent);
+  position:relative;z-index:1;
+}
+.steps { display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px;max-width:1200px;margin:0 auto; }
+.step { text-align:center;padding:0 16px; }
+.step-num {
+  width:60px;height:60px;
+  background:linear-gradient(135deg,rgba(0,201,167,0.15),rgba(124,58,237,0.15));
+  border:1px solid rgba(0,201,167,0.3);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 18px;
+  font-size:22px;font-weight:800;color:var(--teal);
+}
+.step h3 { font-size:16px;font-weight:700;margin-bottom:8px; }
+.step p { font-size:13px;color:var(--muted);line-height:1.6; }
+
+/* Pricing */
+.pricing { display:flex;gap:20px;justify-content:center;flex-wrap:wrap;align-items:stretch; }
+.price-card {
+  background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px;
+  width:300px;position:relative;transition:all .3s;
+}
+.price-card.featured {
+  border-color:rgba(0,201,167,0.4);
+  background:linear-gradient(135deg,rgba(0,201,167,0.06),rgba(124,58,237,0.06));
+}
+.price-card:hover { transform:translateY(-3px); }
+.price-badge {
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,#00c9a7,#7c3aed);color:#080810;
+  padding:3px 18px;border-radius:20px;font-size:11px;font-weight:700;
+}
+.price-name { font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px; }
+.price-amount { font-size:44px;font-weight:800;margin-bottom:4px; }
+.price-amount .curr { font-size:16px;color:var(--muted);font-weight:400; }
+.price-desc { font-size:13px;color:var(--muted);margin-bottom:24px; }
+.price-features { list-style:none;margin-bottom:28px;flex:1; }
+
+.cp-filter-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.cp-filter-btn:hover { color: var(--text); }
+.cp-filter-btn.active { background: var(--teal); color: #000; }
+
+.country-progress-card {
+  background: #0d0d18;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  transition: border-color .15s;
+}
+.country-progress-card:hover { border-color: var(--teal); }
+.country-progress-card.diamond { border-color: rgba(0,201,167,0.4); background: rgba(0,201,167,0.06); }
+.cpc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cpc-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.cpc-name { font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpc-bar-track { background: #1e1e35; border-radius: 4px; height: 6px; overflow: hidden; }
+.cpc-bar-fill { height: 100%; border-radius: 4px; background: var(--teal); transition: width .3s; }
+.cpc-count { font-size: 11px; color: var(--muted); margin-top: 8px; }
+.cpc-count.diamond { color: var(--teal); font-weight: 700; }
+
+.price-features li { font-size:13px;padding:7px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start; }
+.price-features li::before { content:'✓';color:var(--teal);font-weight:700;flex-shrink:0; }
+.price-features li.no::before { content:'✗';color:var(--muted); }
+.price-features li.no { color:var(--muted); }
+.price-card .btn { width:100%;padding:13px;font-size:14px; }
+
+/* Rules section */
+.rules-section {
+  padding:80px 40px;
+  background:linear-gradient(135deg,rgba(255,76,106,0.04),transparent);
+  position:relative;z-index:1;
+  border-top:1px solid var(--border);
+}
+.rules-box {
+  max-width:900px;margin:0 auto;
+  background:rgba(255,76,106,0.06);border:1px solid rgba(255,76,106,0.25);
+  border-radius:16px;padding:36px;
+}
+.rules-box h3 { color:#ff4c6a;font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px; }
+.rules-box ul { list-style:none;color:var(--muted);font-size:14px;line-height:1.8; }
+.rules-box ul li { padding:10px 12px 10px 34px;border-bottom:1px solid rgba(255,76,106,0.1);display:flex;align-items:flex-start;line-height:1.7;position:relative; }
+.rules-box ul li::before { content:'⚠️';position:absolute;left:8px;top:11px;font-size:14px;line-height:1; }
+.rules-badge {
+  display:inline-block;background:rgba(255,76,106,0.1);border:1px solid rgba(255,76,106,0.3);
+  color:#ff4c6a;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:16px;
+}
+
+/* Policies dropdown */
+.nav-dropdown-wrap { position:relative;display:flex;align-items:center;height:100%; }
+.nav-dropdown-wrap > a { cursor:pointer;display:flex;align-items:center;gap:3px; }
+.nav-dropdown-menu {
+  display:none;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  background:var(--card);border:1px solid var(--border);border-radius:12px;min-width:200px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:300;overflow:hidden;padding:6px 0;
+}
+/* invisible bridge so mouse can travel from trigger to menu */
+.nav-dropdown-menu::before {
+  content:'';position:absolute;top:-8px;left:0;right:0;height:8px;
+}
+.nav-dropdown-wrap.open .nav-dropdown-menu { display:block; }
+.nav-dropdown-menu a {
+  display:block;padding:10px 18px;color:var(--muted);font-size:13px;text-decoration:none;
+  transition:background .15s, color .15s;white-space:nowrap;cursor:pointer;
+}
+.nav-dropdown-menu a:hover { background:var(--card2);color:var(--text); }
+.nav-dropdown-menu a::after { display:none !important; }
+
+/* Policy modal */
+.policy-modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:2000;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto; }
+.policy-modal-overlay.active { display:flex; }
+.policy-modal {
+  background:var(--card);border:1px solid var(--border);border-radius:18px;
+  padding:40px;width:760px;max-width:100%;position:relative;margin:auto;
+}
+.policy-modal h2 { font-size:24px;font-weight:800;margin-bottom:6px; }
+.policy-modal .policy-date { font-size:12px;color:var(--muted);margin-bottom:28px; }
+.policy-modal h3 { font-size:15px;font-weight:700;margin:24px 0 8px;color:var(--teal); }
+.policy-modal p, .policy-modal li { font-size:14px;color:var(--muted);line-height:1.75;margin-bottom:8px; }
+.policy-modal ul { padding-left:20px; }
+.policy-modal .policy-close { position:absolute;top:18px;right:18px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--muted);cursor:pointer;border-radius:8px;width:32px;height:32px;font-size:16px; }
+
+/* Download section */
+.download-section {
+  padding:80px 40px;position:relative;z-index:1;text-align:center;
+  border-top:1px solid var(--border);
+}
+.download-box {
+  background:linear-gradient(135deg,rgba(0,201,167,0.06),rgba(124,58,237,0.06));
+  border:1px solid rgba(0,201,167,0.2);border-radius:24px;
+  padding:56px 40px;max-width:720px;margin:0 auto;position:relative;overflow:hidden;
+}
+.download-box::before {
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(0,201,167,0.08),transparent);
+  pointer-events:none;
+}
+.download-steps {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:16px;margin:36px 0;text-align:left;
+}
+.dl-step {
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:18px;position:relative;
+}
+.dl-step-num {
+  width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,var(--teal),#7c3aed);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;color:#000;margin-bottom:10px;
+}
+.dl-step h4 { font-size:13px;font-weight:700;margin-bottom:4px; }
+.dl-step p { font-size:12px;color:var(--muted);line-height:1.5; }
+.download-btn {
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,var(--teal),#00a87d);
+  color:#000;font-weight:800;font-size:15px;
+  padding:14px 32px;border-radius:12px;text-decoration:none;
+  transition:all .2s;border:none;cursor:pointer;
+}
+.download-btn:hover { transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,201,167,0.35); }
+.download-note { font-size:12px;color:var(--muted);margin-top:14px; }
+.faq-section { padding:80px 40px;max-width:860px;margin:0 auto;position:relative;z-index:1; }
+.faq-item {
+  border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;
+  transition:border-color .2s;
+}
+.faq-item:hover { border-color:rgba(0,201,167,0.3); }
+.faq-q {
+  padding:18px 22px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;
+  font-size:15px;font-weight:600;user-select:none;line-height:1.4;
+}
+.faq-q .faq-arrow { color:var(--teal);font-size:18px;transition:transform .3s;flex-shrink:0; }
+.faq-item.open .faq-arrow { transform:rotate(45deg); }
+.faq-a { display:none;padding:0 22px 20px;font-size:14px;color:var(--muted);line-height:1.75; }
+.faq-item.open .faq-a { display:block; }
+
+/* Contact section */
+.contact-section {
+  padding:80px 40px;position:relative;z-index:1;
+  background:linear-gradient(180deg,transparent,rgba(0,201,167,0.03),transparent);
+  border-top:1px solid var(--border);
+}
+.contact-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;max-width:900px;margin:0 auto; }
+.contact-card {
+  background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;
+  text-align:center;transition:all .3s;text-decoration:none;display:block;
+}
+.contact-card:hover { border-color:rgba(0,201,167,0.35);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,201,167,0.07); }
+.contact-card-icon { font-size:28px;margin-bottom:12px; }
+.contact-card h4 { font-size:14px;font-weight:700;margin-bottom:6px;color:var(--text); }
+.contact-card p { font-size:12px;color:var(--muted);line-height:1.5; }
+#dashboard { display:none;padding:40px;max-width:900px;margin:0 auto;position:relative;z-index:1; }
+.dash-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;flex-wrap:wrap;gap:16px; }
+.dash-welcome { font-size:24px;font-weight:800; }
+.dash-tier { display:inline-block;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;background:rgba(0,201,167,0.12);border:1px solid var(--teal);color:var(--teal); }
+.dash-tier.pro { background:rgba(240,165,0,0.12);border-color:var(--gold);color:var(--gold); }
+.dash-cards { display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:10px; }
+.dash-card { background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 10px; }
+.dash-card-num { font-size:18px;font-weight:800;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+.dash-card-label { font-size:11px;color:var(--muted);margin-top:3px; }
+
+/* Auth modal */
+.modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;align-items:center;justify-content:center; }
+.modal-overlay.active { display:flex; }
+.modal { background:var(--card);border:1px solid var(--border);border-radius:18px;padding:36px;width:380px;max-width:95vw;position:relative; }
+.modal h2 { font-size:22px;font-weight:800;margin-bottom:4px; }
+.modal-sub { font-size:13px;color:var(--muted);margin-bottom:24px; }
+.tabs { display:flex;border-bottom:1px solid var(--border);margin-bottom:24px; }
+.tab { padding:9px 22px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);border-bottom:2px solid transparent;transition:all .2s; }
+.tab.active { color:var(--teal);border-bottom-color:var(--teal); }
+.form-group { margin-bottom:14px; }
+.form-group label { display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px; }
+.form-group input { width:100%;padding:10px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none;transition:border-color .2s; }
+.form-group input:focus { border-color:var(--teal); }
+.form-btn { width:100%;padding:13px;margin-top:8px; }
+.form-error { font-size:12px;margin-top:8px;display:none;color:#ff6b6b; }
+.modal-close { position:absolute;top:16px;right:16px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px; }
+
+footer {
+  text-align:center;padding:48px 40px;
+  border-top:1px solid var(--border);color:var(--muted);font-size:13px;
+  background:var(--card);position:relative;z-index:1;
+}
+.footer-links { display:flex;justify-content:center;gap:24px;margin-bottom:16px;flex-wrap:wrap; }
+.footer-links a { color:var(--muted);text-decoration:none;font-size:13px;transition:color .2s; }
+.footer-links a:hover { color:var(--teal); }
+
+
+/* === INTERACTIVE POLISH === */
+
+/* Pulse on CTA button */
+.btn-primary { animation: pulse-glow 3s ease-in-out infinite; }
+@keyframes pulse-glow {
+  0%,100% { box-shadow: 0 0 0 0 rgba(0,201,167,0); }
+  50% { box-shadow: 0 0 20px 4px rgba(0,201,167,0.25); }
+}
+
+/* Feature cards - lift + glow on hover */
+.feature-card:hover {
+  border-color: rgba(0,201,167,0.4) !important;
+  transform: translateY(-4px) !important;
+  box-shadow: 0 16px 40px rgba(0,201,167,0.08);
+}
+
+/* Step numbers - spin on hover */
+.step:hover .step-num {
+  transform: rotate(360deg) scale(1.1);
+  transition: transform 0.5s ease;
+  border-color: var(--teal);
+  background: rgba(0,201,167,0.2);
+}
+
+/* Price cards */
+.price-card:hover {
+  box-shadow: 0 20px 60px rgba(0,201,167,0.1);
+}
+.price-card.featured:hover {
+  box-shadow: 0 20px 60px rgba(0,201,167,0.2);
+}
+
+/* Nav links underline animation */
+.nav-links a {
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--teal);
+  transition: width .3s ease;
+}
+.nav-links a:hover::after { width: 100%; }
+
+/* Stat cards pop on hover */
+.stat {
+  transition: background .3s;
+  cursor: default;
+}
+.stat:hover {
+  background: rgba(0,201,167,0.04);
+}
+.stat:hover .stat-num {
+  transform: scale(1.05);
+  display: inline-block;
+  transition: transform .2s;
+}
+
+/* Country tags in marquee */
+.country-tag {
+  transition: all .2s;
+  cursor: default;
+}
+.country-tag:hover {
+  background: rgba(0,201,167,0.15) !important;
+  border-color: rgba(0,201,167,0.4) !important;
+  color: var(--text) !important;
+  transform: scale(1.05);
+}
+
+/* Rules box hover */
+.rules-box ul li {
+  transition: background .2s;
+  border-radius: 6px;
+}
+.rules-box ul li:hover {
+  background: rgba(255,76,106,0.06);
+}
+
+/* Avatar colour buttons */
+.avatar-color-btn:hover {
+  transform: scale(1.2) !important;
+  border-color: #fff !important;
+}
+
+/* Smooth scroll */
+/* overflow-x here (not just on body below) matters specifically because of
+   the off-canvas mobile nav panel further down: it's transform:translateX'd
+   off-screen, but a transformed position:fixed element still counts toward
+   the page's scrollable width in Chrome's layout model even while
+   invisible — body's own overflow-x:hidden doesn't clip that, since a
+   fixed element is positioned against the root/viewport, not against body.
+   Confirmed directly: without this, a 390px-wide phone viewport measured
+   as 690px wide (390 visible + the 300px off-canvas panel), because
+   nothing was clipping the panel's off-screen contribution. */
+html { scroll-behavior: smooth; overflow-x: hidden; }
+
+/* Hero flag emojis */
+.flag-strip span {
+  transition: transform .2s;
+  display: inline-block;
+  cursor: default;
+}
+.flag-strip span:hover {
+  transform: scale(1.4) translateY(-4px);
+}
+
+/* Dashboard cards */
+.dash-card {
+  transition: all .25s;
+}
+.dash-card:hover {
+  border-color: rgba(0,201,167,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,201,167,0.08);
+}
+
+/* Form inputs glow on focus */
+.form-group input:focus {
+  border-color: var(--teal) !important;
+  box-shadow: 0 0 0 3px rgba(0,201,167,0.1);
+}
+
+/* Discord link hover */
+.nav-discord:hover svg {
+  transform: rotate(-10deg) scale(1.2);
+  transition: transform .2s;
+}
+
+/* ── Mobile hamburger (hidden on desktop) ─────────────────── */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 210;
+}
+.nav-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text);
+  margin: 0 auto;
+  transition: transform .2s, opacity .2s;
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Must stay below nav's z-index (100), not above it. #nav-links and the
+   hamburger button live *inside* <nav>, which is itself a stacking context
+   (position:sticky + z-index). Their own z-index:200/210 only orders them
+   against each other within that context - it can't lift them above a
+   sibling like #nav-scrim, which gets compared against nav's context as a
+   whole. With z-index:195 here (above nav's 100), the scrim painted over
+   the entire nav stacking context, including the off-canvas menu nested
+   inside it: the panel looked washed out and every tap on a link or the
+   close button was swallowed by the scrim's own click-to-close handler
+   instead of reaching the link underneath. */
+.nav-scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 90;
+}
+.nav-scrim.open { display: block; }
+
+/* ── Mobile layout (≤820px) ───────────────────────────────── */
+@media (max-width: 820px) {
+  body.nav-open-lock { overflow: hidden; }
+
+  .nav-hamburger { display: flex; }
+
+  nav { padding: 12px 16px; }
+
+  .nav-links {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: 300px; max-width: 85vw;
+    background: var(--card, #10101e);
+    border-left: 1px solid var(--border);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 72px 20px 24px;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform .25s ease;
+    z-index: 200;
+    box-shadow: -12px 0 40px rgba(0,0,0,0.5);
+  }
+  .nav-links.open { transform: translateX(0); display: flex; }
+
+  .nav-links a {
+    font-size: 16px;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--border);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  .nav-links a:last-child { border-bottom: none; }
+
+  /* .nav-links's align-items:stretch (needed so the plain links' dividers
+     span the full row) also stretched this badge to the row's full width,
+     even though its own inline style is sized for a small pill - so the
+     teal background/border just trailed off into empty space past the
+     text instead of hugging it like on desktop. Selector needs to beat
+     ".nav-links a"'s specificity to actually override min-height. */
+  .nav-links a.nav-metas-badge {
+    align-self: flex-start;
+    min-height: 0;
+    margin: 8px 0;
+  }
+
+  .nav-dropdown-wrap { height: auto; display: block; }
+  /* Without width:100% the anchor only sizes to its own text ("Games"/
+     "Tools" + chevron), so its border-bottom - and the space-between
+     below meant to push the chevron to the row's right edge - only ever
+     spanned that short width instead of the full row like every other
+     item's divider, making the underlines look randomly inconsistent. */
+  .nav-dropdown-wrap > a { width: 100%; padding: 14px 4px; border-bottom: 1px solid var(--border); justify-content: space-between; }
+  .nav-dropdown-menu {
+    position: static; transform: none; display: none;
+    box-shadow: none; border: none; background: var(--bg2);
+    margin: 0 0 4px; padding: 4px 0 4px 16px;
+  }
+  .nav-dropdown-wrap.open .nav-dropdown-menu { display: block; }
+  .nav-dropdown-menu a { font-size: 15px; padding: 12px 4px; border-bottom: none; }
+
+  /* Social icons: .nav-links a's generic row treatment (full-width,
+     border-bottom, 44px min-height) was still winning over the old
+     ".nav-discord { padding: 8px }" override further down (lower
+     specificity, so it never actually applied) - each icon rendered as
+     its own nearly-empty full-width row with a divider under it. They're
+     now grouped in a .nav-socials wrapper and laid out as a single
+     touch-friendly icon row instead of four stacked rows. */
+  .nav-socials {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-links .nav-socials a.nav-discord {
+    min-width: 38px;
+    min-height: 38px;
+    padding: 0;
+    border-bottom: none;
+    justify-content: center;
+    background: var(--card2, rgba(255,255,255,0.04));
+    border-radius: 10px;
+    flex: 0 0 auto;
+  }
+
+  .currency-picker { margin: 16px 0; align-self: stretch; justify-content: space-between; }
+  .currency-btn { flex: 1; padding: 9px 8px; font-size: 13px; min-height: 38px; }
+
+  #nav-auth-guest { flex-direction: column; gap: 10px; margin-top: 8px; }
+  #nav-auth-guest .btn { width: 100%; padding: 13px 20px; font-size: 15px; min-height: 46px; }
+  #nav-auth-user { align-self: stretch; }
+  #nav-auth-user > button { width: 100%; justify-content: center; padding: 12px 16px; }
+  #user-dropdown { position: static; box-shadow: none; margin-top: 8px; width: 100%; }
+  #user-dropdown a { padding: 13px 16px; font-size: 14px; }
+
+  /* Hero */
+  .hero { padding: 56px 20px 44px; }
+  .hero h1 { font-size: 32px; }
+  .hero p { font-size: 15px; }
+  .hero-btns .btn { width: 100%; max-width: 320px; padding: 14px 24px; font-size: 15px; min-height: 46px; }
+
+  /* Stats */
+  .stats { flex-wrap: wrap; }
+  .stat { flex: 1 1 45%; padding: 20px; border-right: none; border-bottom: 1px solid var(--border); }
+
+  /* Sections */
+  .section { padding: 50px 20px; }
+  .section h2 { font-size: 26px; }
+  .section > p { font-size: 14px; margin-bottom: 36px; }
+  .how-section, .rules-section, .download-section, .faq-section { padding: 50px 20px !important; }
+
+  /* Buttons generally more tappable on touch */
+  .btn { min-height: 40px; }
+  .price-card .btn { padding: 14px; font-size: 15px; min-height: 46px; }
+
+  /* Forms — 16px prevents iOS auto-zoom on focus */
+  .form-group input { font-size: 16px; padding: 12px 14px; }
+  .modal { padding: 28px 22px; }
+  .tab { padding: 12px 16px; font-size: 14px; }
+
+  /* Dashboard */
+  .dash-header { flex-direction: column; align-items: flex-start; }
+  .dash-welcome { font-size: 20px; }
+}
+
+@keyframes gaxConfettiFall {
+  0%   { transform: translate(0, 0) rotate(0deg); opacity: .9; }
+  100% { transform: translate(var(--gax-drift), 100vh) rotate(var(--gax-rotate)); opacity: 0; }
+}
+</style>
+<link rel="icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+</head>
+<body>
+<!-- Simple standalone header, not the full app nav -- this page doesn't
+     load the main app's auth/session JS, so it can't reuse the dropdown
+     mega-menu or login-state-aware nav from index.html without dragging
+     that whole bootstrap in too. Just the wordmark, linking home. -->
+<nav style="display:flex;align-items:center;padding:18px 32px;">
+  <a href="/" style="display:flex;align-items:center;gap:10px;text-decoration:none;">
+    <img src="/favicon-144x144.png" alt="" width="32" height="32" style="border-radius:8px;">
+    <span style="font-size:18px;font-weight:800;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">5kable</span>
+  </a>
+</nav>
+  <!-- Download -->
+  <div class="download-section" id="download">
+    <div class="download-box">
+      <div class="section-label" style="text-align:center;">Get The Extension</div>
+      <h2 style="font-size:36px;font-weight:800;letter-spacing:-0.5px;">Install 5kable<br>in 2 steps</h2>
+      <p style="color:var(--muted);font-size:15px;margin-top:8px;">A Chrome extension. No Python. Just install and play.</p>
+      <div class="download-steps">
+        <div class="dl-step">
+          <div class="dl-step-num">1</div>
+          <h4>Add to Chrome</h4>
+          <p>Click the button below and hit "Add to Chrome" on the Chrome Web Store page.</p>
+        </div>
+        <div class="dl-step">
+          <div class="dl-step-num">2</div>
+          <h4>Sign In & Play</h4>
+          <p>Click the 5kable icon in your toolbar, create a free account, and start training in singleplayer practice rounds.</p>
+        </div>
+      </div>
+      <a href="https://chromewebstore.google.com/detail/5kable/nikigfdmmpbkddgcgehdbnflnmocjmcc" class="download-btn" target="_blank">
+        Add 5kable to Chrome
+      </a>
+      <div class="download-note">Free • Chrome Web Store • No account needed to install</div>
+
+      <div style="margin-top:32px">
+        <div class="section-label" style="text-align:center;margin-bottom:12px">See It In Action</div>
+        <div id="yt-facade" style="position:relative;border-radius:12px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:16/9;margin-bottom:20px;cursor:pointer;" onclick="loadYoutubeEmbed(this)">
+          <img src="https://img.youtube.com/vi/YrAHVCrz05E/maxresdefault.jpg" onerror="this.onerror=null;this.src='https://img.youtube.com/vi/YrAHVCrz05E/hqdefault.jpg';" alt="5kable Installation Guide" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.15);">
+            <div style="width:68px;height:48px;background:rgba(0,0,0,0.75);border-radius:12px;display:flex;align-items:center;justify-content:center;transition:background .15s;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:16px;">
+          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:498/727;flex:1 1 260px;max-width:300px;cursor:pointer;" onclick="openScreenshotLightbox('screenshot-training.webp','5kable Training Guide')">
+            <img src="screenshot-training.webp" alt="5kable Training Guide" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
+          </div>
+          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:495/722;flex:1 1 260px;max-width:300px;cursor:pointer;" onclick="openScreenshotLightbox('screenshot-region-guide.webp','5kable Region Guide')">
+            <img src="screenshot-region-guide.webp" alt="5kable Region Guide" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<footer>
+  <div class="footer-links">
+    <a href="/#policy=credits">Credits</a>
+    <a href="/#policy=fairuse">Fair Use</a>
+    <a href="/#policy=privacy">Privacy Policy</a>
+    <a href="/#policy=refund">Refunds</a>
+    <a href="/#policy=tos">Terms of Service</a>
+    <a href="/">Back to 5kable.net</a>
+  </div>
+  <div style="margin-bottom:8px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">5kable</div>
+  <div>Learning · Accuracy · Training · Perfection</div>
+  <div style="margin-top:8px;font-size:11px;opacity:0.5;">© 2026 5kable</div>
+</footer>
+<script>
+// with autoplay — deferring the iframe until interaction means the site
+// isn't loading YouTube's player JS on every visit just to show a thumbnail,
+// and also sidesteps YouTube's own embed poster sometimes serving a lower-
+// resolution image than the video's actual thumbnail and stretching it
+// blurry to fill the container (the facade's <img> uses the real
+// maxresdefault directly, with an hqdefault fallback if that 404s).
+function loadYoutubeEmbed(el) {
+  const iframe = document.createElement('iframe');
+  iframe.width = '100%';
+  iframe.height = '100%';
+  iframe.src = 'https://www.youtube.com/embed/YrAHVCrz05E?autoplay=1';
+  iframe.title = '5kable Installation Guide';
+  iframe.frameBorder = '0';
+  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+  iframe.allowFullscreen = true;
+  iframe.style.display = 'block';
+  el.replaceWith(iframe);
+}
+
+function openScreenshotLightbox(src, alt) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:24px;box-sizing:border-box;';
+  overlay.innerHTML = `
+    <img src="${src}" alt="${alt}" style="max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+    <button style="position:absolute;top:20px;right:24px;background:rgba(13,13,18,0.75);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e0e0f0;font-size:20px;width:36px;height:36px;cursor:pointer;">✕</button>
+  `;
+  document.body.appendChild(overlay);
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', close);
+  overlay.querySelector('img').addEventListener('click', e => e.stopPropagation());
+  document.addEventListener('keydown', function escClose(e) {
+    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', escClose); }
+  });
+}
+
+</script>
+</body>
+</html>
