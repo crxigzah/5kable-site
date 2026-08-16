@@ -4216,7 +4216,13 @@ document.addEventListener('keydown', e => {
 (function() {
   const token = getToken();
   const user = getUser();
-  if (token && user) showDashboard(user, token);
+  // /#download is meant to land on the install section regardless of
+  // login state (someone sharing the link may not know or care whether
+  // this browser happens to be signed in) -- skip the optimistic
+  // dashboard render here so the landing page stays visible, and the
+  // checkAuth() completion below forces it again in case a valid
+  // session would otherwise have flipped this back to the dashboard.
+  if (token && user && location.hash !== '#download') showDashboard(user, token);
 })();
 
 // Wake server and check auth
@@ -4227,6 +4233,14 @@ document.addEventListener('keydown', e => {
 wakeServer().then(() => checkAuth()).then(() => {
   const profileUsername = urlParams.get('u');
   if (profileUsername) goToPublicProfile(profileUsername);
+  // checkAuth() above calls showDashboard() for a valid session, which
+  // would otherwise silently override the guard in the IIFE above once
+  // the network round trip finishes -- force the landing page back and
+  // scroll to the install section now that it's actually in the DOM.
+  if (location.hash === '#download') {
+    goHome();
+    document.getElementById('download')?.scrollIntoView();
+  }
 });
 
 // ── Currency ──────────────────────────────────────────────
