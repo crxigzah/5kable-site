@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Install 5kable</title>
-<meta name="description" content="Install the 5kable Chrome extension in 2 steps and start training in singleplayer practice rounds.">
-<meta property="og:title" content="Install 5kable">
-<meta property="og:description" content="Install the 5kable Chrome extension in 2 steps and start training in singleplayer practice rounds.">
+<title>Rules & Acceptable Use</title>
+<meta name="description" content="5kable's rules and acceptable use policy: a singleplayer training tool only, never for competitive or multiplayer rounds.">
+<meta property="og:title" content="5kable Rules & Acceptable Use">
+<meta property="og:description" content="5kable's rules and acceptable use policy: a singleplayer training tool only, never for competitive or multiplayer rounds.">
 <meta property="og:image" content="https://5kable.net/apple-touch-icon.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Install 5kable">
-<meta name="twitter:description" content="Install the 5kable Chrome extension in 2 steps and start training in singleplayer practice rounds.">
+<meta name="twitter:title" content="5kable Rules & Acceptable Use">
+<meta name="twitter:description" content="5kable's rules and acceptable use policy: a singleplayer training tool only, never for competitive or multiplayer rounds.">
 <meta name="twitter:image" content="https://5kable.net/apple-touch-icon.png">
 <style>
 :root {
@@ -771,63 +771,39 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 </head>
 <body>
-<!-- Simple standalone header, not the full app nav -- this page doesn't
-     load the main app's auth/session JS, so it can't reuse the dropdown
-     mega-menu or login-state-aware nav from index.html without dragging
-     that whole bootstrap in too. Logo only, links home. -->
+<!-- Simple standalone header, not the full app nav -- see download.html
+     for why (no auth/session JS loaded here). Logo only, links home. -->
 <nav style="display:flex;align-items:center;padding:18px 32px;">
   <a href="/" style="display:flex;align-items:center;text-decoration:none;">
     <img src="/favicon-144x144.png" alt="5kable" width="32" height="32" style="border-radius:8px;">
   </a>
 </nav>
 
-<!-- Hero -- reuses the same .hero/.orb treatment as the homepage's own
-     hero (minus the WebGL globe, too heavy for a page whose whole job is
-     to load fast) so this reads as a real page opener rather than one
-     card sitting in empty space. -->
+<!-- Hero -- same .hero/.orb treatment as download.html and the homepage,
+     so this reads as a real page rather than one card in empty space. -->
 <div style="position:relative;overflow:hidden;">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
-  <div class="hero" style="padding:70px 40px 50px;">
-    <div class="hero-badge">⬇️ Get The Extension</div>
-    <h1 style="font-size:48px;">Install 5kable<br><span class="grad">in 2 steps</span></h1>
-    <p>A Chrome extension. No Python. Just install and play.</p>
-    <a href="https://chromewebstore.google.com/detail/5kable/nikigfdmmpbkddgcgehdbnflnmocjmcc" class="download-btn" target="_blank">
-      Add 5kable to Chrome
-    </a>
-    <div class="download-note">Free • Chrome Web Store • No account needed to install</div>
+  <div class="hero" style="padding:70px 40px 40px;">
+    <div class="hero-badge">⚠️ Fair Play</div>
+    <h1 style="font-size:44px;">Rules & <span class="grad">Acceptable Use</span></h1>
+    <p>5kable is a singleplayer training tool only. It must never be used during competitive or multiplayer rounds against other players.</p>
   </div>
 </div>
 
-<div style="max-width:760px;margin:0 auto;padding:0 40px 70px;position:relative;z-index:1;">
-  <div class="download-steps" style="margin:0 0 60px;">
-    <div class="dl-step">
-      <div class="dl-step-num">1</div>
-      <h4>Add to Chrome</h4>
-      <p>Click the button above and hit "Add to Chrome" on the Chrome Web Store page.</p>
-    </div>
-    <div class="dl-step">
-      <div class="dl-step-num">2</div>
-      <h4>Sign In & Play</h4>
-      <p>Click the 5kable icon in your toolbar, create a free account, and start training in singleplayer practice rounds.</p>
-    </div>
-  </div>
-
-  <div class="section-label" style="text-align:center;margin-bottom:12px">See It In Action</div>
-  <div id="yt-facade" style="position:relative;border-radius:12px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:16/9;margin-bottom:20px;cursor:pointer;" onclick="loadYoutubeEmbed(this)">
-    <img src="https://img.youtube.com/vi/YrAHVCrz05E/maxresdefault.jpg" onerror="this.onerror=null;this.src='https://img.youtube.com/vi/YrAHVCrz05E/hqdefault.jpg';" alt="5kable Installation Guide" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
-    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.15);">
-      <div style="width:68px;height:48px;background:rgba(0,0,0,0.75);border-radius:12px;display:flex;align-items:center;justify-content:center;transition:background .15s;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-      </div>
-    </div>
-  </div>
-  <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:16px;">
-    <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:498/727;flex:1 1 260px;max-width:300px;cursor:pointer;" onclick="openScreenshotLightbox('screenshot-training.webp','5kable Training Guide')">
-      <img src="screenshot-training.webp" alt="5kable Training Guide" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
-    </div>
-    <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid #1e1e35;aspect-ratio:495/722;flex:1 1 260px;max-width:300px;cursor:pointer;" onclick="openScreenshotLightbox('screenshot-region-guide.webp','5kable Region Guide')">
-      <img src="screenshot-region-guide.webp" alt="5kable Region Guide" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
+<div style="max-width:820px;margin:0 auto;padding:0 40px 70px;position:relative;z-index:1;">
+  <div class="rules-box">
+    <div class="rules-badge">⚠️ IMPORTANT READ BEFORE USING</div>
+    <h3>🚫 This tool is strictly for practice and training only</h3>
+    <ul>
+      <li>5kable must NEVER be used during online multiplayer matches, ranked duels, competitive challenges or any game mode where you are playing against other real players.</li>
+      <li>Using AI assistance against other players is cheating and strictly prohibited. It violates the Terms of Service of competitive map-guessing games, which prohibit the use of third-party software to gain an unfair advantage.</li>
+      <li>Accounts found using 5kable in competitive play will have their 5kable access permanently revoked without refund.</li>
+      <li>5kable is designed exclusively for solo practice maps, single-player exploration, and offline training sessions to improve your genuine geographic knowledge.</li>
+      <li>The goal of this tool is to make you genuinely better at geography, not to replace skill with automation. Use it to learn, not to cheat.</li>
+    </ul>
+    <div style="margin-top:20px;padding:14px 18px;background:rgba(0,201,167,0.06);border:1px solid rgba(0,201,167,0.2);border-radius:10px;font-size:13px;color:var(--muted);">
+      By using 5kable you agree to these rules. Violation detection may involve automated monitoring. If you believe an account action was taken in error, contact us on <a href="https://discord.gg/YAmvxvXmw8" style="color:var(--teal);">Discord</a>.
     </div>
   </div>
 </div>
@@ -844,42 +820,5 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   <div>Learning · Accuracy · Training · Perfection</div>
   <div style="margin-top:8px;font-size:11px;opacity:0.5;">© 2026 5kable</div>
 </footer>
-<script>
-// with autoplay — deferring the iframe until interaction means the site
-// isn't loading YouTube's player JS on every visit just to show a thumbnail,
-// and also sidesteps YouTube's own embed poster sometimes serving a lower-
-// resolution image than the video's actual thumbnail and stretching it
-// blurry to fill the container (the facade's <img> uses the real
-// maxresdefault directly, with an hqdefault fallback if that 404s).
-function loadYoutubeEmbed(el) {
-  const iframe = document.createElement('iframe');
-  iframe.width = '100%';
-  iframe.height = '100%';
-  iframe.src = 'https://www.youtube.com/embed/YrAHVCrz05E?autoplay=1';
-  iframe.title = '5kable Installation Guide';
-  iframe.frameBorder = '0';
-  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-  iframe.allowFullscreen = true;
-  iframe.style.display = 'block';
-  el.replaceWith(iframe);
-}
-
-function openScreenshotLightbox(src, alt) {
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:24px;box-sizing:border-box;';
-  overlay.innerHTML = `
-    <img src="${src}" alt="${alt}" style="max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
-    <button style="position:absolute;top:20px;right:24px;background:rgba(13,13,18,0.75);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e0e0f0;font-size:20px;width:36px;height:36px;cursor:pointer;">✕</button>
-  `;
-  document.body.appendChild(overlay);
-  const close = () => overlay.remove();
-  overlay.addEventListener('click', close);
-  overlay.querySelector('img').addEventListener('click', e => e.stopPropagation());
-  document.addEventListener('keydown', function escClose(e) {
-    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', escClose); }
-  });
-}
-
-</script>
 </body>
 </html>
