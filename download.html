@@ -835,11 +835,20 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       <a href="/" class="btn btn-outline">Sign In</a>
       <a href="/" class="btn btn-primary">Get Started</a>
     </div>
-    <div id="nav-auth-user" style="display:none;align-items:center;">
-      <a href="/" style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;">
+    <div id="nav-auth-user" style="display:none;align-items:center;position:relative;">
+      <button onclick="toggleUserMenu()" style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">
         <div id="nav-avatar" style="width:24px;height:24px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#080810;"></div>
-        <span id="nav-username">Account</span>
-      </a>
+        <span id="nav-username">Account</span> ▾
+      </button>
+      <div id="user-dropdown" style="display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--card);border:1px solid var(--border);border-radius:12px;min-width:200px;box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:200;overflow:hidden;">
+        <a href="/" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">📊 Dashboard</a>
+        <a href="/" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">📈 Stats</a>
+        <a href="/" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🎫 Tickets</a>
+        <a href="/" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">⚙️ Account Settings</a>
+        <div style="border-top:1px solid var(--border);">
+          <a onclick="lightLogout()" style="display:block;padding:11px 16px;color:var(--red);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🚪 Sign Out</a>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
@@ -944,7 +953,6 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     <a href="/#policy=privacy">Privacy Policy</a>
     <a href="/#policy=refund">Refunds</a>
     <a href="/#policy=tos">Terms of Service</a>
-    <a href="/">Back to 5kable.net</a>
   </div>
   <div style="margin-bottom:8px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">5kable</div>
   <div>Learning · Accuracy · Training · Perfection</div>
@@ -1021,6 +1029,28 @@ document.getElementById('nav-links').addEventListener('click', (e) => {
     navAv.textContent = (user.username || '?')[0].toUpperCase();
   }
 })();
+
+function toggleUserMenu() {
+  const dd = document.getElementById('user-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+function closeUserMenu() {
+  const dd = document.getElementById('user-dropdown');
+  if (dd) dd.style.display = 'none';
+}
+document.addEventListener('click', e => {
+  const menu = document.getElementById('nav-auth-user');
+  if (menu && !menu.contains(e.target)) closeUserMenu();
+});
+// Local-only sign out (clears the cached session so this page's own nav
+// reflects it immediately) -- named lightLogout rather than logout()
+// since the real logout() on index.html also revokes the session
+// server side and does more cleanup than this lean page needs or can do.
+function lightLogout() {
+  localStorage.removeItem('kbl_token');
+  localStorage.removeItem('kbl_user');
+  location.reload();
+}
 
 // with autoplay — deferring the iframe until interaction means the site
 // isn't loading YouTube's player JS on every visit just to show a thumbnail,
