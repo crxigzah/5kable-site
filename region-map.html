@@ -136,6 +136,10 @@
     display:flex;align-items:center;justify-content:space-between;padding:14px 40px;
     border-bottom:1px solid var(--border);position:relative;z-index:100;
     width:100%;box-sizing:border-box;
+    /* html/body default to --font-mono for the map UI's data-heavy feel,
+       which nav was silently inheriting -- override back to the standard
+       site font so nav matches every other page. */
+    font-family: var(--font-display);
   }
   nav::before {
     content:'';position:absolute;inset:0;

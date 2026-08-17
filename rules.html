@@ -34,7 +34,10 @@
 .gax-toggle input:checked + .gax-toggle-slider { background:rgba(0,201,167,0.25); border-color:#00c9a7; }
 .gax-toggle input:checked + .gax-toggle-slider::before { transform:translateX(16px); background:#00c9a7; }
 * { box-sizing:border-box;margin:0;padding:0; }
-body { background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;line-height:1.6;overflow-x:hidden; }
+/* padding-top reserves the space nav (position:fixed, see below) no
+   longer occupies in normal flow -- matches index.html's fix for the
+   same sticky-nav-doesn't-stick bug. */
+body { background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;line-height:1.6;overflow-x:hidden;padding-top:68px; }
 
 /* Rich layered background */
 body::before {
@@ -92,9 +95,13 @@ body::after {
   100% { transform: translateX(60%) skewX(-8deg); opacity:0; }
 }
 
+/* position:fixed, not sticky -- see index.html for the full writeup;
+   overflow-x:hidden elsewhere on this page forces overflow-y:auto on
+   both html and body, which breaks position:sticky's containing-block
+   resolution. position:fixed sidesteps it. */
 nav {
   display:flex;align-items:center;justify-content:space-between;padding:14px 40px;
-  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
+  border-bottom:1px solid var(--border);position:fixed;top:0;left:0;right:0;z-index:100;
 }
 /* The frosted-glass effect lives on a pseudo-element behind nav's content,
    not on `nav` itself. backdrop-filter (like transform/filter/perspective/
@@ -912,10 +919,15 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 </div>
 <footer>
   <div class="footer-links">
+    <a href="/support">Contact</a>
     <a href="/#policy=credits">Credits</a>
     <a href="/#policy=fairuse">Fair Use</a>
+    <a href="/#faq">FAQ</a>
+    <a href="/#features">Features</a>
+    <a href="/#pricing">Pricing</a>
     <a href="/#policy=privacy">Privacy Policy</a>
     <a href="/#policy=refund">Refunds</a>
+    <a href="/rules">Rules</a>
     <a href="/#policy=tos">Terms of Service</a>
   </div>
   <div style="margin-bottom:8px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">5kable</div>
