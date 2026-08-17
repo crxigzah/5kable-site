@@ -154,7 +154,7 @@ nav { position:sticky;top:0;z-index:100;background:rgba(8,8,16,0.92);backdrop-fi
   </div>
 
   <div style="max-width:360px;margin:0 auto 20px;position:relative;">
-    <input id="countrySearchInput" type="text" placeholder="🔍 Search for a country..." autocomplete="off"
+    <input id="countrySearchInput" type="text" placeholder="🔍 Search by country or clue (e.g. yellow license plate)..." autocomplete="off"
       style="width:100%;padding:11px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;box-sizing:border-box;">
     <div id="countrySearchResults" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:10px;max-height:280px;overflow-y:auto;z-index:20;box-shadow:0 12px 30px rgba(0,0,0,0.4);"></div>
   </div>
@@ -794,20 +794,30 @@ searchableEntries.sort((a, b) => a.name.localeCompare(b.name));
 const searchInput = document.getElementById('countrySearchInput');
 const searchResults = document.getElementById('countrySearchResults');
 
-function renderSearchResults(query){
-  const q = query.trim().toLowerCase();
-  if (!q){ searchResults.style.display = 'none'; return; }
-  const matches = searchableEntries.filter(e => e.name.toLowerCase().includes(q)).slice(0, 8);
-  if (!matches.length){
+// Renders the merged dropdown -- country-name matches (instant, local)
+// plus clue-content matches (from /metas/search, arrives a beat later).
+// Shared by both the instant and debounced repaint so the click-binding
+// logic only lives in one place.
+function renderSearchResultsList(nameMatches, clueMatches){
+  if (!nameMatches.length && !clueMatches.length){
     searchResults.innerHTML = '<div style="padding:12px 16px;color:var(--muted);font-size:13px;">No matches</div>';
     searchResults.style.display = 'block';
     return;
   }
-  searchResults.innerHTML = matches.map(e => `
+  const nameHtml = nameMatches.map(e => `
     <div class="search-result-item" data-slug="${e.slug}" style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;font-size:14px;"
       onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='none'">
       ${flagImg(e.iso, 18)}<span>${escapeHtml(e.name)}</span>
     </div>`).join('');
+  const clueHtml = !clueMatches.length ? '' : `
+    <div style="padding:8px 16px 4px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);">Matches in guide content</div>
+    ${clueMatches.map(r => `
+      <div class="search-result-item" data-slug="${r.slug}" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 16px;cursor:pointer;"
+        onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='none'">
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px;">${flagImg(r.iso, 18)}<span>${escapeHtml(r.country)}</span></div>
+        <div style="font-size:11px;color:var(--muted);padding-left:28px;">${escapeHtml(r.snippet)}</div>
+      </div>`).join('')}`;
+  searchResults.innerHTML = nameHtml + clueHtml;
   searchResults.style.display = 'block';
   searchResults.querySelectorAll('.search-result-item').forEach(el => {
     el.addEventListener('click', () => {
@@ -816,6 +826,40 @@ function renderSearchResults(query){
       navigateTo(el.dataset.slug);
     });
   });
+}
+
+let metaSearchDebounce = null;
+let metaSearchAbort = null;
+
+function renderSearchResults(query){
+  const q = query.trim().toLowerCase();
+  clearTimeout(metaSearchDebounce);
+  if (metaSearchAbort) metaSearchAbort.abort();
+  if (!q){ searchResults.style.display = 'none'; return; }
+
+  const nameMatches = searchableEntries.filter(e => e.name.toLowerCase().includes(q)).slice(0, 8);
+  renderSearchResultsList(nameMatches, []); // instant, local -- clue matches arrive a beat later
+
+  if (q.length < 3) return; // matches /metas/search's own minimum
+  metaSearchDebounce = setTimeout(async () => {
+    metaSearchAbort = new AbortController();
+    try {
+      const res = await fetch(`${API}/metas/search?q=${encodeURIComponent(q)}&limit=6`, { signal: metaSearchAbort.signal });
+      const data = await res.json();
+      const nameIsos = new Set(nameMatches.map(e => e.iso));
+      // Resolve each result's ISO back to a navigable slug via the same
+      // isoToCountry map the name search already uses; drop anything we
+      // can't resolve (e.g. a manual guide under an ISO not on the globe)
+      // and anything already shown in the name-match list above.
+      const clueMatches = (data.results || [])
+        .filter(r => !nameIsos.has(r.iso) && isoToCountry[r.iso])
+        .map(r => ({ ...r, slug: isoToCountry[r.iso].slug }));
+      // Only repaint if the user hasn't since changed the query.
+      if (searchInput.value.trim().toLowerCase() === q) {
+        renderSearchResultsList(nameMatches, clueMatches);
+      }
+    } catch(e) {} // aborted (query changed) or offline -- name matches already shown stand as-is
+  }, 300);
 }
 searchInput.addEventListener('input', () => renderSearchResults(searchInput.value));
 searchInput.addEventListener('keydown', (e) => {
