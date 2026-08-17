@@ -1809,7 +1809,14 @@ async function checkAuth() {
     const data = await res.json();
     if (data.valid) {
       localStorage.setItem('kbl_user', JSON.stringify(data.user));
-      showDashboard(data.user, token);
+      // Only re-render the dashboard view if the user is still ON it.
+      // /auth/verify's round trip can take a few seconds (Render cold
+      // start), and this used to call showDashboard() unconditionally --
+      // if the user clicked the logo (goHome(), which flips currentView
+      // away from 'dashboard') while that request was still in flight,
+      // its response landed afterward and silently snapped them right
+      // back to the dashboard they'd just navigated away from.
+      if (currentView === 'dashboard') showDashboard(data.user, token);
     }
     // Only the auth keys — an expired/invalid token shouldn't also wipe
     // unrelated local prefs (avatar, currency, quiz streak stats).
@@ -1820,9 +1827,10 @@ async function checkAuth() {
       resetNav(); goHome();
     }
   } catch(e) {
-    // API offline show cached user if available
+    // API offline show cached user if available -- same currentView guard
+    // as the success branch above, for the same reason.
     const user = getUser();
-    if (user) showDashboard(user, token);
+    if (user && currentView === 'dashboard') showDashboard(user, token);
   }
   updatePricingButtons();
 }
@@ -4222,7 +4230,7 @@ document.addEventListener('keydown', e => {
   // dashboard render here so the landing page stays visible, and the
   // checkAuth() completion below forces it again in case a valid
   // session would otherwise have flipped this back to the dashboard.
-  if (token && user && location.hash !== '#download') showDashboard(user, token);
+  if (token && user && location.hash !== '#download') { currentView = 'dashboard'; showDashboard(user, token); }
 })();
 
 // Wake server and check auth
