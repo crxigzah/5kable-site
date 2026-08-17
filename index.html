@@ -171,30 +171,11 @@ nav::before {
 .landing-hero-copy h1 { font-size:56px;font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:20px; }
 .landing-hero-copy h1 .grad { background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
 .landing-hero-copy p { font-size:18px;color:var(--muted);margin-bottom:32px;max-width:480px; }
-.landing-metas-link {
-  display:inline-flex;align-items:center;gap:6px;margin-top:18px;color:var(--teal);
-  font-size:14px;font-weight:600;text-decoration:none;position:relative;
-}
-.landing-metas-link .arrow { transition:transform .2s; }
-.landing-metas-link:hover .arrow { transform:translateX(4px); }
-.landing-metas-link::after {
-  content:'';position:absolute;left:0;right:0;bottom:-3px;height:1px;background:var(--teal);
-  transform:scaleX(0);transform-origin:left;transition:transform .2s;
-}
-.landing-metas-link:hover::after { transform:scaleX(1); }
 .landing-globe-col { position:relative; }
-.landing-float-chip {
-  position:absolute;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
-  background:rgba(16,16,30,0.85);backdrop-filter:blur(8px);border:1px solid var(--border);
-  border-radius:12px;padding:8px 14px;font-size:12px;font-weight:600;color:var(--text);
-  box-shadow:0 12px 30px rgba(0,0,0,0.4);animation:landingFloat 5s ease-in-out infinite;
-}
-@keyframes landingFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
 @media (max-width:900px) {
   .landing-hero { grid-template-columns:1fr;text-align:center;padding:60px 20px 20px;gap:24px; }
   .landing-hero-copy p { margin-left:auto;margin-right:auto; }
   .landing-hero-copy .hero-btns { justify-content:center; }
-  .landing-float-chip { display:none; }
 }
 
 /* Glow orbs */
@@ -929,15 +910,12 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
           <button class="btn btn-primary" style="border-radius:999px;" onclick="getStarted()">Start Training Free</button>
           <button class="btn btn-outline" style="border-radius:999px;" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">See How It Works</button>
         </div>
-        <a href="/metas" class="landing-metas-link">🗺️ Country Metas <span class="arrow">→</span></a>
       </div>
       <div class="landing-globe-col">
         <div id="globeBlock" style="width:100%;max-width:420px;aspect-ratio:1/1;position:relative;margin:0 auto;">
           <div style="position:absolute;inset:-20%;border-radius:50%;background:radial-gradient(circle,rgba(0,201,167,0.4) 0%,rgba(124,58,237,0.2) 45%,transparent 70%);filter:blur(24px);pointer-events:none;"></div>
           <canvas id="heroGlobeCanvas" style="width:100%;height:100%;display:block;position:relative;"></canvas>
         </div>
-        <div class="landing-float-chip" style="top:4%;left:-4%;animation-delay:0s;">⚡ Real-Time AI</div>
-        <div class="landing-float-chip" style="bottom:6%;right:-6%;animation-delay:2.5s;">🌍 114 Countries</div>
       </div>
     </div>
 
