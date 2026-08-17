@@ -298,7 +298,7 @@ nav::before {
   display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:30px;
   font-size:13px;font-weight:600;transition:transform .2s;
 }
-.metas-tag:hover { transform:scale(1.06); }
+.metas-tag:hover { transform:scale(1.06);box-shadow:0 8px 20px rgba(0,0,0,0.3); }
 .metas-tag.teal { background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.25);color:#00c9a7; }
 .metas-tag.purple { background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.25);color:#c4b5fd; }
 .metas-card {
@@ -308,7 +308,7 @@ nav::before {
   box-shadow:0 30px 70px rgba(0,0,0,0.5);transform:rotate(-2deg);transition:transform .3s;
 }
 .metas-card:hover { transform:rotate(0deg) scale(1.02); }
-.metas-card-header { display:flex;align-items:center;gap:12px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--border); }
+.metas-card-header { display:flex;align-items:center;gap:12px;margin-bottom:18px; }
 .metas-card-flag { font-size:32px;line-height:1; }
 .metas-card-title { font-size:17px;font-weight:800; }
 .metas-card-sub { font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px; }
@@ -1126,7 +1126,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
             <span class="metas-tag purple">🛣️ Road Meta</span>
             <span class="metas-tag teal">🌍 Regional Breakdowns</span>
           </div>
-          <a href="/metas" class="btn btn-outline" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;border-radius:999px;">
+          <a href="/metas" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:8px;text-decoration:none;border-radius:999px;padding:14px 30px;font-size:15px;">
             🗺️ Explore Country Metas
           </a>
         </div>
@@ -1155,8 +1155,8 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
           <div class="metas-card-row">
             <div class="metas-card-row-icon">🌍</div>
             <div>
-              <div class="metas-card-row-label">Regional Note</div>
-              <div class="metas-card-row-text">Red-tiled roofs common in the south, slate-grey further north</div>
+              <div class="metas-card-row-label">Landscape & Terrain</div>
+              <div class="metas-card-row-text">Rolling farmland in the north, Mediterranean scrub further south</div>
             </div>
           </div>
         </div>
