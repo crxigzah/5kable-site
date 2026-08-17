@@ -260,19 +260,36 @@ nav::before {
 .how-section {
   padding:80px 40px;
   background:linear-gradient(180deg,transparent,rgba(124,58,237,0.04),transparent);
-  position:relative;z-index:1;
+  position:relative;z-index:1;overflow:hidden;
 }
-.steps { display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px;max-width:1200px;margin:0 auto; }
-.step { text-align:center;padding:0 16px; }
+.steps { display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px;max-width:1200px;margin:0 auto;position:relative;z-index:2; }
+/* Connector line threading the step circles together, so the four steps
+   read as one journey instead of four unrelated islands. Only makes sense
+   once they're actually in a single horizontal row -- hidden below the
+   width where the grid starts wrapping (see mobile breakpoint). */
+.steps::before {
+  content:'';position:absolute;top:30px;left:12%;right:12%;height:2px;
+  background:linear-gradient(90deg,var(--teal),#7c3aed,var(--teal),#7c3aed);
+  opacity:0.3;z-index:0;
+}
+.step { text-align:center;padding:0 16px;position:relative;z-index:1; }
 .step-num {
   width:60px;height:60px;
-  background:linear-gradient(135deg,rgba(0,201,167,0.15),rgba(124,58,237,0.15));
+  background-color:#0d0d18;
+  background-image:linear-gradient(135deg,rgba(0,201,167,0.18),rgba(0,201,167,0.05));
   border:1px solid rgba(0,201,167,0.3);border-radius:50%;
   display:flex;align-items:center;justify-content:center;margin:0 auto 18px;
-  font-size:22px;font-weight:800;color:var(--teal);
+  font-size:22px;font-weight:800;color:var(--teal);position:relative;
+}
+.step:nth-child(even) .step-num {
+  background-image:linear-gradient(135deg,rgba(124,58,237,0.22),rgba(124,58,237,0.05));
+  border-color:rgba(124,58,237,0.35);color:#c4b5fd;
 }
 .step h3 { font-size:16px;font-weight:700;margin-bottom:8px; }
 .step p { font-size:13px;color:var(--muted);line-height:1.6; }
+@media (max-width:900px) {
+  .steps::before { display:none; }
+}
 
 /* Pricing */
 .pricing { display:flex;gap:20px;justify-content:center;flex-wrap:wrap;align-items:stretch; }
@@ -541,7 +558,11 @@ footer {
   transform: rotate(360deg) scale(1.1);
   transition: transform 0.5s ease;
   border-color: var(--teal);
-  background: rgba(0,201,167,0.2);
+  background-color: rgba(0,201,167,0.2);
+}
+.step:nth-child(even):hover .step-num {
+  border-color: #7c3aed;
+  background-color: rgba(124,58,237,0.22);
 }
 
 /* Price cards */
@@ -982,7 +1003,9 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 
   <!-- How It Works -->
   <div class="how-section" id="how-it-works">
-    <div style="text-align:center;max-width:700px;margin:0 auto 52px;">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div style="text-align:center;max-width:700px;margin:0 auto 52px;position:relative;z-index:2;">
       <div class="section-label" style="text-align:center;">How It Works</div>
       <h2 style="font-size:38px;font-weight:800;letter-spacing:-0.5px;text-align:center;">From install to improvement<br>in minutes</h2>
     </div>
