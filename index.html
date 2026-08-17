@@ -1969,14 +1969,16 @@ async function checkAuth() {
     const data = await res.json();
     if (data.valid) {
       localStorage.setItem('kbl_user', JSON.stringify(data.user));
-      // Only re-render the dashboard view if the user is still ON it.
-      // /auth/verify's round trip can take a few seconds (Render cold
-      // start), and this used to call showDashboard() unconditionally --
-      // if the user clicked the logo (goHome(), which flips currentView
-      // away from 'dashboard') while that request was still in flight,
-      // its response landed afterward and silently snapped them right
-      // back to the dashboard they'd just navigated away from.
-      if (currentView === 'dashboard') showDashboard(data.user, token);
+      // Refreshes the nav (avatar, username, tier) either way. Only
+      // re-renders the full dashboard VIEW if the user is already on it --
+      // this never navigates them there. Signing in successfully should
+      // update who the nav says you are; it should never yank you onto a
+      // different page than the one you're looking at, especially since
+      // this request can take a few seconds to resolve (Render cold
+      // start) and may well land after the user has since clicked
+      // elsewhere.
+      if (currentView === 'dashboard') { showDashboard(data.user, token); }
+      else { updateNav(data.user); updateNavAvatar(); }
     }
     // Only the auth keys — an expired/invalid token shouldn't also wipe
     // unrelated local prefs (avatar, currency, quiz streak stats).
@@ -1987,10 +1989,13 @@ async function checkAuth() {
       resetNav(); goHome();
     }
   } catch(e) {
-    // API offline show cached user if available -- same currentView guard
-    // as the success branch above, for the same reason.
+    // API offline -- same nav-only-unless-already-on-dashboard behavior
+    // as the success branch above, using whatever's cached.
     const user = getUser();
-    if (user && currentView === 'dashboard') showDashboard(user, token);
+    if (user) {
+      if (currentView === 'dashboard') { showDashboard(user, token); }
+      else { updateNav(user); updateNavAvatar(); }
+    }
   }
   updatePricingButtons();
 }
@@ -4373,40 +4378,32 @@ document.addEventListener('keydown', e => {
   else if (document.getElementById('form-login').style.display !== 'none') login();
 });
 
-// Render the signed-in nav/dashboard immediately from whatever's already
-// cached in localStorage, rather than waiting on wakeServer() + checkAuth()
-// to make their round trips first — that pair used to run in series before
-// the UI updated at all, so a returning user with a perfectly valid session
-// would see the signed-out landing page flash for a couple of seconds
-// before flipping to their dashboard. checkAuth() below still runs and
-// reverts this (see its invalid-token branch) if the cached token turns
-// out to be stale.
+// Refreshes the signed-in nav (avatar, username, tier) immediately from
+// whatever's already cached in localStorage, rather than waiting on
+// wakeServer() + checkAuth() to make their round trips first -- a
+// returning user would otherwise see the signed-out nav for a couple of
+// seconds before it updated. This only ever touches the nav, never the
+// page content: the landing page is always what's shown on load, and
+// Dashboard is reached by clicking it in the nav, not auto-selected just
+// because a session exists. checkAuth() below still runs and reverts
+// this (see its invalid-token branch) if the cached token turns out to
+// be stale.
 (function() {
   const token = getToken();
   const user = getUser();
-  // /#download is meant to land on the install section regardless of
-  // login state (someone sharing the link may not know or care whether
-  // this browser happens to be signed in) -- skip the optimistic
-  // dashboard render here so the landing page stays visible, and the
-  // checkAuth() completion below forces it again in case a valid
-  // session would otherwise have flipped this back to the dashboard.
-  if (token && user && location.hash !== '#download') { currentView = 'dashboard'; showDashboard(user, token); }
+  if (token && user) { updateNav(user); updateNavAvatar(); }
 })();
 
 // Wake server and check auth
 // If ?u=<username> is present, jump to that public profile once auth has
-// settled — chained AFTER checkAuth (not before) so a logged-in visitor's
-// own showDashboard() call can't stomp on it and silently redirect them
-// to their own dashboard instead of the profile link they actually opened.
+// settled.
 wakeServer().then(() => checkAuth()).then(() => {
   const profileUsername = urlParams.get('u');
   if (profileUsername) goToPublicProfile(profileUsername);
-  // checkAuth() above calls showDashboard() for a valid session, which
-  // would otherwise silently override the guard in the IIFE above once
-  // the network round trip finishes -- force the landing page back and
-  // scroll to the install section now that it's actually in the DOM.
+  // Re-confirms the #download scroll position once everything above it
+  // (nav avatar, fonts, images) has settled -- content shifting in after
+  // the browser's own native anchor-scroll already ran can leave it short.
   if (location.hash === '#download') {
-    goHome();
     document.getElementById('download')?.scrollIntoView();
   }
 });
