@@ -152,13 +152,16 @@
   .nav-back-btn{
     display:none;
     align-items:center; justify-content:center;
-    width:32px; height:32px;
+    height:32px;
+    padding:0 14px;
     margin-left:10px;
     border-radius:8px;
     background:rgba(0,201,167,0.1);
     border:1px solid rgba(0,201,167,0.3);
     color:var(--teal);
-    font-size:16px;
+    font-size:13px;
+    font-weight:600;
+    white-space:nowrap;
     cursor:pointer;
     transition:background .2s, transform .15s;
   }
@@ -734,7 +737,7 @@
       <a href="/" style="display:flex;align-items:center;text-decoration:none;">
         <img src="/nav-logo.png" alt="5kable">
       </a>
-      <button class="nav-back-btn" id="nav-back-btn" style="display:none;" onclick="renderWorldView()" title="Back to world map" aria-label="Back to world map">←</button>
+      <button class="nav-back-btn" id="nav-back-btn" style="display:none;" onclick="renderWorldView()" title="Back to world map" aria-label="Back to world map">Back To World</button>
     </div>
     <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
       <span></span><span></span><span></span>
