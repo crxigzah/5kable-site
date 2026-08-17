@@ -147,6 +147,22 @@
   }
   .nav-logo img { width:38px;height:38px;object-fit:contain; }
   .nav-logo span { background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+  /* Only shown once a country's regions are being viewed -- toggled by
+     showGlobeView()/showDrillDownView(), same as the on-map breadcrumb. */
+  .nav-back-btn{
+    display:none;
+    align-items:center; justify-content:center;
+    width:32px; height:32px;
+    margin-left:10px;
+    border-radius:8px;
+    background:rgba(0,201,167,0.1);
+    border:1px solid rgba(0,201,167,0.3);
+    color:var(--teal);
+    font-size:16px;
+    cursor:pointer;
+    transition:background .2s, transform .15s;
+  }
+  .nav-back-btn:hover{ background:rgba(0,201,167,0.2); transform:translateX(-2px); }
   .nav-links { display:flex;gap:20px;align-items:center; }
   .nav-links a { color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s; }
   .nav-links a:hover { color:var(--text); }
@@ -718,6 +734,7 @@
       <a href="/" style="display:flex;align-items:center;text-decoration:none;">
         <img src="/nav-logo.png" alt="5kable">
       </a>
+      <button class="nav-back-btn" id="nav-back-btn" style="display:none;" onclick="renderWorldView()" title="Back to world map" aria-label="Back to world map">←</button>
     </div>
     <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
       <span></span><span></span><span></span>
@@ -1533,6 +1550,7 @@ function showGlobeView(){
   globeCanvasEl.style.display = '';
   svg.style('display', 'none');
   document.getElementById('annotateToolbar').style.display = 'none';
+  document.getElementById('nav-back-btn').style.display = 'none';
   resizeGlobeRenderer();
 }
 function showDrillDownView(){
@@ -1540,6 +1558,7 @@ function showDrillDownView(){
   globeCanvasEl.style.display = 'none';
   svg.style('display', '');
   document.getElementById('annotateToolbar').style.display = 'flex';
+  document.getElementById('nav-back-btn').style.display = 'flex';
 }
 
 // Converts a raw screen position (clientX/clientY) into the SVG's own
