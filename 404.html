@@ -4,13 +4,17 @@
 <meta charset="UTF-8">
 <script>
 // GitHub Pages 404 redirect trick — redirect /metas/country to /metas?c=country
-// so the metas page can pick it up via query param
+// so the metas page can pick it up via query param. /support works the
+// same way, redirecting into index.html's own ?ticket=1 handling so it
+// opens the New Ticket modal directly.
 var path = window.location.pathname;
 var metaMatch = path.match(/^\/metas\/(.+)$/);
 if (metaMatch) {
   window.location.replace('/metas?c=' + encodeURIComponent(metaMatch[1]));
 } else if (path.startsWith('/metas')) {
   window.location.replace('/metas');
+} else if (path.startsWith('/support')) {
+  window.location.replace('/?ticket=1');
 } else {
   window.location.replace('/');
 }

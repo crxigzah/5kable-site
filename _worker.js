@@ -28,6 +28,15 @@ export default {
       url.pathname = '/';
       return env.ASSETS.fetch(new Request(url, request));
     }
+    // /support opens the New Ticket modal on index.html directly, same
+    // redirect-to-index approach as /discord/callback above -- there's no
+    // standalone support.html, so this maps straight to index.html's own
+    // ?ticket=1 handling instead.
+    if (url.pathname === '/support') {
+      url.pathname = '/';
+      url.searchParams.set('ticket', '1');
+      return env.ASSETS.fetch(new Request(url, request));
+    }
     // /download is now a real standalone page (download.html) rather than
     // a redirect into index.html's #download anchor -- Cloudflare Pages'
     // own clean-URL resolution in env.ASSETS.fetch() already serves it at
