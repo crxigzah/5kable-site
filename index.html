@@ -237,7 +237,22 @@ nav::before {
 }
 .feature-card:hover { border-color:rgba(0,201,167,0.3);transform:translateY(-2px); }
 .feature-card:hover::before { opacity:1; }
+.feature-card::after {
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--teal),transparent);opacity:0;transition:opacity .3s;
+}
+.feature-card:hover::after { opacity:1; }
+.feature-card.purple::after { background:linear-gradient(90deg,#7c3aed,transparent); }
 .feature-icon { font-size:30px;margin-bottom:14px; }
+.feature-icon-tile {
+  width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;margin-bottom:16px;background:linear-gradient(135deg,rgba(0,201,167,0.18),rgba(0,201,167,0.05));
+  border:1px solid rgba(0,201,167,0.25);
+}
+.feature-card.purple .feature-icon-tile {
+  background:linear-gradient(135deg,rgba(124,58,237,0.22),rgba(124,58,237,0.05));
+  border-color:rgba(124,58,237,0.3);
+}
 .feature-card h3 { font-size:16px;font-weight:700;margin-bottom:8px; }
 .feature-card p { font-size:13px;color:var(--muted);line-height:1.6; }
 
@@ -268,6 +283,11 @@ nav::before {
 .price-card.featured {
   border-color:rgba(0,201,167,0.4);
   background:linear-gradient(135deg,rgba(0,201,167,0.06),rgba(124,58,237,0.06));
+  animation:priceFeaturedPulse 3s ease-in-out infinite;
+}
+@keyframes priceFeaturedPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(240,165,0,0); }
+  50% { box-shadow:0 0 32px 6px rgba(240,165,0,0.12); }
 }
 .price-card:hover { transform:translateY(-3px); }
 .price-badge {
@@ -275,6 +295,26 @@ nav::before {
   background:linear-gradient(135deg,#00c9a7,#7c3aed);color:#080810;
   padding:3px 18px;border-radius:20px;font-size:11px;font-weight:700;
 }
+.compare-table-wrap {
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:8px;max-width:720px;margin:0 auto;overflow-x:auto;
+}
+.compare-table-wrap table { width:100%;border-collapse:collapse;font-size:14px;min-width:480px; }
+.compare-table-wrap th { padding:16px;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border); }
+.compare-table-wrap th:first-child { text-align:left;color:var(--muted); }
+.compare-table-wrap th.col-free { text-align:center;color:var(--teal); }
+.compare-table-wrap th.col-pro { text-align:center;color:var(--gold); }
+.compare-table-wrap td { padding:14px 16px;border-bottom:1px solid var(--border);text-align:center;transition:background .15s; }
+.compare-table-wrap td:first-child { text-align:left;color:var(--text); }
+.compare-table-wrap tbody tr:hover td { background:rgba(255,255,255,0.03); }
+.compare-table-wrap tbody tr:last-child td { border-bottom:none; }
+.compare-check {
+  display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;
+  border-radius:50%;font-size:12px;font-weight:800;
+}
+.compare-check.yes { background:rgba(0,201,167,0.15);color:var(--teal); }
+.compare-check.yes.pro { background:rgba(240,165,0,0.18);color:var(--gold); }
+.compare-check.no { background:rgba(255,255,255,0.05);color:var(--muted); }
 .price-name { font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px; }
 .price-amount { font-size:44px;font-weight:800;margin-bottom:4px; }
 .price-amount .curr { font-size:16px;color:var(--muted);font-weight:400; }
@@ -955,55 +995,59 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   </div>
 
   <!-- Features -->
-  <div class="section" id="features" style="text-align:center;">
-    <div class="section-label" style="text-align:center;">Features</div>
-    <h2 style="font-size:38px;font-weight:800;letter-spacing:-0.5px;line-height:1.1;text-align:center;">Everything you need<br>to master the world</h2>
-    <p style="text-align:center;color:var(--muted);max-width:500px;margin:0 auto 48px;">A complete training system that learns alongside you and adapts to your weaknesses.</p>
-    <div class="features">
-      <div class="feature-card">
-        <div class="feature-icon">🧠</div>
-        <h3>Intelligent Scene Reading</h3>
-        <p>5kable reads vegetation type, soil colour, road markings, architecture, signage and terrain to identify exactly where in the world you are, far beyond what simple clue-lists can do.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📖</div>
-        <h3>Post-Round Teaching</h3>
-        <p>After a wrong guess, a detailed lesson appears with your scene, a live Street View panorama from the correct region, a dead giveaway clue, and 3 visual teaching points tailored to exactly what you missed.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🗺️</div>
-        <h3>Community Scene Library</h3>
-        <p>Every F7 capture adds a real location to a shared community map, organised by country and region. Teaching popups pull the closest match and show it live via Google Street View — never a stored copy.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">💬</div>
-        <h3>Live Chat with 5K</h3>
-        <p>Ask follow-up questions mid-lesson. "Why does inland Brazil look like this?" or "What's the giveaway for rural Finland?" 5K gives specific, location-aware answers.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📍</div>
-        <h3>Region-Aware Comparisons</h3>
-        <p>5kable distinguishes between regions within a country, not just borders. Coastal vs inland, north vs south — reference photos come from the exact matching region, not just the country.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">⚡</div>
-        <h3>F7 Instant Capture</h3>
-        <p>One keypress uploads your current Street View scene to the community cloud library, correctly categorised by country and region. No forms, no clicks, no interruption.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🌍</div>
-        <h3>114 Countries Supported</h3>
-        <p>Works across all 114 supported countries. Any map, any round, any location worldwide.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🎯</div>
-        <h3>Dead Giveaway Training</h3>
-        <p>Every lesson highlights the single most identifiable visual feature the one thing you should have seen first. Over hundreds of rounds, you build instinctive pattern recognition.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔬</div>
-        <h3>Accurate Border Detection</h3>
-        <p>Uses real geographic border coordinates to correctly classify locations in tricky boundary areas northern Victoria, southern Queensland, border regions in Europe and South America.</p>
+  <div style="position:relative;overflow:hidden;">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="section" id="features" style="text-align:center;">
+      <div class="section-label" style="text-align:center;">Features</div>
+      <h2 style="font-size:38px;font-weight:800;letter-spacing:-0.5px;line-height:1.1;text-align:center;">Everything you need<br>to master the world</h2>
+      <p style="text-align:center;color:var(--muted);max-width:500px;margin:0 auto 48px;">A complete training system that learns alongside you and adapts to your weaknesses.</p>
+      <div class="features">
+        <div class="feature-card">
+          <div class="feature-icon-tile">🧠</div>
+          <h3>Intelligent Scene Reading</h3>
+          <p>5kable reads vegetation type, soil colour, road markings, architecture, signage and terrain to identify exactly where in the world you are, far beyond what simple clue-lists can do.</p>
+        </div>
+        <div class="feature-card purple">
+          <div class="feature-icon-tile">📖</div>
+          <h3>Post-Round Teaching</h3>
+          <p>After a wrong guess, a detailed lesson appears with your scene, a live Street View panorama from the correct region, a dead giveaway clue, and 3 visual teaching points tailored to exactly what you missed.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-tile">🗺️</div>
+          <h3>Community Scene Library</h3>
+          <p>Every F7 capture adds a real location to a shared community map, organised by country and region. Teaching popups pull the closest match and show it live via Google Street View — never a stored copy.</p>
+        </div>
+        <div class="feature-card purple">
+          <div class="feature-icon-tile">💬</div>
+          <h3>Live Chat with 5K</h3>
+          <p>Ask follow-up questions mid-lesson. "Why does inland Brazil look like this?" or "What's the giveaway for rural Finland?" 5K gives specific, location-aware answers.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-tile">📍</div>
+          <h3>Region-Aware Comparisons</h3>
+          <p>5kable distinguishes between regions within a country, not just borders. Coastal vs inland, north vs south — reference photos come from the exact matching region, not just the country.</p>
+        </div>
+        <div class="feature-card purple">
+          <div class="feature-icon-tile">⚡</div>
+          <h3>F7 Instant Capture</h3>
+          <p>One keypress uploads your current Street View scene to the community cloud library, correctly categorised by country and region. No forms, no clicks, no interruption.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-tile">🌍</div>
+          <h3>114 Countries Supported</h3>
+          <p>Works across all 114 supported countries. Any map, any round, any location worldwide.</p>
+        </div>
+        <div class="feature-card purple">
+          <div class="feature-icon-tile">🎯</div>
+          <h3>Dead Giveaway Training</h3>
+          <p>Every lesson highlights the single most identifiable visual feature the one thing you should have seen first. Over hundreds of rounds, you build instinctive pattern recognition.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon-tile">🔬</div>
+          <h3>Accurate Border Detection</h3>
+          <p>Uses real geographic border coordinates to correctly classify locations in tricky boundary areas northern Victoria, southern Queensland, border regions in Europe and South America.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -1026,104 +1070,110 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   </div>
 
   <!-- Pricing -->
-  <div class="section" id="pricing">
-    <div class="section-label" style="text-align:center;">Pricing</div>
-    <h2 style="font-size:30px;font-weight:800;text-align:center;margin-bottom:32px;">Start free, upgrade when ready</h2>
-    <p style="text-align:center;color:var(--muted);margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto;">Start free with unlimited F7 captures and 3 daily training guides, or try Pro free for 3 days.</p>
-    <div class="pricing">
-      <div class="price-card">
-        <div class="price-name">Free</div>
-        <div class="price-amount"><span class="price-display" data-gbp="0">£0</span><span class="curr"> / month</span></div>
-        <div class="price-desc">Get a taste of AI-powered training</div>
-        <ul class="price-features">
-          <li>114 Country Meta Guides</li>
-          <li>3 Training Guides Per Day</li>
-          <li>Unlimited F7 scene captures</li>
-          <li class="no">5K live chat ask anything</li>
-          <li class="no">Early access to new features</li>
-          <li class="no">Geography-enhanced AI model</li>
-          <li class="no">Priority support via Discord</li>
-          <li class="no">Pro badge on your account</li>
-          <li class="no">Unlimited training guides</li>
-        </ul>
-        <button class="btn btn-outline" id="pricing-free-btn" onclick="getStarted()" style="margin-top:auto;">Get Started Free</button>
+  <div style="position:relative;overflow:hidden;">
+    <div class="orb orb3"></div>
+    <div class="orb orb4"></div>
+    <div class="section" id="pricing">
+      <div class="section-label" style="text-align:center;">Pricing</div>
+      <h2 style="font-size:30px;font-weight:800;text-align:center;margin-bottom:32px;">Start free, upgrade when ready</h2>
+      <p style="text-align:center;color:var(--muted);margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto;">Start free with unlimited F7 captures and 3 daily training guides, or try Pro free for 3 days.</p>
+      <div class="pricing">
+        <div class="price-card">
+          <div class="price-name">Free</div>
+          <div class="price-amount"><span class="price-display" data-gbp="0">£0</span><span class="curr"> / month</span></div>
+          <div class="price-desc">Get a taste of AI-powered training</div>
+          <ul class="price-features">
+            <li>114 Country Meta Guides</li>
+            <li>3 Training Guides Per Day</li>
+            <li>Unlimited F7 scene captures</li>
+            <li class="no">5K live chat ask anything</li>
+            <li class="no">Early access to new features</li>
+            <li class="no">Geography-enhanced AI model</li>
+            <li class="no">Priority support via Discord</li>
+            <li class="no">Pro badge on your account</li>
+            <li class="no">Unlimited training guides</li>
+          </ul>
+          <button class="btn btn-outline" id="pricing-free-btn" onclick="getStarted()" style="margin-top:auto;">Get Started Free</button>
+        </div>
+        <div class="price-card featured">
+          <div class="price-badge">👑 Most Popular</div>
+          <div class="price-name">Pro</div>
+          <div class="price-amount"><span class="price-display" data-gbp="9.99">£9.99</span><span class="curr"> / month</span></div>
+          <div class="price-desc">Unlock Full Region Specific Knowledge</div>
+          <div style="color:var(--teal);font-size:12px;font-weight:700;margin-bottom:16px;">🎁 Free for your first 3 days</div>
+          <ul class="price-features">
+            <li>114 Country Meta Guides</li>
+            <li>5K live chat ask anything</li>
+            <li>Early access to new features</li>
+            <li>Geography-enhanced AI model</li>
+            <li>Priority support via Discord</li>
+            <li>Pro badge on your account</li>
+            <li>Unlimited F7 scene captures</li>
+            <li>Unlimited training guides</li>
+          </ul>
+          <button class="btn btn-primary" id="pricing-pro-btn" onclick="proCtaClick(this)" style="margin-top:auto;">Start Free Trial</button>
+        </div>
       </div>
-      <div class="price-card featured">
-        <div class="price-badge">Most Popular</div>
-        <div class="price-name">Pro</div>
-        <div class="price-amount"><span class="price-display" data-gbp="9.99">£9.99</span><span class="curr"> / month</span></div>
-        <div class="price-desc">Unlock Full Region Specific Knowledge</div>
-        <div style="color:var(--teal);font-size:12px;font-weight:700;margin-bottom:16px;">🎁 Free for your first 3 days</div>
-        <ul class="price-features">
-          <li>114 Country Meta Guides</li>
-          <li>5K live chat ask anything</li>
-          <li>Early access to new features</li>
-          <li>Geography-enhanced AI model</li>
-          <li>Priority support via Discord</li>
-          <li>Pro badge on your account</li>
-          <li>Unlimited F7 scene captures</li>
-          <li>Unlimited training guides</li>
-        </ul>
-        <button class="btn btn-primary" id="pricing-pro-btn" onclick="proCtaClick(this)" style="margin-top:auto;">Start Free Trial</button>
-      </div>
-    </div>
 
-    <!-- Comparison table -->
-    <div style="margin-top:48px;overflow-x:auto;">
-      <div class="section-label" style="text-align:center;margin-bottom:20px;">Full Comparison</div>
-      <table style="width:100%;max-width:700px;margin:0 auto;border-collapse:collapse;font-size:14px;">
-        <thead>
-          <tr>
-            <th style="text-align:left;padding:12px 16px;color:var(--muted);font-weight:600;border-bottom:1px solid #1e1e35;">Feature</th>
-            <th style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;border-bottom:1px solid #1e1e35;">Free</th>
-            <th style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;border-bottom:1px solid #1e1e35;">⭐ Pro</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="border-bottom:1px solid #1e1e35;">
-            <td style="padding:12px 16px;">F7 Scene Captures</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">Unlimited</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;">Unlimited</td>
-          </tr>
-          <tr style="border-bottom:1px solid #1e1e35;background:rgba(255,255,255,0.02);">
-            <td style="padding:12px 16px;">Training Guides</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">3 / day</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;">Unlimited</td>
-          </tr>
-          <tr style="border-bottom:1px solid #1e1e35;">
-            <td style="padding:12px 16px;">Country Meta Guides</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--teal);font-weight:700;">114</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;">114</td>
-          </tr>
-          <tr style="border-bottom:1px solid #1e1e35;background:rgba(255,255,255,0.02);">
-            <td style="padding:12px 16px;">5K Live Chat</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--muted);">✗</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;">✓</td>
-          </tr>
-          <tr style="border-bottom:1px solid #1e1e35;">
-            <td style="padding:12px 16px;">Geography-Enhanced AI</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--muted);">✗</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;">✓</td>
-          </tr>
-          <tr style="border-bottom:1px solid #1e1e35;background:rgba(255,255,255,0.02);">
-            <td style="padding:12px 16px;">Early Access Features</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--muted);">✗</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;">✓</td>
-          </tr>
-          <tr>
-            <td style="padding:12px 16px;">Pro Badge</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--muted);">✗</td>
-            <td style="text-align:center;padding:12px 16px;color:var(--gold);font-weight:700;">✓</td>
-          </tr>
-        </tbody>
-        <tfoot>
-          <tr>
-            <td style="padding:16px;"></td>
-            <td style="text-align:center;padding:16px;"><button class="btn btn-outline" onclick="getStarted()" style="padding:8px 20px;font-size:13px;">Free Forever</button></td>
-            <td style="text-align:center;padding:16px;"><button class="btn" id="compare-pro-btn" onclick="proCtaClick(this)" style="padding:8px 20px;font-size:13px;background:linear-gradient(135deg,#f0c02e,var(--gold));color:#080810;font-weight:700;">Start Free Trial</button></td>
-          </tr>
-        </tfoot>
-      </table>
+      <!-- Comparison table -->
+      <div style="margin-top:48px;">
+        <div class="section-label" style="text-align:center;margin-bottom:20px;">Full Comparison</div>
+        <div class="compare-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th class="col-free">Free</th>
+                <th class="col-pro">⭐ Pro</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>F7 Scene Captures</td>
+                <td><span class="compare-check yes">✓</span></td>
+                <td><span class="compare-check yes pro">✓</span></td>
+              </tr>
+              <tr>
+                <td>Training Guides</td>
+                <td style="color:var(--teal);font-weight:700;">3 / day</td>
+                <td style="color:var(--gold);font-weight:700;">Unlimited</td>
+              </tr>
+              <tr>
+                <td>Country Meta Guides</td>
+                <td style="color:var(--teal);font-weight:700;">114</td>
+                <td style="color:var(--gold);font-weight:700;">114</td>
+              </tr>
+              <tr>
+                <td>5K Live Chat</td>
+                <td><span class="compare-check no">✗</span></td>
+                <td><span class="compare-check yes pro">✓</span></td>
+              </tr>
+              <tr>
+                <td>Geography-Enhanced AI</td>
+                <td><span class="compare-check no">✗</span></td>
+                <td><span class="compare-check yes pro">✓</span></td>
+              </tr>
+              <tr>
+                <td>Early Access Features</td>
+                <td><span class="compare-check no">✗</span></td>
+                <td><span class="compare-check yes pro">✓</span></td>
+              </tr>
+              <tr>
+                <td>Pro Badge</td>
+                <td><span class="compare-check no">✗</span></td>
+                <td><span class="compare-check yes pro">✓</span></td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td style="border-bottom:none;padding:16px;"></td>
+                <td style="border-bottom:none;text-align:center;padding:16px;"><button class="btn btn-outline" onclick="getStarted()" style="padding:8px 20px;font-size:13px;">Free Forever</button></td>
+                <td style="border-bottom:none;text-align:center;padding:16px;"><button class="btn" id="compare-pro-btn" onclick="proCtaClick(this)" style="padding:8px 20px;font-size:13px;background:linear-gradient(135deg,#f0c02e,var(--gold));color:#080810;font-weight:700;">Start Free Trial</button></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
