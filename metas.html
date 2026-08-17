@@ -159,6 +159,11 @@ nav { position:sticky;top:0;z-index:100;background:rgba(8,8,16,0.92);backdrop-fi
     <div id="countrySearchResults" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:10px;max-height:280px;overflow-y:auto;z-index:20;box-shadow:0 12px 30px rgba(0,0,0,0.4);"></div>
   </div>
 
+  <div id="recentGuidesStrip" style="display:none;max-width:620px;margin:0 auto 20px;text-align:center;">
+    <div style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">🆕 Recently Updated</div>
+    <div id="recentGuidesList" style="display:flex;flex-wrap:wrap;justify-content:center;gap:8px;"></div>
+  </div>
+
   <div style="width:100%;max-width:620px;aspect-ratio:1/1;margin:-30px auto 0;position:relative;">
     <canvas id="globeCanvas" style="width:100%;height:100%;display:block;cursor:grab;"></canvas>
   </div>
@@ -884,6 +889,30 @@ function navigateTo(slug) {
   history.pushState({slug}, '', `/metas/${slug}`);
   showCountry(c);
 }
+
+// "Recently Updated" strip -- lets a visitor notice new/edited guide
+// content without re-browsing every country. Stays hidden (its wrapper
+// starts display:none) until there's actually something to show, same
+// pattern used elsewhere on the site for optional/data-dependent UI.
+async function loadRecentGuides(){
+  try {
+    const res = await fetch(`${API}/metas/recent?limit=5`);
+    const data = await res.json();
+    const rows = (data.results || []).filter(r => isoToCountry[r.iso]);
+    if (!rows.length) return;
+    const list = document.getElementById('recentGuidesList');
+    list.innerHTML = rows.map(r => `
+      <div class="recent-guide-chip" data-slug="${isoToCountry[r.iso].slug}" style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--card);border:1px solid var(--border);border-radius:20px;cursor:pointer;font-size:13px;transition:border-color .2s;"
+        onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+        ${flagImg(r.iso, 16)}<span>${escapeHtml(r.country)}</span>
+      </div>`).join('');
+    list.querySelectorAll('.recent-guide-chip').forEach(el => {
+      el.addEventListener('click', () => navigateTo(el.dataset.slug));
+    });
+    document.getElementById('recentGuidesStrip').style.display = 'block';
+  } catch(e) {} // offline or unreachable -- strip just stays hidden
+}
+loadRecentGuides();
 
 // Each country's URL only became a real, crawlable page once hosting
 // started serving /metas/<slug> with a 200 instead of the old GitHub
