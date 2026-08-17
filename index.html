@@ -406,27 +406,6 @@ nav::before {
 .price-features li.no { color:var(--muted); }
 .price-card .btn { width:100%;padding:13px;font-size:14px; }
 
-/* Rules section */
-.rules-section {
-  padding:80px 40px;
-  background:linear-gradient(135deg,rgba(255,76,106,0.04),transparent);
-  position:relative;z-index:1;
-  border-top:1px solid var(--border);
-}
-.rules-box {
-  max-width:900px;margin:0 auto;
-  background:rgba(255,76,106,0.06);border:1px solid rgba(255,76,106,0.25);
-  border-radius:16px;padding:36px;
-}
-.rules-box h3 { color:#ff4c6a;font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px; }
-.rules-box ul { list-style:none;color:var(--muted);font-size:14px;line-height:1.8; }
-.rules-box ul li { padding:10px 12px 10px 34px;border-bottom:1px solid rgba(255,76,106,0.1);display:flex;align-items:flex-start;line-height:1.7;position:relative; }
-.rules-box ul li::before { content:'⚠️';position:absolute;left:8px;top:11px;font-size:14px;line-height:1; }
-.rules-badge {
-  display:inline-block;background:rgba(255,76,106,0.1);border:1px solid rgba(255,76,106,0.3);
-  color:#ff4c6a;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;margin-bottom:16px;
-}
-
 /* Policies dropdown */
 .nav-dropdown-wrap { position:relative;display:flex;align-items:center;height:100%; }
 .nav-dropdown-wrap > a { cursor:pointer;display:flex;align-items:center;gap:3px; }
@@ -461,46 +440,6 @@ nav::before {
 .policy-modal ul { padding-left:20px; }
 .policy-modal .policy-close { position:absolute;top:18px;right:18px;background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--muted);cursor:pointer;border-radius:8px;width:32px;height:32px;font-size:16px; }
 
-/* Download section */
-.download-section {
-  padding:80px 40px;position:relative;z-index:1;text-align:center;
-  border-top:1px solid var(--border);
-}
-.download-box {
-  background:linear-gradient(135deg,rgba(0,201,167,0.06),rgba(124,58,237,0.06));
-  border:1px solid rgba(0,201,167,0.2);border-radius:24px;
-  padding:56px 40px;max-width:720px;margin:0 auto;position:relative;overflow:hidden;
-}
-.download-box::before {
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(0,201,167,0.08),transparent);
-  pointer-events:none;
-}
-.download-steps {
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:16px;margin:36px 0;text-align:left;
-}
-.dl-step {
-  background:var(--card);border:1px solid var(--border);border-radius:12px;
-  padding:18px;position:relative;
-}
-.dl-step-num {
-  width:26px;height:26px;border-radius:50%;
-  background:linear-gradient(135deg,var(--teal),#7c3aed);
-  display:flex;align-items:center;justify-content:center;
-  font-size:12px;font-weight:800;color:#000;margin-bottom:10px;
-}
-.dl-step h4 { font-size:13px;font-weight:700;margin-bottom:4px; }
-.dl-step p { font-size:12px;color:var(--muted);line-height:1.5; }
-.download-btn {
-  display:inline-flex;align-items:center;gap:10px;
-  background:linear-gradient(135deg,var(--teal),#00a87d);
-  color:#000;font-weight:800;font-size:15px;
-  padding:14px 32px;border-radius:12px;text-decoration:none;
-  transition:all .2s;border:none;cursor:pointer;
-}
-.download-btn:hover { transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,201,167,0.35); }
-.download-note { font-size:12px;color:var(--muted);margin-top:14px; }
 .faq-section { padding:80px 40px;max-width:860px;margin:0 auto;position:relative;z-index:1; }
 .faq-item {
   border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;
@@ -644,15 +583,6 @@ footer {
   border-color: rgba(0,201,167,0.4) !important;
   color: var(--text) !important;
   transform: scale(1.05);
-}
-
-/* Rules box hover */
-.rules-box ul li {
-  transition: background .2s;
-  border-radius: 6px;
-}
-.rules-box ul li:hover {
-  background: rgba(255,76,106,0.06);
 }
 
 /* Avatar colour buttons */
@@ -861,7 +791,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   .section { padding: 50px 20px; }
   .section h2 { font-size: 26px; }
   .section > p { font-size: 14px; margin-bottom: 36px; }
-  .how-section, .rules-section, .download-section, .faq-section { padding: 50px 20px !important; }
+  .how-section, .faq-section { padding: 50px 20px !important; }
 
   /* Buttons generally more tappable on touch */
   .btn { min-height: 40px; }
@@ -1266,71 +1196,6 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
               </tr>
             </tfoot>
           </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Rules -->
-  <div class="rules-section" id="rules">
-    <div class="section-label" style="text-align:center;margin-bottom:14px;">Fair Play</div>
-    <h2 style="text-align:center;font-size:38px;font-weight:800;margin-bottom:14px;letter-spacing:-0.5px;">Rules & Acceptable Use</h2>
-    <p style="text-align:center;color:var(--muted);margin-bottom:40px;max-width:600px;margin-left:auto;margin-right:auto;">5kable is a singleplayer training tool only. It must never be used during competitive or multiplayer rounds against other players.</p>
-    <div class="rules-box">
-      <div class="rules-badge">⚠️ IMPORTANT READ BEFORE USING</div>
-      <h3>🚫 This tool is strictly for practice and training only</h3>
-      <ul>
-        <li>5kable must NEVER be used during online multiplayer matches, ranked duels, competitive challenges or any game mode where you are playing against other real players.</li>
-        <li>Using AI assistance against other players is cheating and strictly prohibited. It violates the Terms of Service of competitive map-guessing games, which prohibit the use of third-party software to gain an unfair advantage.</li>
-        <li>Accounts found using 5kable in competitive play will have their 5kable access permanently revoked without refund.</li>
-        <li>5kable is designed exclusively for solo practice maps, single-player exploration, and offline training sessions to improve your genuine geographic knowledge.</li>
-        <li>The goal of this tool is to make you genuinely better at geography, not to replace skill with automation. Use it to learn, not to cheat.</li>
-      </ul>
-      <div style="margin-top:20px;padding:14px 18px;background:rgba(0,201,167,0.06);border:1px solid rgba(0,201,167,0.2);border-radius:10px;font-size:13px;color:var(--muted);">
-        By using 5kable you agree to these rules. Violation detection may involve automated monitoring. If you believe an account action was taken in error, contact us on <a href="https://discord.gg/YAmvxvXmw8" style="color:var(--teal);">Discord</a>.
-      </div>
-    </div>
-  </div>
-  <!-- Download -->
-  <div class="download-section" id="download">
-    <div class="download-box">
-      <div class="section-label" style="text-align:center;">Get The Extension</div>
-      <h2 style="font-size:36px;font-weight:800;letter-spacing:-0.5px;">Install 5kable<br>in 2 steps</h2>
-      <p style="color:var(--muted);font-size:15px;margin-top:8px;">A Chrome extension. No Python. Just install and play.</p>
-      <div class="download-steps">
-        <div class="dl-step">
-          <div class="dl-step-num">1</div>
-          <h4>Add to Chrome</h4>
-          <p>Click the button below and hit "Add to Chrome" on the Chrome Web Store page.</p>
-        </div>
-        <div class="dl-step">
-          <div class="dl-step-num">2</div>
-          <h4>Sign In & Play</h4>
-          <p>Click the 5kable icon in your toolbar, create a free account, and start training in singleplayer practice rounds.</p>
-        </div>
-      </div>
-      <a href="https://chromewebstore.google.com/detail/5kable/nikigfdmmpbkddgcgehdbnflnmocjmcc" class="download-btn" target="_blank">
-        Add 5kable to Chrome
-      </a>
-      <div class="download-note">Free • Chrome Web Store • No account needed to install</div>
-
-      <div style="margin-top:32px">
-        <div class="section-label" style="text-align:center;margin-bottom:12px">See It In Action</div>
-        <div id="yt-facade" style="position:relative;border-radius:12px;overflow:hidden;background:#0d0d18;border:1px solid rgba(0,201,167,0.35);aspect-ratio:16/9;margin-bottom:20px;cursor:pointer;" onclick="loadYoutubeEmbed(this)">
-          <img src="https://img.youtube.com/vi/YrAHVCrz05E/maxresdefault.jpg" onerror="this.onerror=null;this.src='https://img.youtube.com/vi/YrAHVCrz05E/hqdefault.jpg';" alt="5kable Installation Guide" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.15);">
-            <div style="width:68px;height:48px;background:rgba(0,0,0,0.75);border-radius:12px;display:flex;align-items:center;justify-content:center;transition:background .15s;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:16px;">
-          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid rgba(0,201,167,0.35);aspect-ratio:498/727;flex:1 1 260px;max-width:300px;cursor:pointer;" onclick="openScreenshotLightbox('screenshot-training.webp','5kable Training Guide')">
-            <img src="screenshot-training.webp" alt="5kable Training Guide" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
-          </div>
-          <div style="border-radius:10px;overflow:hidden;background:#0d0d18;border:1px solid rgba(0,201,167,0.35);aspect-ratio:495/722;flex:1 1 260px;max-width:300px;cursor:pointer;" onclick="openScreenshotLightbox('screenshot-region-guide.webp','5kable Region Guide')">
-            <img src="screenshot-region-guide.webp" alt="5kable Region Guide" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
-          </div>
         </div>
       </div>
     </div>
@@ -4400,12 +4265,6 @@ document.addEventListener('keydown', e => {
 wakeServer().then(() => checkAuth()).then(() => {
   const profileUsername = urlParams.get('u');
   if (profileUsername) goToPublicProfile(profileUsername);
-  // Re-confirms the #download scroll position once everything above it
-  // (nav avatar, fonts, images) has settled -- content shifting in after
-  // the browser's own native anchor-scroll already ran can leave it short.
-  if (location.hash === '#download') {
-    document.getElementById('download')?.scrollIntoView();
-  }
 });
 
 // ── Currency ──────────────────────────────────────────────
@@ -5610,42 +5469,6 @@ async function loadStatsBadges(){
   } catch(e) {
     el.innerHTML = '<div style="color:var(--muted);font-size:13px;">Couldn\'t load badges right now.</div>';
   }
-}
-
-// Swaps the static thumbnail facade for a real YouTube iframe on click,
-// with autoplay — deferring the iframe until interaction means the site
-// isn't loading YouTube's player JS on every visit just to show a thumbnail,
-// and also sidesteps YouTube's own embed poster sometimes serving a lower-
-// resolution image than the video's actual thumbnail and stretching it
-// blurry to fill the container (the facade's <img> uses the real
-// maxresdefault directly, with an hqdefault fallback if that 404s).
-function loadYoutubeEmbed(el) {
-  const iframe = document.createElement('iframe');
-  iframe.width = '100%';
-  iframe.height = '100%';
-  iframe.src = 'https://www.youtube.com/embed/YrAHVCrz05E?autoplay=1';
-  iframe.title = '5kable Installation Guide';
-  iframe.frameBorder = '0';
-  iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-  iframe.allowFullscreen = true;
-  iframe.style.display = 'block';
-  el.replaceWith(iframe);
-}
-
-function openScreenshotLightbox(src, alt) {
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:24px;box-sizing:border-box;';
-  overlay.innerHTML = `
-    <img src="${src}" alt="${alt}" style="max-width:100%;max-height:100%;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
-    <button style="position:absolute;top:20px;right:24px;background:rgba(13,13,18,0.75);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:#e0e0f0;font-size:20px;width:36px;height:36px;cursor:pointer;">✕</button>
-  `;
-  document.body.appendChild(overlay);
-  const close = () => overlay.remove();
-  overlay.addEventListener('click', close);
-  overlay.querySelector('img').addEventListener('click', e => e.stopPropagation());
-  document.addEventListener('keydown', function escClose(e) {
-    if (e.key === 'Escape') { close(); document.removeEventListener('keydown', escClose); }
-  });
 }
 
 function showPaymentMethods() {
