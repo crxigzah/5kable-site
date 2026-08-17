@@ -390,7 +390,7 @@ nav::before {
     <button class="btn active" id="coverage-toggle-btn" onclick="toggleCoverage()">🔵 Coverage: On</button>
     <button class="btn active" id="labels-toggle-btn" onclick="toggleLabels()">🏷️ Labels: On</button>
   </div>
-  <div id="coverage-zoom-hint" style="display:none;">Zoom in closer to see coverage. At this zoom, Google's own coverage lines render as thick blocks that make it look like whole countries are covered.</div>
+  <div id="coverage-zoom-hint" style="display:none;">Zoom in a bit to see coverage -- at world view it would just be one meaningless blob.</div>
   <div id="zoom-readout" style="text-align:center;color:var(--muted);font-size:11px;margin:-10px 0 14px;">Zoom level: <span id="zoom-readout-num">–</span> (report this number back if the coverage threshold needs tuning)</div>
 
   <div class="map-layout">
@@ -525,14 +525,14 @@ let labelsOn = true;
 
 const LABELS_OFF_STYLE = [{ elementType: 'labels', stylers: [{ visibility: 'off' }] }];
 
-// google.maps.StreetViewCoverageLayer has no styling API at all (no line
-// width, color, or opacity option) -- Google renders its tiles directly,
-// and at low zoom those tiles are genuinely thick/blocky, reading as if
-// whole countries have coverage rather than specific roads. It only
-// resolves into the thin, road-accurate rendering once zoomed in close.
-// Hiding the layer below that point (rather than trying to restyle
-// something with no style API) avoids showing the misleading blob.
-const MIN_COVERAGE_ZOOM = 12;
+// google.maps.StreetViewCoverageLayer has no styling API at all -- no line
+// width, color, or opacity option, nothing beyond setMap()/getMap(). There's
+// no way to fade it in gradually; it's Google's fixed rendering or nothing.
+// Below this zoom it's hidden entirely (world/continent view, where it
+// would read as one giant meaningless blob); from here up it's shown at
+// whatever Google renders, which is genuinely blocky around 4-8 and only
+// resolves into thin, road-accurate lines by roughly zoom 14.
+const MIN_COVERAGE_ZOOM = 4;
 
 function initCoverageMap(){
   geocoder = new google.maps.Geocoder();
