@@ -609,15 +609,14 @@ async function loadHeroChampion(){
 }
 loadHeroChampion();
 
-// Same six photo_quiz types the backend's VALID_PHOTO_QUIZ_TYPES accepts,
-// titled the same way photo-quiz-game.html's own GAME_META does, plus
-// camera_quiz as a 7th entry (a separate leaderboard endpoint, no `type`
-// param since there's only one Camera Generation mode).
+// Only the photo_quiz types that are actually live games on the site
+// (linked from the nav's Games dropdown), plus camera_quiz as a 4th entry
+// (a separate leaderboard endpoint, no `type` param since there's only
+// one Camera Generation mode). The backend's VALID_PHOTO_QUIZ_TYPES also
+// accepts sign_shape/vegetation/license_plate, but those aren't real
+// games on the site -- deliberately left out here.
 const MINI_GAME_META = {
   bollard:        { title: '🚧 Bollard Bingo' },
-  sign_shape:     { title: '🚸 Sign Shape Sprint' },
-  vegetation:     { title: '🌿 Vegetation Snap' },
-  license_plate:  { title: '🚗 License Plate Guess' },
   fifty_fifty:    { title: '🎲 50/50' },
   google_car:     { title: '🚙 Guess the Google Car' },
   camera_quiz:    { title: '🎥 Camera Generation' }
@@ -683,8 +682,7 @@ function switchMiniGameType(type){
   loadMiniGameLeaderboard(type);
 }
 
-// Built from MINI_GAME_META rather than hardcoded HTML, same list the
-// backend's VALID_PHOTO_QUIZ_TYPES accepts plus camera_quiz.
+// Built from MINI_GAME_META rather than hardcoded HTML.
 (function(){
   const row = document.getElementById('leaderboard-minigame-row');
   row.innerHTML = Object.entries(MINI_GAME_META).map(([type, meta]) => {
