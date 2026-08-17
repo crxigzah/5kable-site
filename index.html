@@ -161,6 +161,42 @@ nav::before {
 .hero-btns { display:flex;gap:12px;justify-content:center;flex-wrap:wrap; }
 .hero-btns .btn { padding:13px 30px;font-size:15px; }
 
+/* Landing hero -- two columns (copy left, globe right) instead of the old
+   single centered stack, so the page opens with more visual energy and
+   the interactive globe gets real room instead of a cramped 320px box. */
+.landing-hero {
+  display:grid;grid-template-columns:1.05fr 0.95fr;gap:56px;align-items:center;
+  max-width:1160px;margin:0 auto;padding:110px 40px 40px;position:relative;z-index:1;
+}
+.landing-hero-copy h1 { font-size:56px;font-weight:800;line-height:1.1;letter-spacing:-1px;margin-bottom:20px; }
+.landing-hero-copy h1 .grad { background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+.landing-hero-copy p { font-size:18px;color:var(--muted);margin-bottom:32px;max-width:480px; }
+.landing-metas-link {
+  display:inline-flex;align-items:center;gap:6px;margin-top:18px;color:var(--teal);
+  font-size:14px;font-weight:600;text-decoration:none;position:relative;
+}
+.landing-metas-link .arrow { transition:transform .2s; }
+.landing-metas-link:hover .arrow { transform:translateX(4px); }
+.landing-metas-link::after {
+  content:'';position:absolute;left:0;right:0;bottom:-3px;height:1px;background:var(--teal);
+  transform:scaleX(0);transform-origin:left;transition:transform .2s;
+}
+.landing-metas-link:hover::after { transform:scaleX(1); }
+.landing-globe-col { position:relative; }
+.landing-float-chip {
+  position:absolute;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+  background:rgba(16,16,30,0.85);backdrop-filter:blur(8px);border:1px solid var(--border);
+  border-radius:12px;padding:8px 14px;font-size:12px;font-weight:600;color:var(--text);
+  box-shadow:0 12px 30px rgba(0,0,0,0.4);animation:landingFloat 5s ease-in-out infinite;
+}
+@keyframes landingFloat { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
+@media (max-width:900px) {
+  .landing-hero { grid-template-columns:1fr;text-align:center;padding:60px 20px 20px;gap:24px; }
+  .landing-hero-copy p { margin-left:auto;margin-right:auto; }
+  .landing-hero-copy .hero-btns { justify-content:center; }
+  .landing-float-chip { display:none; }
+}
+
 /* Glow orbs */
 .orb { position:absolute;border-radius:50%;filter:blur(80px);opacity:0.18;pointer-events:none; }
 .orb1 { width:500px;height:500px;background:#00c9a7;top:-80px;left:-160px; }
@@ -885,25 +921,28 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     <div class="orb orb2"></div>
     <div class="orb orb3"></div>
     <div class="orb orb4"></div>
-    <div class="hero">
-      <h1>Every Clue.<br><span class="grad">Every Country.</span></h1>
-      <p>A training tool that actually works. Learn from every mistake, and learn every region.</p>
+    <div class="landing-hero">
+      <div class="landing-hero-copy">
+        <h1>Every Clue.<br><span class="grad">Every Country.</span></h1>
+        <p>A training tool that actually works. Learn from every mistake, and learn every region.</p>
+        <div class="hero-btns" style="justify-content:flex-start;">
+          <button class="btn btn-primary" style="border-radius:999px;" onclick="getStarted()">Start Training Free</button>
+          <button class="btn btn-outline" style="border-radius:999px;" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">See How It Works</button>
+        </div>
+        <a href="/metas" class="landing-metas-link">🗺️ Country Metas <span class="arrow">→</span></a>
+      </div>
+      <div class="landing-globe-col">
+        <div id="globeBlock" style="width:100%;max-width:420px;aspect-ratio:1/1;position:relative;margin:0 auto;">
+          <div style="position:absolute;inset:-20%;border-radius:50%;background:radial-gradient(circle,rgba(0,201,167,0.4) 0%,rgba(124,58,237,0.2) 45%,transparent 70%);filter:blur(24px);pointer-events:none;"></div>
+          <canvas id="heroGlobeCanvas" style="width:100%;height:100%;display:block;position:relative;"></canvas>
+        </div>
+        <div class="landing-float-chip" style="top:4%;left:-4%;animation-delay:0s;">⚡ Real-Time AI</div>
+        <div class="landing-float-chip" style="bottom:6%;right:-6%;animation-delay:2.5s;">🌍 114 Countries</div>
+      </div>
+    </div>
 
-      <div id="globeBlock" style="width:100%;max-width:320px;aspect-ratio:1/1;position:relative;margin:8px auto 20px;">
-        <div style="position:absolute;inset:-20%;border-radius:50%;background:radial-gradient(circle,rgba(0,201,167,0.4) 0%,rgba(124,58,237,0.2) 45%,transparent 70%);filter:blur(24px);pointer-events:none;"></div>
-        <canvas id="heroGlobeCanvas" style="width:100%;height:100%;display:block;position:relative;"></canvas>
-      </div>
-
-      <div class="hero-btns">
-        <button class="btn btn-primary" style="border-radius:999px;" onclick="getStarted()">Start Training Free</button>
-        <button class="btn btn-outline" style="border-radius:999px;" onclick="document.getElementById('how-it-works').scrollIntoView({behavior:'smooth'})">See How It Works</button>
-      </div>
-      <div style="margin-top:16px;">
-        <a href="/metas" style="color:#00c9a7;font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:3px;">
-          🗺️ Country Metas
-        </a>
-      </div>
-      <div class="flag-strip" style="margin-top:32px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:600px;margin-left:auto;margin-right:auto;">
+    <div style="text-align:center;position:relative;z-index:1;padding:0 40px 80px;">
+      <div class="flag-strip" style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;max-width:600px;margin-left:auto;margin-right:auto;">
 <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="Australia"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1e6-1f1fa.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="AU"/>Australia</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="Brazil"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1e7-1f1f7.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="BR"/>Brazil</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="United States"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1fa-1f1f8.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="US"/>United States</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="Japan"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1ef-1f1f5.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="JP"/>Japan</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="India"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1ee-1f1f3.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="IN"/>India</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="South Africa"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1ff-1f1e6.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="ZA"/>South Africa</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="France"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1eb-1f1f7.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="FR"/>France</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="Argentina"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1e6-1f1f7.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="AR"/>Argentina</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="Norway"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1f3-1f1f4.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="NO"/>Norway</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="Thailand"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1f9-1f1ed.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="TH"/>Thailand</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="Portugal"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1f5-1f1f9.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="PT"/>Portugal</span><span style="display:inline-flex;align-items:center;gap:4px;background:rgba(0,201,167,0.08);border:1px solid rgba(0,201,167,0.2);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--muted);transition:all .2s;cursor:default;" onmouseover="this.style.background='rgba(0,201,167,0.18)';this.style.color='#fff';this.style.transform='scale(1.1)'" onmouseout="this.style.background='rgba(0,201,167,0.08)';this.style.color='var(--muted)';this.style.transform='scale(1)'" title="New Zealand"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f1f3-1f1ff.svg" width="20" height="15" style="border-radius:2px;vertical-align:middle;margin-right:5px;" onerror="this.style.display='none'" alt="NZ"/>New Zealand</span>
 </div>
 <div style="color:var(--muted);font-size:12px;margin-top:10px;">+ 100 more countries supported</div>
