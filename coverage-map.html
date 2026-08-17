@@ -63,6 +63,10 @@
     width:100%; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center;
     margin-bottom:16px;
   }
+  #coverage-zoom-hint{
+    width:100%; max-width:560px; text-align:center; color:var(--purple); font-size:12px;
+    line-height:1.5; margin:-6px 0 16px;
+  }
   .toolbar input[type=text]{
     background:var(--panel2); border:1px solid var(--border); color:var(--text);
     padding:10px 14px; border-radius:8px; font-size:13px; width:260px; max-width:60vw;
@@ -156,6 +160,7 @@
     <button class="btn active" id="coverage-toggle-btn" onclick="toggleCoverage()">🔵 Coverage: On</button>
     <button class="btn active" id="labels-toggle-btn" onclick="toggleLabels()">🏷️ Labels: On</button>
   </div>
+  <div id="coverage-zoom-hint" style="display:none;">Zoom in closer to see coverage. At this zoom, Google's own coverage lines render as thick blocks that make it look like whole countries are covered.</div>
 
   <div class="map-layout">
     <div id="map-wrap">
@@ -183,6 +188,15 @@ let labelsOn = true;
 
 const LABELS_OFF_STYLE = [{ elementType: 'labels', stylers: [{ visibility: 'off' }] }];
 
+// google.maps.StreetViewCoverageLayer has no styling API at all (no line
+// width, color, or opacity option) -- Google renders its tiles directly,
+// and at low zoom those tiles are genuinely thick/blocky, reading as if
+// whole countries have coverage rather than specific roads. It only
+// resolves into the thin, road-accurate rendering once zoomed in close.
+// Hiding the layer below that point (rather than trying to restyle
+// something with no style API) avoids showing the misleading blob.
+const MIN_COVERAGE_ZOOM = 12;
+
 function initCoverageMap(){
   geocoder = new google.maps.Geocoder();
   streetViewService = new google.maps.StreetViewService();
@@ -195,7 +209,8 @@ function initCoverageMap(){
   });
 
   coverageLayer = new google.maps.StreetViewCoverageLayer();
-  coverageLayer.setMap(map);
+  updateCoverageVisibility();
+  map.addListener('zoom_changed', updateCoverageVisibility);
 
   panorama = new google.maps.StreetViewPanorama(document.getElementById('pano-view'), {
     addressControl: false, showRoadLabels: false, motionTracking: false, fullscreenControl: false,
@@ -260,10 +275,16 @@ function hidePano(){
 
 function toggleCoverage(){
   coverageOn = !coverageOn;
-  coverageLayer.setMap(coverageOn ? map : null);
+  updateCoverageVisibility();
   const btn = document.getElementById('coverage-toggle-btn');
   btn.textContent = coverageOn ? '🔵 Coverage: On' : '⚪ Coverage: Off';
   btn.classList.toggle('active', coverageOn);
+}
+
+function updateCoverageVisibility(){
+  const zoomedInEnough = map.getZoom() >= MIN_COVERAGE_ZOOM;
+  coverageLayer.setMap(coverageOn && zoomedInEnough ? map : null);
+  document.getElementById('coverage-zoom-hint').style.display = (coverageOn && !zoomedInEnough) ? 'block' : 'none';
 }
 
 function toggleLabels(){
