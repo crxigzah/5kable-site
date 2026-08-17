@@ -869,8 +869,6 @@
           <button class="btn" id="selectAllRegionsBtn" style="flex:1;">Select All</button>
           <button class="btn" id="selectNoneRegionsBtn" style="flex:1;">Select None</button>
         </div>
-        <button class="btn" id="exportAllBadgesBtn" style="width:100%;margin-top:8px;background:rgba(0,201,167,0.1);border-color:rgba(0,201,167,0.3);color:#00c9a7;">📦 Export All Region Badges</button>
-        <div id="exportProgress" style="display:none;font-size:11px;color:var(--muted);margin-top:6px;text-align:center;"></div>
       </div>
       <div class="region-list" id="countryRegionsList" style="display:none;"></div>
     </aside>
@@ -2107,115 +2105,6 @@ document.getElementById('selectNoneRegionsBtn').onclick = () => {
     row.querySelectorAll('.region-swatch').forEach(b => b.classList.toggle('active', b.dataset.key === 'white'));
   });
 };
-
-// ── Bulk region badge export ─────────────────────────────────
-// Captures the map's current CSS-styled appearance as a standalone PNG.
-// External stylesheet rules (fills via CSS variables, label font styling,
-// the ocean gradient's stop-colors) don't survive serializing an SVG
-// outside the page, so every relevant element's *computed* style gets
-// inlined onto a clone first.
-async function captureMapAsPng(){
-  const svgNode = document.getElementById('map');
-  const clone = svgNode.cloneNode(true);
-
-  const liveEls   = svgNode.querySelectorAll('path, text, stop');
-  const clonedEls = clone.querySelectorAll('path, text, stop');
-  liveEls.forEach((el, i) => {
-    const cs = getComputedStyle(el);
-    const target = clonedEls[i];
-    if (el.tagName === 'stop'){
-      target.setAttribute('stop-color', cs.stopColor || cs.color);
-      target.setAttribute('stop-opacity', cs.stopOpacity || '1');
-      return;
-    }
-    target.setAttribute('fill', cs.fill);
-    target.setAttribute('stroke', cs.stroke);
-    target.setAttribute('stroke-width', cs.strokeWidth);
-    if (el.tagName === 'text'){
-      target.setAttribute('font-family', cs.fontFamily);
-      target.setAttribute('font-size', cs.fontSize);
-      target.setAttribute('font-weight', cs.fontWeight);
-    }
-  });
-
-  const w = svgNode.clientWidth  * 2;  // 2x for a higher-res export
-  const h = svgNode.clientHeight * 2;
-  clone.setAttribute('width', w);
-  clone.setAttribute('height', h);
-
-  const svgString = new XMLSerializer().serializeToString(clone);
-  const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
-
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('toBlob failed')), 'image/png');
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('SVG image load failed')); };
-    img.src = url;
-  });
-}
-
-function downloadBlob(blob, filename){
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-
-async function exportAllRegionBadges(){
-  if (!currentLabelData || !currentLabelData.length){
-    alert('Drill into a country first, then try exporting.');
-    return;
-  }
-  const btn = document.getElementById('exportAllBadgesBtn');
-  const progressEl = document.getElementById('exportProgress');
-  btn.disabled = true;
-  progressEl.style.display = 'block';
-
-  const wasLabelsHidden = document.body.classList.contains('labels-hidden');
-  applyLabelsVisibility(true); // clean badges shouldn't have text labels on them
-
-  for (let i = 0; i < currentLabelData.length; i++){
-    const region = currentLabelData[i];
-    progressEl.textContent = `Exporting ${i+1} / ${currentLabelData.length}: ${region.name}...`;
-
-    currentLabelData.forEach(r => setRegionColor(r.id, r.id === region.id ? 'default' : 'hide'));
-    // Two animation-frame waits so the browser has actually repainted the
-    // new colors before we capture — otherwise this can grab a stale frame.
-    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-    try {
-      const blob = await captureMapAsPng();
-      const safeCountry = (currentCountryName || 'country').replace(/[^a-z0-9]+/gi, '-');
-      const safeRegion  = region.name.replace(/[^a-z0-9]+/gi, '-');
-      downloadBlob(blob, `${safeCountry}-${safeRegion}.png`);
-    } catch(e) {
-      console.error('Export failed for', region.name, e);
-    }
-    // Small gap between downloads — firing many at once in a tight loop is
-    // more likely to trip a browser's automatic-download safety prompt.
-    await new Promise(r => setTimeout(r, 350));
-  }
-
-  currentLabelData.forEach(r => setRegionColor(r.id, 'default'));
-  applyLabelsVisibility(wasLabelsHidden);
-  buildCountryRegionsList(currentLabelData); // refresh sidebar swatches to match
-  progressEl.textContent = `Done — exported ${currentLabelData.length} badges.`;
-  setTimeout(() => { progressEl.style.display = 'none'; }, 4000);
-  btn.disabled = false;
-}
-document.getElementById('exportAllBadgesBtn').onclick = exportAllRegionBadges;
 
 // mobile side-panel drawer
 const sidePanel = document.getElementById('sidePanel');
