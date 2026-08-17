@@ -407,14 +407,16 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   <div class="orb orb4"></div>
   <div id="leaderboard-page" style="min-height:60vh;position:relative;z-index:1;">
     <div style="padding:0 40px;max-width:700px;margin:0 auto;">
-      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;max-width:480px;margin-left:auto;margin-right:auto;">
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;max-width:600px;margin-left:auto;margin-right:auto;flex-wrap:wrap;">
         <button id="leaderboard-tab-players" class="leaderboard-tab-btn" onclick="switchLeaderboardTab('players')" style="flex:1;background:var(--teal);color:#080810;border:none;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">🏆 Top Players</button>
         <button id="leaderboard-tab-contributors" class="leaderboard-tab-btn" onclick="switchLeaderboardTab('contributors')" style="flex:1;background:transparent;color:var(--muted);border:none;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">📍 Top Contributors</button>
         <button id="leaderboard-tab-streaks" class="leaderboard-tab-btn" onclick="switchLeaderboardTab('streaks')" style="flex:1;background:transparent;color:var(--muted);border:none;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">🔥 Streaks</button>
+        <button id="leaderboard-tab-minigames" class="leaderboard-tab-btn" onclick="switchLeaderboardTab('minigames')" style="flex:1;background:transparent;color:var(--muted);border:none;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">🎮 Mini-Games</button>
       </div>
       <div style="text-align:center;margin-bottom:20px;">
         <div style="color:var(--muted);font-size:13px;" id="leaderboard-page-subtitle">Ranked by total XP across every game mode. Play rounds with the extension active to climb the board.</div>
       </div>
+      <div id="leaderboard-minigame-row" style="display:none;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;max-width:640px;margin-left:auto;margin-right:auto;"></div>
       <div id="leaderboard-period-row" style="display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:20px;">
         <div style="display:flex;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;">
           <button id="leaderboard-period-season" class="leaderboard-period-btn" onclick="switchLeaderboardPeriod('season')" style="background:var(--teal);color:#080810;border:none;padding:7px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">This Season</button>
@@ -607,6 +609,21 @@ async function loadHeroChampion(){
 }
 loadHeroChampion();
 
+// Same six photo_quiz types the backend's VALID_PHOTO_QUIZ_TYPES accepts,
+// titled the same way photo-quiz-game.html's own GAME_META does, plus
+// camera_quiz as a 7th entry (a separate leaderboard endpoint, no `type`
+// param since there's only one Camera Generation mode).
+const MINI_GAME_META = {
+  bollard:        { title: '🚧 Bollard Bingo' },
+  sign_shape:     { title: '🚸 Sign Shape Sprint' },
+  vegetation:     { title: '🌿 Vegetation Snap' },
+  license_plate:  { title: '🚗 License Plate Guess' },
+  fifty_fifty:    { title: '🎲 50/50' },
+  google_car:     { title: '🚙 Guess the Google Car' },
+  camera_quiz:    { title: '🎥 Camera Generation' }
+};
+let currentMiniGameType = 'bollard';
+
 let currentLeaderboardTab = 'players';
 let currentLeaderboardPeriod = 'season';
 const _lbNow = new Date();
@@ -624,17 +641,20 @@ function switchLeaderboardTab(tab){
   const playersBtn = document.getElementById('leaderboard-tab-players');
   const contributorsBtn = document.getElementById('leaderboard-tab-contributors');
   const streaksBtn = document.getElementById('leaderboard-tab-streaks');
-  [[playersBtn, tab === 'players'], [contributorsBtn, tab === 'contributors'], [streaksBtn, tab === 'streaks']].forEach(([btn, active]) => {
+  const minigamesBtn = document.getElementById('leaderboard-tab-minigames');
+  [[playersBtn, tab === 'players'], [contributorsBtn, tab === 'contributors'], [streaksBtn, tab === 'streaks'], [minigamesBtn, tab === 'minigames']].forEach(([btn, active]) => {
     btn.style.background = active ? 'var(--teal)' : 'transparent';
     btn.style.color = active ? '#080810' : 'var(--muted)';
   });
 
-  // Streaks isn't season scoped (a streak is a live running count, not
-  // something that resets every calendar month), so there's no This
-  // Season / All Time choice to make for it.
+  // Streaks and mini-games aren't season scoped (a daily-challenge streak
+  // and a mini-game best streak are both live running counts, not
+  // something that resets every calendar month), so neither gets a This
+  // Season / All Time choice.
   const periodRow = document.getElementById('leaderboard-period-row');
-  periodRow.style.display = tab === 'streaks' ? 'none' : 'flex';
-  document.getElementById('leaderboard-season-label').style.display = (tab !== 'streaks' && currentLeaderboardPeriod === 'season') ? 'block' : 'none';
+  periodRow.style.display = (tab === 'streaks' || tab === 'minigames') ? 'none' : 'flex';
+  document.getElementById('leaderboard-season-label').style.display = (tab !== 'streaks' && tab !== 'minigames' && currentLeaderboardPeriod === 'season') ? 'block' : 'none';
+  document.getElementById('leaderboard-minigame-row').style.display = tab === 'minigames' ? 'flex' : 'none';
   updateSeasonLabel();
   updateLeaderboardSubtitle();
   if (tab === 'players') {
@@ -643,11 +663,35 @@ function switchLeaderboardTab(tab){
   } else if (tab === 'contributors') {
     document.getElementById('leaderboard-my-rank').style.display = 'none'; // XP-specific; no contributor-rank lookup yet
     loadTopContributorsLeaderboard();
-  } else {
+  } else if (tab === 'streaks') {
     document.getElementById('leaderboard-my-rank').style.display = 'none'; // no streak-rank lookup yet
     loadTopStreaksLeaderboard();
+  } else {
+    document.getElementById('leaderboard-my-rank').style.display = 'none'; // no mini-game-rank lookup yet
+    loadMiniGameLeaderboard(currentMiniGameType);
   }
 }
+
+function switchMiniGameType(type){
+  currentMiniGameType = type;
+  document.querySelectorAll('.leaderboard-minigame-btn').forEach(btn => {
+    const active = btn.dataset.type === type;
+    btn.style.background = active ? 'var(--teal)' : 'transparent';
+    btn.style.color = active ? '#080810' : 'var(--muted)';
+  });
+  updateLeaderboardSubtitle();
+  loadMiniGameLeaderboard(type);
+}
+
+// Built from MINI_GAME_META rather than hardcoded HTML, same list the
+// backend's VALID_PHOTO_QUIZ_TYPES accepts plus camera_quiz.
+(function(){
+  const row = document.getElementById('leaderboard-minigame-row');
+  row.innerHTML = Object.entries(MINI_GAME_META).map(([type, meta]) => {
+    const active = type === currentMiniGameType;
+    return `<button class="leaderboard-minigame-btn" data-type="${type}" onclick="switchMiniGameType('${type}')" style="background:${active ? 'var(--teal)' : 'transparent'};color:${active ? '#080810' : 'var(--muted)'};border:none;padding:7px 11px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">${meta.title}</button>`;
+  }).join('');
+})();
 
 function updateLeaderboardSubtitle(){
   const el = document.getElementById('leaderboard-page-subtitle');
@@ -663,8 +707,11 @@ function updateLeaderboardSubtitle(){
     el.textContent = currentLeaderboardPeriod === 'season'
       ? `Ranked by locations added to the scene library in ${label}. Resets every month, so everyone's got a fresh shot.`
       : "Ranked by locations added to the scene library, all time. The players actually building out 5kable's map coverage.";
-  } else {
+  } else if (currentLeaderboardTab === 'streaks') {
     el.textContent = "Ranked by current daily challenge streak. Answer the Discord daily challenge correctly to keep yours going.";
+  } else {
+    const gameTitle = (MINI_GAME_META[currentMiniGameType] || {}).title || 'this game';
+    el.textContent = `Ranked by best streak in ${gameTitle}. Play a round to get on the board.`;
   }
 }
 
@@ -810,6 +857,44 @@ async function loadTopStreaksLeaderboard(){
           <div style="text-align:right;flex-shrink:0;">
             <div style="font-size:13px;font-weight:700;">🔥 ${row.streak.toLocaleString()}</div>
             <div style="font-size:10px;color:var(--muted);">day streak</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">Couldn't load the leaderboard right now.</div>`;
+  }
+}
+
+async function loadMiniGameLeaderboard(type){
+  const el = document.getElementById('leaderboard-page-list');
+  if (!el) return;
+  el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">Loading...</div>`;
+  // camera_quiz is the one mode with its own dedicated leaderboard route
+  // (no `type` param -- there's only one Camera Generation mode); every
+  // other entry is a photo_quiz type sharing the same endpoint.
+  const url = type === 'camera_quiz'
+    ? `${API}/camera_quiz/leaderboard?limit=50`
+    : `${API}/photo_quiz/leaderboard?type=${encodeURIComponent(type)}&limit=50`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const rows = data.leaderboard || [];
+    if (!rows.length) {
+      el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No scores yet — be the first on the board!</div>`;
+      return;
+    }
+    const me = getUser();
+    el.innerHTML = rows.map((row, i) => {
+      const isMe = me && row.user_id === me.id;
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;${isMe ? 'background:rgba(0,201,167,0.1);border:1px solid var(--teal);' : ''}">
+          <div style="width:32px;text-align:center;font-size:${i < 3 ? '18px' : '13px'};font-weight:700;color:${i < 3 ? '#fff' : 'var(--muted)'};flex-shrink:0;">${medal}</div>
+          <div style="font-size:20px;flex-shrink:0;" title="${escapeHtmlLocal(row.tier_title)}">${row.tier_icon}</div>
+          <div style="flex:1;min-width:0;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlLocal(row.username)}${isMe ? ' <span style="color:var(--teal);font-weight:400;">(you)</span>' : ''}</div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:13px;font-weight:700;">🔥 ${row.best_streak.toLocaleString()}</div>
+            <div style="font-size:10px;color:var(--muted);">best streak</div>
           </div>
         </div>`;
     }).join('');
