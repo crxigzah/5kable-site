@@ -260,7 +260,7 @@ nav::before {
 .how-section {
   padding:80px 40px;
   background:linear-gradient(180deg,transparent,rgba(124,58,237,0.04),transparent);
-  position:relative;z-index:1;overflow:hidden;
+  position:relative;z-index:1;
 }
 .steps { display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px;max-width:1200px;margin:0 auto;position:relative;z-index:2; }
 /* Connector line threading the step circles together, so the four steps
@@ -1005,20 +1005,22 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   <div class="how-section" id="how-it-works">
     <div class="orb orb1"></div>
     <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+    <div class="orb orb4"></div>
     <div style="text-align:center;max-width:700px;margin:0 auto 52px;position:relative;z-index:2;">
       <div class="section-label" style="text-align:center;">How It Works</div>
       <h2 style="font-size:38px;font-weight:800;letter-spacing:-0.5px;text-align:center;">From install to improvement<br>in minutes</h2>
     </div>
     <div class="steps">
       <div class="step"><div class="step-num">1</div><h3>Install the Extension</h3><p>Add 5kable from the Chrome Web Store in one click. Takes 10 seconds.</p></div>
-      <div class="step"><div class="step-num">2</div><h3>Play Normally</h3><p>Open your map game and play as you normally would. Press F7 to capture the scene before you guess.</p></div>
+      <div class="step"><div class="step-num">2</div><h3>Play Normally</h3><p>Open your map game and play as you normally would.</p></div>
       <div class="step"><div class="step-num">3</div><h3>Get a Lesson</h3><p>After a wrong guess, a teaching popup explains exactly what you missed dead giveaway, visual clues, reference photo.</p></div>
-      <div class="step"><div class="step-num">4</div><h3>Contribute to the Community Library</h3><p>Press F7 on any scene to add it to the shared community map. Everyone's captures make the reference library smarter for all players — live Street View, not stored screenshots.</p></div>
+      <div class="step"><div class="step-num">4</div><h3>Contribute to the Community Library</h3><p>Press F7 on any scene to add it to the shared community map. Everyone's captures make the reference library smarter for all players.</p></div>
     </div>
   </div>
 
   <!-- Features -->
-  <div style="position:relative;overflow:hidden;">
+  <div style="position:relative;">
     <div class="orb orb1"></div>
     <div class="orb orb2"></div>
     <div class="section" id="features" style="text-align:center;">
