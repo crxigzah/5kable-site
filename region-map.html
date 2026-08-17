@@ -478,21 +478,26 @@
     white-space:nowrap; box-shadow:0 8px 24px rgba(0,0,0,0.5);
   }
 
-  /* breadcrumb / back-to-world control */
-  /* Sits directly below the annotate toolbar (which occupies the same
-     left:16px/top:16px corner whenever a country's regions are shown —
-     exactly when this back button is needed) rather than on top of it;
-     they used to share identical coordinates, so the toolbar's higher
-     z-index and opaque background completely hid this button. */
+  /* breadcrumb -- doubles as the back-to-world control. Sits directly
+     below the annotate toolbar (which occupies the same left:16px/top:16px
+     corner whenever a country's regions are shown -- exactly when this is
+     needed) rather than on top of it; they used to share identical
+     coordinates, so the toolbar's higher z-index and opaque background
+     completely hid this. */
   .breadcrumb{
     position:absolute; left:16px; top:70px;
-    display:flex; align-items:center; gap:10px;
+    display:flex; align-items:center; gap:8px;
     z-index:4;
+    cursor:pointer;
   }
   .breadcrumb span{
     font-size:11px; color: var(--muted); letter-spacing:.06em;
+    transition: color .15s;
   }
   .breadcrumb span b{ color: var(--covered-hover); }
+  .breadcrumb-arrow{ font-size:13px !important; }
+  .breadcrumb:hover span{ color: var(--text); }
+  .breadcrumb:hover .breadcrumb-arrow{ color: var(--covered-hover) !important; }
   /* In the light "Google Maps style" theme, teal reads poorly against the
      pale blue background — switch the highlighted country name to the
      same dark neutral already used for that theme's map labels. */
@@ -790,7 +795,8 @@
     <div class="map-stage" id="mapStage">
       <div class="hud" id="hud">LAT — · LON —</div>
       <div class="map-tooltip" id="countryHoverTooltip"></div>
-      <div class="breadcrumb" id="breadcrumb" style="display:none;">
+      <div class="breadcrumb" id="breadcrumb" style="display:none;" title="Back to world map">
+        <span class="breadcrumb-arrow">←</span>
         <span id="breadcrumbLabel"></span>
       </div>
       <div class="loading-overlay" id="loadingOverlay" style="display:none;">
@@ -837,7 +843,6 @@
       <div class="region-list" id="regionList"></div>
 
       <div class="panel-section" id="countryRegionsPanelHeader" style="display:none;border-bottom:none;padding-bottom:6px;">
-        <button class="btn btn-hdr" id="backToWorldBtn" style="display:none;margin-bottom:10px;">← WORLD MAP</button>
         <h2 id="countryRegionsTitle">Regions</h2>
         <div class="selected-empty" style="margin-top:-2px;margin-bottom:8px;">Click a color swatch to assign that region a group, or ✕ to hide it.</div>
         <div style="display:flex;gap:8px;margin-top:8px;">
@@ -1528,7 +1533,6 @@ function showGlobeView(){
   globeCanvasEl.style.display = '';
   svg.style('display', 'none');
   document.getElementById('annotateToolbar').style.display = 'none';
-  document.getElementById('backToWorldBtn').style.display = 'none';
   resizeGlobeRenderer();
 }
 function showDrillDownView(){
@@ -1536,7 +1540,6 @@ function showDrillDownView(){
   globeCanvasEl.style.display = 'none';
   svg.style('display', '');
   document.getElementById('annotateToolbar').style.display = 'flex';
-  document.getElementById('backToWorldBtn').style.display = '';
 }
 
 // Converts a raw screen position (clientX/clientY) into the SVG's own
@@ -2303,7 +2306,7 @@ function renderWorldView(){
     animateGlobe();
   }
 }
-document.getElementById('backToWorldBtn').onclick = renderWorldView;
+document.getElementById('breadcrumb').onclick = renderWorldView;
 
 function showLoading(text){
   document.getElementById('loadingText').textContent = text;
