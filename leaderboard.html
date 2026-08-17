@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leaderboard</title>
+<meta name="description" content="See who's topping 5kable this season: Top Players by XP, Top Contributors adding locations to the scene library, and daily challenge Streaks.">
+<meta property="og:title" content="5kable Leaderboard">
+<meta property="og:description" content="See who's topping 5kable this season: Top Players by XP, Top Contributors adding locations to the scene library, and daily challenge Streaks.">
+<meta property="og:image" content="https://5kable.net/apple-touch-icon.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="5kable Leaderboard">
+<meta name="twitter:description" content="See who's topping 5kable this season: Top Players by XP, Top Contributors adding locations to the scene library, and daily challenge Streaks.">
+<meta name="twitter:image" content="https://5kable.net/apple-touch-icon.png">
+<style>
+:root {
+  --bg: #080810;
+  --bg2: #0d0d18;
+  --card: #10101e;
+  --card2: #14142a;
+  --border: #1e1e35;
+  --teal: #00c9a7;
+  --teal2: #00a87d;
+  --purple: #7c3aed;
+  --text: #e8e8f5;
+  --muted: #6a6a9a;
+  --red: #ff4c6a;
+  --gold: #f0a500;
+}
+.gax-toggle { position:relative; display:inline-block; width:38px; height:22px; flex-shrink:0; }
+.gax-toggle input { opacity:0; width:0; height:0; }
+.gax-toggle-slider { position:absolute; cursor:pointer; inset:0; background:#1e1e35; border:1px solid #2a2a45; border-radius:22px; transition:.2s; }
+.gax-toggle-slider::before { content:""; position:absolute; height:16px; width:16px; left:2px; top:2px; background:#8888aa; border-radius:50%; transition:.2s; }
+.gax-toggle input:checked + .gax-toggle-slider { background:rgba(0,201,167,0.25); border-color:#00c9a7; }
+.gax-toggle input:checked + .gax-toggle-slider::before { transform:translateX(16px); background:#00c9a7; }
+* { box-sizing:border-box;margin:0;padding:0; }
+body { background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;line-height:1.6;overflow-x:hidden; }
+
+/* Rich layered background */
+body::before {
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 70% 55% at 8% 18%, rgba(0,201,167,0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 45% at 92% 8%, rgba(124,58,237,0.09) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 38% at 50% 85%, rgba(0,168,125,0.06) 0%, transparent 58%),
+    radial-gradient(ellipse 38% 30% at 78% 62%, rgba(124,58,237,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 30% 25% at 25% 60%, rgba(0,201,167,0.04) 0%, transparent 45%);
+  pointer-events:none;z-index:0;animation:bgShift 22s ease-in-out infinite alternate;
+}
+@keyframes bgShift {
+  0%   { opacity: 0.75; transform: scale(1) translateY(0); }
+  50%  { opacity: 0.95; transform: scale(1.02) translateY(-6px); }
+  100% { opacity: 1;   transform: scale(1.05) translateY(4px); }
+}
+
+/* Fine grid + noise overlay */
+body::after {
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,201,167,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,201,167,0.025) 1px, transparent 1px),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 48px 48px, 48px 48px, 200px 200px;
+  pointer-events:none;z-index:0;
+  mask-image:radial-gradient(ellipse 110% 110% at 50% 50%, black 20%, transparent 100%);
+}
+
+/* Animated aurora scan lines */
+.aurora-lines {
+  position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+}
+.aurora-lines::before {
+  content:'';position:absolute;
+  width:200%;height:3px;
+  background:linear-gradient(90deg, transparent, rgba(0,201,167,0.08), rgba(124,58,237,0.06), transparent);
+  top:30%;left:-50%;
+  animation:auroraSweep 14s ease-in-out infinite;
+  filter:blur(2px);
+}
+.aurora-lines::after {
+  content:'';position:absolute;
+  width:200%;height:2px;
+  background:linear-gradient(90deg, transparent, rgba(124,58,237,0.06), rgba(0,201,167,0.08), transparent);
+  top:65%;left:-50%;
+  animation:auroraSweep 20s ease-in-out infinite reverse;
+  filter:blur(2px);
+}
+@keyframes auroraSweep {
+  0%   { transform: translateX(-10%) skewX(-8deg); opacity:0; }
+  20%  { opacity:1; }
+  80%  { opacity:1; }
+  100% { transform: translateX(60%) skewX(-8deg); opacity:0; }
+}
+
+nav {
+  display:flex;align-items:center;justify-content:space-between;padding:14px 40px;
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
+}
+nav::before {
+  content:'';position:absolute;inset:0;
+  background:rgba(8,8,16,0.92);backdrop-filter:blur(20px);z-index:-1;
+}
+.nav-logo {
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  color:var(--text);font-size:17px;font-weight:700;letter-spacing:0.5px;text-decoration:none;
+}
+.nav-logo img { width:38px;height:38px;object-fit:contain; }
+.nav-logo span { background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+.nav-links { display:flex;gap:20px;align-items:center; }
+.nav-links a { color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s; }
+.nav-links a:hover { color:var(--text); }
+.nav-socials { display:flex;align-items:center;gap:14px; }
+.nav-discord { color:var(--muted);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:5px;transition:color .2s; }
+.nav-discord:hover { color:#5865F2; }
+.btn { padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s; }
+.btn-outline { background:transparent;border:1px solid rgba(0,201,167,0.4);color:var(--teal); }
+.btn-outline:hover { background:var(--teal);color:#080810; }
+.btn-primary { background:linear-gradient(135deg,#00c9a7,#00a87d);color:#080810;font-weight:700; }
+.btn-primary:hover { opacity:0.9;transform:translateY(-1px); }
+
+/* Glow orbs */
+.orb { position:absolute;border-radius:50%;filter:blur(80px);opacity:0.18;pointer-events:none; }
+.orb1 { width:500px;height:500px;background:#f0a500;top:-80px;left:-160px; }
+.orb2 { width:420px;height:420px;background:#7c3aed;top:20px;right:-140px; }
+.orb3 { width:320px;height:320px;background:#00c9a7;top:200px;left:-80px;opacity:0.08;filter:blur(120px); }
+.orb4 { width:280px;height:280px;background:#7c3aed;top:160px;right:-60px;opacity:0.08;filter:blur(120px); }
+
+footer {
+  text-align:center;padding:48px 40px;
+  border-top:1px solid var(--border);color:var(--muted);font-size:13px;
+  background:var(--card);position:relative;z-index:1;
+}
+.footer-links { display:flex;justify-content:center;gap:24px;margin-bottom:16px;flex-wrap:wrap; }
+.footer-links a { color:var(--muted);text-decoration:none;font-size:13px;transition:color .2s; }
+.footer-links a:hover { color:var(--teal); }
+
+/* Policies dropdown */
+.nav-dropdown-wrap { position:relative;display:flex;align-items:center;height:100%; }
+.nav-dropdown-wrap > a { cursor:pointer;display:flex;align-items:center;gap:3px; }
+.nav-dropdown-menu {
+  display:none;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  background:var(--card);border:1px solid var(--border);border-radius:12px;min-width:200px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:300;overflow:hidden;padding:6px 0;
+}
+.nav-dropdown-menu::before {
+  content:'';position:absolute;top:-8px;left:0;right:0;height:8px;
+}
+.nav-dropdown-wrap.open .nav-dropdown-menu { display:block; }
+.nav-dropdown-menu a {
+  display:block;padding:10px 18px;color:var(--muted);font-size:13px;text-decoration:none;
+  transition:background .15s, color .15s;white-space:nowrap;cursor:pointer;
+}
+.nav-dropdown-menu a:hover { background:var(--card2);color:var(--text); }
+.nav-dropdown-menu a::after { display:none !important; }
+
+/* Nav links underline animation */
+.nav-links a { position: relative; }
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--teal);
+  transition: width .3s ease;
+}
+.nav-links a:hover::after { width: 100%; }
+
+.nav-discord:hover svg { transform: rotate(-10deg) scale(1.2); transition: transform .2s; }
+
+/* Smooth scroll + clip off-canvas mobile panel from contributing scroll width */
+html { scroll-behavior: smooth; overflow-x: hidden; }
+
+/* ── Mobile hamburger (hidden on desktop) ─────────────────── */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 210;
+}
+.nav-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text);
+  margin: 0 auto;
+  transition: transform .2s, opacity .2s;
+}
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.nav-scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 90;
+}
+.nav-scrim.open { display: block; }
+
+/* ── Mobile layout (≤820px) ───────────────────────────────── */
+@media (max-width: 820px) {
+  body.nav-open-lock { overflow: hidden; }
+  .nav-hamburger { display: flex; }
+  nav { padding: 12px 16px; }
+  .nav-links {
+    position: fixed;
+    top: 0; right: 0; bottom: 0;
+    width: 300px; max-width: 85vw;
+    background: var(--card, #10101e);
+    border-left: 1px solid var(--border);
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 72px 20px 24px;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform .25s ease;
+    z-index: 200;
+    box-shadow: -12px 0 40px rgba(0,0,0,0.5);
+  }
+  .nav-links.open { transform: translateX(0); display: flex; }
+  .nav-links a {
+    font-size: 16px;
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--border);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  .nav-links a:last-child { border-bottom: none; }
+  .nav-links a.nav-metas-badge { align-self: flex-start; min-height: 0; margin: 8px 0; }
+  .nav-dropdown-wrap { height: auto; display: block; }
+  .nav-dropdown-wrap > a { width: 100%; padding: 14px 4px; border-bottom: 1px solid var(--border); justify-content: space-between; }
+  .nav-dropdown-menu {
+    position: static; transform: none; display: none;
+    box-shadow: none; border: none; background: var(--bg2);
+    margin: 0 0 4px; padding: 4px 0 4px 16px;
+  }
+  .nav-dropdown-wrap.open .nav-dropdown-menu { display: block; }
+  .nav-dropdown-menu a { font-size: 15px; padding: 12px 4px; border-bottom: none; }
+  .nav-socials { flex-wrap: wrap; gap: 10px; padding: 16px 4px; border-bottom: 1px solid var(--border); }
+  .nav-links .nav-socials a.nav-discord {
+    min-width: 38px; min-height: 38px; padding: 0; border-bottom: none;
+    justify-content: center; background: var(--card2, rgba(255,255,255,0.04));
+    border-radius: 10px; flex: 0 0 auto;
+  }
+  #nav-auth-guest { flex-direction: column; gap: 10px; margin-top: 8px; }
+  #nav-auth-guest .btn { width: 100%; padding: 13px 20px; font-size: 15px; min-height: 46px; }
+  #nav-auth-user { align-self: stretch; }
+  #nav-auth-user > button { width: 100%; justify-content: center; padding: 12px 16px; }
+  #user-dropdown { position: static; box-shadow: none; margin-top: 8px; width: 100%; }
+  #user-dropdown a { padding: 13px 16px; font-size: 14px; }
+
+  .lb-hero { padding: 56px 20px 44px !important; }
+  .lb-hero h1 { font-size: 32px !important; }
+  .lb-hero p { font-size: 15px !important; }
+}
+</style>
+<link rel="icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png">
+<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+<link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+</head>
+<body>
+<!-- Real site nav -- same pattern as download.html/rules.html/photo-quiz-game.html:
+     links to real standalone pages, a lightweight cached-login check shows the
+     signed-in avatar, and the full account dropdown still points back to
+     index.html since it needs the full app's session bootstrap. -->
+<nav>
+  <div class="nav-logo" style="display:flex;align-items:center;">
+    <a href="/" style="display:flex;align-items:center;text-decoration:none;">
+      <img src="/nav-logo.png" alt="5kable">
+    </a>
+  </div>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="nav-links">
+    <a href="/download">⬇️ Download</a>
+    <div class="nav-dropdown-wrap" style="display:flex;align-items:center;">
+      <a style="display:flex;align-items:center;gap:4px;">
+        🎮 Games
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </a>
+      <div class="nav-dropdown-menu">
+        <a href="/photo-quiz-game.html?type=fifty_fifty">🎲 50/50</a>
+        <a href="/photo-quiz-game.html?type=bollard">🚧 Bollard Bingo</a>
+        <a href="/camera-gen-game.html">🎥 Camera Generation Game</a>
+        <a href="/photo-quiz-game.html?type=google_car">🚙 Guess the Google Car</a>
+      </div>
+    </div>
+    <div class="nav-dropdown-wrap" style="display:flex;align-items:center;">
+      <a style="display:flex;align-items:center;gap:4px;">
+        🛠️ Tools
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </a>
+      <div class="nav-dropdown-menu">
+        <a href="/coverage-map.html">🛰️ Coverage Map</a>
+        <a href="/region-map.html">🗺️ Region Map</a>
+      </div>
+    </div>
+    <a href="/rules">📋 Rules</a>
+    <a href="/leaderboard" style="color:var(--gold);">🏆 Leaderboard</a>
+    <a href="/metas" class="nav-metas-badge" style="color:#00c9a7;font-weight:700;background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.25);padding:4px 12px;border-radius:20px;font-size:12px;text-decoration:none;transition:background .2s;" onmouseover="this.style.background='rgba(0,201,167,0.2)'" onmouseout="this.style.background='rgba(0,201,167,0.1)'">🗺️ Metas</a>
+
+    <div class="nav-socials">
+      <a href="https://discord.gg/YAmvxvXmw8" target="_blank" class="nav-discord" title="Discord">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.079.11 18.1.128 18.114a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+      </a>
+      <a href="https://www.tiktok.com/@5kable" target="_blank" class="nav-discord" title="TikTok">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
+      </a>
+      <a href="https://www.instagram.com/5kableuk" target="_blank" class="nav-discord" title="Instagram">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      </a>
+      <a href="https://x.com/5kable" target="_blank" class="nav-discord" title="X / Twitter">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </a>
+    </div>
+    <div id="nav-auth-guest" style="display:flex;gap:8px;">
+      <a href="/" class="btn btn-outline">Sign In</a>
+      <a href="/" class="btn btn-primary">Get Started</a>
+    </div>
+    <div id="nav-auth-user" style="display:none;align-items:center;position:relative;">
+      <button onclick="toggleUserMenu()" style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">
+        <div id="nav-avatar" style="width:24px;height:24px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#080810;"></div>
+        <span id="nav-username">Account</span> ▾
+      </button>
+      <div id="user-dropdown" style="display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--card);border:1px solid var(--border);border-radius:12px;min-width:200px;box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:200;overflow:hidden;">
+        <a href="/" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">📊 Dashboard</a>
+        <a href="/" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">📈 Stats</a>
+        <a href="/" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🎫 Tickets</a>
+        <a href="/" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;text-decoration:none;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">⚙️ Account Settings</a>
+        <div style="border-top:1px solid var(--border);">
+          <a onclick="lightLogout()" style="display:block;padding:11px 16px;color:var(--red);font-size:13px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='var(--card2)'" onmouseout="this.style.background=''">🚪 Sign Out</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+<div class="nav-scrim" id="nav-scrim" onclick="closeMobileNav()"></div>
+
+<!-- Hero -- two column like download.html/rules.html's, but the right side
+     is a LIVE champion card instead of a static graphic: it fetches the
+     real #1 all-time player and renders their tier/level/XP, since the
+     leaderboard already has real data worth showing off rather than a
+     generic trophy illustration. Falls back to a plain trophy state while
+     loading or if the fetch fails. -->
+<style>
+.lb-hero { display:grid;grid-template-columns:1.1fr 0.9fr;gap:56px;align-items:center;max-width:1080px;margin:0 auto;padding:90px 40px 70px;position:relative;z-index:1; }
+.grad-gold { background:linear-gradient(135deg,#f0a500,#ff8a3d);-webkit-background-clip:text;-webkit-text-fill-color:transparent; }
+.lb-champion-card {
+  position:relative;width:100%;max-width:300px;margin:0 auto;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;text-align:center;
+  background:linear-gradient(135deg,rgba(240,165,0,0.12),rgba(124,58,237,0.08));
+  border-radius:16px;border:1px solid rgba(240,165,0,0.4);
+  box-shadow:0 30px 70px rgba(0,0,0,0.55);
+  padding:34px 28px;box-sizing:border-box;aspect-ratio:3/4;
+  transform:rotate(3deg);transition:transform .3s;
+}
+.lb-champion-card:hover { transform:rotate(0deg) scale(1.02); }
+.lb-champion-crown { font-size:44px;line-height:1; }
+.lb-champion-name { font-size:19px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%; }
+.lb-champion-tier { font-size:12px;color:var(--muted); }
+.lb-champion-stat { margin-top:6px;font-size:26px;font-weight:800;color:var(--gold); }
+.lb-champion-stat-label { font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px; }
+@media (max-width:820px) {
+  .lb-hero { grid-template-columns:1fr;text-align:center;padding:60px 24px 40px;gap:36px; }
+  .lb-champion-card { transform:none;max-width:240px; }
+}
+</style>
+<div class="lb-hero" style="position:relative;overflow:hidden;">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div>
+    <h1 style="font-size:44px;font-weight:800;line-height:1.08;letter-spacing:-1px;margin-bottom:18px;position:relative;z-index:1;">The <span class="grad-gold">Leaderboard</span></h1>
+    <p style="font-size:18px;color:var(--muted);max-width:460px;position:relative;z-index:1;">Ranked by XP, contributions and streaks. Every round you play with the extension active counts toward your spot on the board.</p>
+  </div>
+  <div style="position:relative;z-index:1;">
+    <div style="position:absolute;inset:-15%;background:radial-gradient(circle,rgba(240,165,0,0.3),transparent 70%);filter:blur(50px);pointer-events:none;"></div>
+    <div class="lb-champion-card" id="lb-champion-card">
+      <div class="lb-champion-crown">👑</div>
+      <div class="lb-champion-name" id="lb-champion-name">Loading...</div>
+      <div class="lb-champion-tier" id="lb-champion-tier">&nbsp;</div>
+      <div class="lb-champion-stat" id="lb-champion-stat">—</div>
+      <div class="lb-champion-stat-label">All Time XP</div>
+    </div>
+  </div>
+</div>
+
+<div style="position:relative;overflow:hidden;padding:0 0 90px;">
+  <div class="orb orb3"></div>
+  <div class="orb orb4"></div>
+  <div id="leaderboard-page" style="min-height:60vh;position:relative;z-index:1;">
+    <div style="padding:0 40px;max-width:700px;margin:0 auto;">
+      <div style="display:flex;gap:6px;justify-content:center;margin-bottom:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;max-width:480px;margin-left:auto;margin-right:auto;">
+        <button id="leaderboard-tab-players" class="leaderboard-tab-btn" onclick="switchLeaderboardTab('players')" style="flex:1;background:var(--teal);color:#080810;border:none;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">🏆 Top Players</button>
+        <button id="leaderboard-tab-contributors" class="leaderboard-tab-btn" onclick="switchLeaderboardTab('contributors')" style="flex:1;background:transparent;color:var(--muted);border:none;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">📍 Top Contributors</button>
+        <button id="leaderboard-tab-streaks" class="leaderboard-tab-btn" onclick="switchLeaderboardTab('streaks')" style="flex:1;background:transparent;color:var(--muted);border:none;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">🔥 Streaks</button>
+      </div>
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="color:var(--muted);font-size:13px;" id="leaderboard-page-subtitle">Ranked by total XP across every game mode. Play rounds with the extension active to climb the board.</div>
+      </div>
+      <div id="leaderboard-period-row" style="display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:20px;">
+        <div style="display:flex;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;">
+          <button id="leaderboard-period-season" class="leaderboard-period-btn" onclick="switchLeaderboardPeriod('season')" style="background:var(--teal);color:#080810;border:none;padding:7px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">This Season</button>
+          <button id="leaderboard-period-alltime" class="leaderboard-period-btn" onclick="switchLeaderboardPeriod('alltime')" style="background:transparent;color:var(--muted);border:none;padding:7px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">All Time</button>
+        </div>
+        <select id="leaderboard-season-picker" onchange="onSeasonPickerChange(this.value)" style="display:none;background:#0d0d18;border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;"></select>
+      </div>
+      <div id="leaderboard-my-rank" style="display:none;margin-bottom:16px;background:rgba(0,201,167,0.08);border:1px solid var(--teal);border-radius:14px;padding:14px 18px;align-items:center;gap:14px;">
+        <div id="leaderboard-my-rank-icon" style="font-size:28px;line-height:1;flex-shrink:0;">⭐</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:14px;">Your Rank: <span id="leaderboard-my-rank-num">#—</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;" id="leaderboard-my-rank-detail">—</div>
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;">
+        <div id="leaderboard-page-list">
+          <div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="/#policy=credits">Credits</a>
+    <a href="/#policy=fairuse">Fair Use</a>
+    <a href="/#policy=privacy">Privacy Policy</a>
+    <a href="/#policy=refund">Refunds</a>
+    <a href="/#policy=tos">Terms of Service</a>
+  </div>
+  <div style="margin-bottom:8px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">5kable</div>
+  <div>Learning · Accuracy · Training · Perfection</div>
+  <div style="margin-top:8px;font-size:11px;opacity:0.5;">© 2026 5kable</div>
+</footer>
+<script>
+const API = 'https://api.5kable.net';
+function getToken() { return localStorage.getItem('kbl_token'); }
+function getUser()  { try { return JSON.parse(localStorage.getItem('kbl_user')); } catch(e) { return null; } }
+
+function toggleMobileNav() {
+  document.getElementById('nav-links').classList.toggle('open');
+  document.getElementById('nav-scrim').classList.toggle('open');
+  document.getElementById('nav-hamburger').classList.toggle('open');
+  document.body.classList.toggle('nav-open-lock');
+}
+function closeMobileNav() {
+  document.getElementById('nav-links').classList.remove('open');
+  document.getElementById('nav-scrim').classList.remove('open');
+  document.getElementById('nav-hamburger').classList.remove('open');
+  document.body.classList.remove('nav-open-lock');
+}
+document.getElementById('nav-links').addEventListener('click', (e) => {
+  if (e.target.tagName === 'A' && !e.target.closest('.nav-dropdown-wrap')) closeMobileNav();
+});
+
+// ── Nav dropdowns (Games + Tools) -- same behavior as index.html's own ──
+(function() {
+  const canHover = window.matchMedia('(hover: hover)').matches;
+  document.querySelectorAll('.nav-dropdown-wrap').forEach(wrap => {
+    let closeTimer;
+    const menu = wrap.querySelector('.nav-dropdown-menu');
+    if (canHover) {
+      wrap.addEventListener('mouseenter', () => { clearTimeout(closeTimer); wrap.classList.add('open'); });
+      wrap.addEventListener('mouseleave', () => { closeTimer = setTimeout(() => wrap.classList.remove('open'), 120); });
+      if (menu) {
+        menu.addEventListener('mouseenter', () => clearTimeout(closeTimer));
+        menu.addEventListener('mouseleave', () => { closeTimer = setTimeout(() => wrap.classList.remove('open'), 120); });
+      }
+    }
+    const trigger = wrap.querySelector(':scope > a');
+    if (trigger) {
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.nav-dropdown-wrap.open').forEach(w => { if (w !== wrap) w.classList.remove('open'); });
+        wrap.classList.toggle('open');
+      });
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav-dropdown-wrap')) {
+      document.querySelectorAll('.nav-dropdown-wrap.open').forEach(w => w.classList.remove('open'));
+    }
+  });
+})();
+
+// Cached-login nav state -- reads whatever's already in localStorage rather
+// than re-verifying with the API, since this page doesn't load the rest of
+// the auth bootstrap.
+(function() {
+  const token = getToken();
+  const user = getUser();
+  if (!token || !user) return;
+  document.getElementById('nav-auth-guest').style.display = 'none';
+  document.getElementById('nav-auth-user').style.display = 'flex';
+  document.getElementById('nav-username').textContent = user.username || 'Account';
+  const navAv = document.getElementById('nav-avatar');
+  const img = localStorage.getItem('kbl_avatar_img');
+  if (img) {
+    navAv.innerHTML = '<img src="' + img + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+    navAv.style.background = 'transparent';
+  } else {
+    navAv.style.background = localStorage.getItem('kbl_avatar_color') || '#00c9a7';
+    navAv.textContent = (user.username || '?')[0].toUpperCase();
+  }
+})();
+
+function toggleUserMenu() {
+  const dd = document.getElementById('user-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+function closeUserMenu() {
+  const dd = document.getElementById('user-dropdown');
+  if (dd) dd.style.display = 'none';
+}
+document.addEventListener('click', e => {
+  const menu = document.getElementById('nav-auth-user');
+  if (menu && !menu.contains(e.target)) closeUserMenu();
+});
+function lightLogout() {
+  localStorage.removeItem('kbl_token');
+  localStorage.removeItem('kbl_user');
+  location.reload();
+}
+
+function escapeHtmlLocal(s){
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+const COUNTRY_ISO2 = {
+  "Andorra":"AD","United Arab Emirates":"AE","Afghanistan":"AF","Albania":"AL","Argentina":"AR",
+  "Austria":"AT","Australia":"AU","Bosnia and Herzegovina":"BA","Bangladesh":"BD","Belgium":"BE",
+  "Bulgaria":"BG","Bahrain":"BH","Benin":"BJ","Bolivia":"BO","Brazil":"BR","Bhutan":"BT",
+  "Botswana":"BW","Canada":"CA","Switzerland":"CH","Chile":"CL","Cameroon":"CM","Colombia":"CO",
+  "Costa Rica":"CR","Cuba":"CU","Cyprus":"CY","Czechia":"CZ","Czech Republic":"CZ","Germany":"DE",
+  "Denmark":"DK","Dominican Republic":"DO","Algeria":"DZ","Ecuador":"EC","Estonia":"EE","Egypt":"EG",
+  "Spain":"ES","Eswatini":"SZ","Ethiopia":"ET","Finland":"FI","Fiji":"FJ","Faroe Islands":"FO",
+  "France":"FR","Gabon":"GA","United Kingdom":"GB","Ghana":"GH","Greenland":"GL","Gambia":"GM",
+  "Greece":"GR","Guatemala":"GT","Hong Kong":"HK","Honduras":"HN","Croatia":"HR","Hungary":"HU",
+  "Indonesia":"ID","Ireland":"IE","Israel":"IL","Isle of Man":"IM","India":"IN","Iraq":"IQ",
+  "Iceland":"IS","Italy":"IT","Jamaica":"JM","Jordan":"JO","Japan":"JP","Kenya":"KE",
+  "Kyrgyzstan":"KG","Cambodia":"KH","South Korea":"KR","Kuwait":"KW","Laos":"LA","Lebanon":"LB",
+  "Liechtenstein":"LI","Sri Lanka":"LK","Lesotho":"LS","Lithuania":"LT","Luxembourg":"LU",
+  "Latvia":"LV","Macau":"MO","Morocco":"MA","Monaco":"MC","Madagascar":"MG","North Macedonia":"MK",
+  "Mongolia":"MN","Martinique":"MQ","Malta":"MT","Mauritius":"MU","Malawi":"MW","Mexico":"MX",
+  "Malaysia":"MY","Mozambique":"MZ","Namibia":"NA","Nigeria":"NG","Nicaragua":"NI","Netherlands":"NL",
+  "Norway":"NO","New Zealand":"NZ","Oman":"OM","Panama":"PA","Peru":"PE","Philippines":"PH",
+  "Pakistan":"PK","Poland":"PL","Puerto Rico":"PR","Palestine":"PS","Portugal":"PT","Paraguay":"PY",
+  "Qatar":"QA","Romania":"RO","Serbia":"RS","Russia":"RU","Rwanda":"RW","Saudi Arabia":"SA",
+  "Senegal":"SN","Singapore":"SG","Slovenia":"SI","Slovakia":"SK","San Marino":"SM",
+  "Somalia":"SO","Suriname":"SR","El Salvador":"SV","Sweden":"SE","Thailand":"TH",
+  "Tajikistan":"TJ","Turkmenistan":"TM","Tunisia":"TN","Turkey":"TR","Taiwan":"TW",
+  "Tanzania":"TZ","Uganda":"UG","Ukraine":"UA","United States":"US","Uruguay":"UY",
+  "Uzbekistan":"UZ","Vatican City":"VA","Venezuela":"VE","Vietnam":"VN","South Africa":"ZA",
+  "Zambia":"ZM","Zimbabwe":"ZW","Curacao":"CW","Bermuda":"BM","Belarus":"BY",
+  "American Samoa":"AS","Guam":"GU","Northern Mariana Islands":"MP","US Virgin Islands":"VI"
+};
+function flagUrlForCountry(country){
+  const iso2 = COUNTRY_ISO2[country];
+  if (!iso2) return null;
+  const cp1 = (0x1F1E6 + (iso2.charCodeAt(0) - 65)).toString(16);
+  const cp2 = (0x1F1E6 + (iso2.charCodeAt(1) - 65)).toString(16);
+  return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${cp1}-${cp2}.svg`;
+}
+function renderBadgeImg(country, size){
+  size = size || 20;
+  const url = flagUrlForCountry(country);
+  if (!url) return '';
+  return `<img src="${url}" title="${escapeHtmlLocal(country)} Badge" style="width:${size}px;height:${Math.round(size*0.75)}px;border-radius:3px;vertical-align:middle;object-fit:cover;box-shadow:0 0 0 1px rgba(255,255,255,0.15);" onerror="this.style.display='none'"/>`;
+}
+
+// ── Hero champion card -- live #1 all-time player, not a static graphic ──
+async function loadHeroChampion(){
+  const nameEl = document.getElementById('lb-champion-name');
+  const tierEl = document.getElementById('lb-champion-tier');
+  const statEl = document.getElementById('lb-champion-stat');
+  try {
+    const res = await fetch(`${API}/leaderboard/levels?limit=1`);
+    const data = await res.json();
+    const top = (data.leaderboard || [])[0];
+    if (!top) { nameEl.textContent = 'Be the first!'; tierEl.textContent = 'No players yet'; statEl.textContent = '—'; return; }
+    nameEl.textContent = top.username;
+    tierEl.innerHTML = `${top.tier_icon} ${escapeHtmlLocal(top.tier_title)} ${renderBadgeImg(top.badge_country, 16)}`;
+    statEl.textContent = top.total_xp.toLocaleString();
+  } catch(e) {
+    nameEl.textContent = 'Climb the board';
+    tierEl.textContent = 'Play to take the crown';
+    statEl.textContent = '—';
+  }
+}
+loadHeroChampion();
+
+let currentLeaderboardTab = 'players';
+let currentLeaderboardPeriod = 'season';
+let currentSeasonYear = null;
+let currentSeasonMonth = null;
+let _seasonPickerLoaded = false;
+
+function switchLeaderboardTab(tab){
+  currentLeaderboardTab = tab;
+  const playersBtn = document.getElementById('leaderboard-tab-players');
+  const contributorsBtn = document.getElementById('leaderboard-tab-contributors');
+  const streaksBtn = document.getElementById('leaderboard-tab-streaks');
+  [[playersBtn, tab === 'players'], [contributorsBtn, tab === 'contributors'], [streaksBtn, tab === 'streaks']].forEach(([btn, active]) => {
+    btn.style.background = active ? 'var(--teal)' : 'transparent';
+    btn.style.color = active ? '#080810' : 'var(--muted)';
+  });
+
+  // Streaks isn't season scoped (a streak is a live running count, not
+  // something that resets every calendar month), so there's no This
+  // Season / All Time choice to make for it.
+  const periodRow = document.getElementById('leaderboard-period-row');
+  periodRow.style.display = tab === 'streaks' ? 'none' : 'flex';
+  document.getElementById('leaderboard-season-picker').style.display = (tab !== 'streaks' && currentLeaderboardPeriod === 'season') ? 'block' : 'none';
+  updateLeaderboardSubtitle();
+  if (tab !== 'streaks' && !_seasonPickerLoaded) loadSeasonPicker();
+  if (tab === 'players') {
+    loadTopPlayersLeaderboard();
+    loadMyRank();
+  } else if (tab === 'contributors') {
+    document.getElementById('leaderboard-my-rank').style.display = 'none'; // XP-specific; no contributor-rank lookup yet
+    loadTopContributorsLeaderboard();
+  } else {
+    document.getElementById('leaderboard-my-rank').style.display = 'none'; // no streak-rank lookup yet
+    loadTopStreaksLeaderboard();
+  }
+}
+
+function updateLeaderboardSubtitle(){
+  const el = document.getElementById('leaderboard-page-subtitle');
+  if (!el) return;
+  const label = currentSeasonYear
+    ? new Date(currentSeasonYear, currentSeasonMonth - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'})
+    : 'this month';
+  if (currentLeaderboardTab === 'players') {
+    el.textContent = currentLeaderboardPeriod === 'season'
+      ? `Ranked by correct guesses in ${label}. Resets every month, so everyone's got a fresh shot.`
+      : 'Ranked by total XP across every game mode, all time. Play rounds with the extension active to climb the board.';
+  } else if (currentLeaderboardTab === 'contributors') {
+    el.textContent = currentLeaderboardPeriod === 'season'
+      ? `Ranked by locations added to the scene library in ${label}. Resets every month, so everyone's got a fresh shot.`
+      : "Ranked by locations added to the scene library, all time. The players actually building out 5kable's map coverage.";
+  } else {
+    el.textContent = "Ranked by current daily challenge streak. Answer the Discord daily challenge correctly to keep yours going.";
+  }
+}
+
+function switchLeaderboardPeriod(period){
+  currentLeaderboardPeriod = period;
+  const seasonBtn = document.getElementById('leaderboard-period-season');
+  const alltimeBtn = document.getElementById('leaderboard-period-alltime');
+  [[seasonBtn, period === 'season'], [alltimeBtn, period === 'alltime']].forEach(([btn, active]) => {
+    btn.style.background = active ? 'var(--teal)' : 'transparent';
+    btn.style.color = active ? '#080810' : 'var(--muted)';
+  });
+  document.getElementById('leaderboard-season-picker').style.display = period === 'season' ? 'block' : 'none';
+  updateLeaderboardSubtitle();
+  if (currentLeaderboardTab === 'players') {
+    loadTopPlayersLeaderboard();
+    loadMyRank();
+  } else {
+    loadTopContributorsLeaderboard();
+  }
+}
+
+async function loadSeasonPicker(){
+  _seasonPickerLoaded = true;
+  const picker = document.getElementById('leaderboard-season-picker');
+  if (!picker) return;
+  const now = new Date();
+  currentSeasonYear = now.getUTCFullYear();
+  currentSeasonMonth = now.getUTCMonth() + 1;
+  try {
+    const res = await fetch(`${API}/leaderboard/season/available`);
+    const data = await res.json();
+    let seasons = data.seasons || [];
+    // Always include the current month even if nobody's played yet this
+    // month, so the picker never opens on an empty/missing selection.
+    if (!seasons.some(s => s.year === currentSeasonYear && s.month === currentSeasonMonth)) {
+      seasons = [{year: currentSeasonYear, month: currentSeasonMonth}, ...seasons];
+    }
+    picker.innerHTML = seasons.map(s => {
+      const label = new Date(s.year, s.month - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'});
+      return `<option value="${s.year}-${s.month}">${label}</option>`;
+    }).join('');
+    picker.value = `${currentSeasonYear}-${currentSeasonMonth}`;
+  } catch(e) {
+    picker.innerHTML = `<option value="${currentSeasonYear}-${currentSeasonMonth}">${new Date(currentSeasonYear, currentSeasonMonth - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'})}</option>`;
+  }
+}
+
+function onSeasonPickerChange(value){
+  const [year, month] = value.split('-').map(Number);
+  currentSeasonYear = year;
+  currentSeasonMonth = month;
+  updateLeaderboardSubtitle();
+  if (currentLeaderboardTab === 'players') {
+    loadTopPlayersLeaderboard();
+    loadMyRank();
+  } else {
+    loadTopContributorsLeaderboard();
+  }
+}
+
+async function loadMyRank(){
+  const el = document.getElementById('leaderboard-my-rank');
+  if (!el) return;
+  const token = getToken();
+  if (!token) { el.style.display = 'none'; return; }
+  const usingSeason = currentLeaderboardPeriod === 'season';
+  const url = usingSeason ? API + '/leaderboard/season/my_rank' : API + '/leaderboard/my_rank';
+  const body = usingSeason ? {token, year: currentSeasonYear, month: currentSeasonMonth} : {token};
+  try {
+    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (data.error) { el.style.display = 'none'; return; }
+    document.getElementById('leaderboard-my-rank-icon').textContent = usingSeason ? '📅' : (data.tier_icon || '⭐');
+    document.getElementById('leaderboard-my-rank-num').textContent = `#${data.rank.toLocaleString()}`;
+    document.getElementById('leaderboard-my-rank-detail').textContent = usingSeason
+      ? `of ${data.total_players.toLocaleString()} players this season: ${data.season_xp.toLocaleString()} correct guesses`
+      : `of ${data.total_players.toLocaleString()} players: Lv.${data.level} ${data.tier_title}, ${data.total_xp.toLocaleString()} XP`;
+    el.style.display = 'flex';
+  } catch(e) {
+    el.style.display = 'none';
+  }
+}
+
+async function loadTopPlayersLeaderboard(){
+  const el = document.getElementById('leaderboard-page-list');
+  if (!el) return;
+  const usingSeason = currentLeaderboardPeriod === 'season';
+  const url = usingSeason
+    ? `${API}/leaderboard/season?limit=50&year=${currentSeasonYear}&month=${currentSeasonMonth}`
+    : `${API}/leaderboard/levels?limit=50`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const rows = data.leaderboard || [];
+    if (!rows.length) {
+      el.innerHTML = usingSeason
+        ? `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No one's played in this season yet. Be the first on the board!</div>`
+        : `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No players yet. Be the first on the board!</div>`;
+      return;
+    }
+    const me = getUser();
+    el.innerHTML = rows.map((row, i) => {
+      const isMe = me && row.user_id === me.id;
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+      const scoreBlock = usingSeason
+        ? `<div style="font-size:13px;font-weight:700;">${row.season_xp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted);">correct</div>`
+        : `<div style="font-size:13px;font-weight:700;">Lv.${row.level}</div><div style="font-size:10px;color:var(--muted);">${row.total_xp.toLocaleString()} XP</div>`;
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;${isMe ? 'background:rgba(0,201,167,0.1);border:1px solid var(--teal);' : ''}">
+          <div style="width:32px;text-align:center;font-size:${i < 3 ? '18px' : '13px'};font-weight:700;color:${i < 3 ? '#fff' : 'var(--muted)'};flex-shrink:0;">${medal}</div>
+          ${renderBadgeImg(row.badge_country, 20)}
+          <div style="font-size:20px;flex-shrink:0;" title="${escapeHtmlLocal(row.tier_title)}">${row.tier_icon}</div>
+          <div style="flex:1;min-width:0;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlLocal(row.username)}${isMe ? ' <span style="color:var(--teal);font-weight:400;">(you)</span>' : ''}</div>
+          <div style="text-align:right;flex-shrink:0;">${scoreBlock}</div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">Couldn't load the leaderboard right now.</div>`;
+  }
+}
+
+async function loadTopContributorsLeaderboard(){
+  const el = document.getElementById('leaderboard-page-list');
+  if (!el) return;
+  const usingSeason = currentLeaderboardPeriod === 'season';
+  const url = usingSeason
+    ? `${API}/leaderboard/contributors/season?limit=50&year=${currentSeasonYear}&month=${currentSeasonMonth}`
+    : `${API}/leaderboard/contributors?limit=50`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const rows = data.leaderboard || [];
+    if (!rows.length) {
+      el.innerHTML = usingSeason
+        ? `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No contributions in this season yet. Be the first to add a location!</div>`
+        : `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No contributions yet. Be the first to add a location!</div>`;
+      return;
+    }
+    const me = getUser();
+    el.innerHTML = rows.map((row, i) => {
+      const isMe = me && row.user_id === me.id;
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;${isMe ? 'background:rgba(0,201,167,0.1);border:1px solid var(--teal);' : ''}">
+          <div style="width:32px;text-align:center;font-size:${i < 3 ? '18px' : '13px'};font-weight:700;color:${i < 3 ? '#fff' : 'var(--muted)'};flex-shrink:0;">${medal}</div>
+          ${renderBadgeImg(row.badge_country, 20)}
+          <div style="font-size:20px;flex-shrink:0;" title="${escapeHtmlLocal(row.tier_title)}">${row.tier_icon}</div>
+          <div style="flex:1;min-width:0;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlLocal(row.username)}${isMe ? ' <span style="color:var(--teal);font-weight:400;">(you)</span>' : ''}</div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:13px;font-weight:700;">📍 ${row.contributed.toLocaleString()}</div>
+            <div style="font-size:10px;color:var(--muted);">${row.times_helped_others.toLocaleString()} uses</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">Couldn't load the leaderboard right now.</div>`;
+  }
+}
+
+async function loadTopStreaksLeaderboard(){
+  const el = document.getElementById('leaderboard-page-list');
+  if (!el) return;
+  try {
+    const res = await fetch(`${API}/leaderboard/streaks?limit=50`);
+    const data = await res.json();
+    const rows = data.leaderboard || [];
+    if (!rows.length) {
+      el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No active streaks yet. Answer the Discord daily challenge to start one!</div>`;
+      return;
+    }
+    const me = getUser();
+    el.innerHTML = rows.map((row, i) => {
+      const isMe = me && row.user_id === me.id;
+      const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+      return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;${isMe ? 'background:rgba(0,201,167,0.1);border:1px solid var(--teal);' : ''}">
+          <div style="width:32px;text-align:center;font-size:${i < 3 ? '18px' : '13px'};font-weight:700;color:${i < 3 ? '#fff' : 'var(--muted)'};flex-shrink:0;">${medal}</div>
+          ${renderBadgeImg(row.badge_country, 20)}
+          <div style="font-size:20px;flex-shrink:0;" title="${escapeHtmlLocal(row.tier_title)}">${row.tier_icon}</div>
+          <div style="flex:1;min-width:0;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtmlLocal(row.username)}${isMe ? ' <span style="color:var(--teal);font-weight:400;">(you)</span>' : ''}</div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:13px;font-weight:700;">🔥 ${row.streak.toLocaleString()}</div>
+            <div style="font-size:10px;color:var(--muted);">day streak</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">Couldn't load the leaderboard right now.</div>`;
+  }
+}
+
+switchLeaderboardTab('players');
+</script>
+</body>
+</html>
