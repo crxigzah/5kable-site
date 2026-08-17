@@ -382,21 +382,22 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   .lb-champion-card { transform:none;max-width:240px; }
 }
 </style>
-<div class="lb-hero" style="position:relative;overflow:hidden;">
+<div style="position:relative;overflow:hidden;">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
-  <div>
-    <h1 style="font-size:44px;font-weight:800;line-height:1.08;letter-spacing:-1px;margin-bottom:18px;position:relative;z-index:1;">The <span class="grad-gold">Leaderboard</span></h1>
-    <p style="font-size:18px;color:var(--muted);max-width:460px;position:relative;z-index:1;">Ranked by XP, contributions and streaks. Every round you play with the extension active counts toward your spot on the board.</p>
-  </div>
-  <div style="position:relative;z-index:1;">
-    <div style="position:absolute;inset:-15%;background:radial-gradient(circle,rgba(240,165,0,0.3),transparent 70%);filter:blur(50px);pointer-events:none;"></div>
-    <div class="lb-champion-card" id="lb-champion-card">
-      <div class="lb-champion-crown">👑</div>
-      <div class="lb-champion-name" id="lb-champion-name">Loading...</div>
-      <div class="lb-champion-tier" id="lb-champion-tier">&nbsp;</div>
-      <div class="lb-champion-stat" id="lb-champion-stat">—</div>
-      <div class="lb-champion-stat-label">All Time XP</div>
+  <div class="lb-hero">
+    <div>
+      <h1 style="font-size:44px;font-weight:800;line-height:1.08;letter-spacing:-1px;margin-bottom:18px;">The <span class="grad-gold">Leaderboard</span></h1>
+      <p style="font-size:18px;color:var(--muted);max-width:460px;">Ranked by XP, contributions and streaks. Every round you play with the extension active counts toward your spot on the board.</p>
+    </div>
+    <div>
+      <div class="lb-champion-card" id="lb-champion-card">
+        <div class="lb-champion-crown">👑</div>
+        <div class="lb-champion-name" id="lb-champion-name">Loading...</div>
+        <div class="lb-champion-tier" id="lb-champion-tier">&nbsp;</div>
+        <div class="lb-champion-stat" id="lb-champion-stat">—</div>
+        <div class="lb-champion-stat-label">All Time XP</div>
+      </div>
     </div>
   </div>
 </div>
@@ -419,7 +420,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
           <button id="leaderboard-period-season" class="leaderboard-period-btn" onclick="switchLeaderboardPeriod('season')" style="background:var(--teal);color:#080810;border:none;padding:7px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">This Season</button>
           <button id="leaderboard-period-alltime" class="leaderboard-period-btn" onclick="switchLeaderboardPeriod('alltime')" style="background:transparent;color:var(--muted);border:none;padding:7px 12px;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;">All Time</button>
         </div>
-        <select id="leaderboard-season-picker" onchange="onSeasonPickerChange(this.value)" style="display:none;background:#0d0d18;border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;"></select>
+        <div id="leaderboard-season-label" style="display:none;background:#0d0d18;border:1px solid var(--border);color:var(--text);padding:7px 10px;border-radius:8px;font-size:11px;font-weight:600;"></div>
       </div>
       <div id="leaderboard-my-rank" style="display:none;margin-bottom:16px;background:rgba(0,201,167,0.08);border:1px solid var(--teal);border-radius:14px;padding:14px 18px;align-items:center;gap:14px;">
         <div id="leaderboard-my-rank-icon" style="font-size:28px;line-height:1;flex-shrink:0;">⭐</div>
@@ -608,9 +609,15 @@ loadHeroChampion();
 
 let currentLeaderboardTab = 'players';
 let currentLeaderboardPeriod = 'season';
-let currentSeasonYear = null;
-let currentSeasonMonth = null;
-let _seasonPickerLoaded = false;
+const _lbNow = new Date();
+let currentSeasonYear = _lbNow.getUTCFullYear();
+let currentSeasonMonth = _lbNow.getUTCMonth() + 1;
+
+function updateSeasonLabel(){
+  const el = document.getElementById('leaderboard-season-label');
+  if (!el) return;
+  el.textContent = new Date(currentSeasonYear, currentSeasonMonth - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'});
+}
 
 function switchLeaderboardTab(tab){
   currentLeaderboardTab = tab;
@@ -627,9 +634,9 @@ function switchLeaderboardTab(tab){
   // Season / All Time choice to make for it.
   const periodRow = document.getElementById('leaderboard-period-row');
   periodRow.style.display = tab === 'streaks' ? 'none' : 'flex';
-  document.getElementById('leaderboard-season-picker').style.display = (tab !== 'streaks' && currentLeaderboardPeriod === 'season') ? 'block' : 'none';
+  document.getElementById('leaderboard-season-label').style.display = (tab !== 'streaks' && currentLeaderboardPeriod === 'season') ? 'block' : 'none';
+  updateSeasonLabel();
   updateLeaderboardSubtitle();
-  if (tab !== 'streaks' && !_seasonPickerLoaded) loadSeasonPicker();
   if (tab === 'players') {
     loadTopPlayersLeaderboard();
     loadMyRank();
@@ -669,46 +676,8 @@ function switchLeaderboardPeriod(period){
     btn.style.background = active ? 'var(--teal)' : 'transparent';
     btn.style.color = active ? '#080810' : 'var(--muted)';
   });
-  document.getElementById('leaderboard-season-picker').style.display = period === 'season' ? 'block' : 'none';
-  updateLeaderboardSubtitle();
-  if (currentLeaderboardTab === 'players') {
-    loadTopPlayersLeaderboard();
-    loadMyRank();
-  } else {
-    loadTopContributorsLeaderboard();
-  }
-}
-
-async function loadSeasonPicker(){
-  _seasonPickerLoaded = true;
-  const picker = document.getElementById('leaderboard-season-picker');
-  if (!picker) return;
-  const now = new Date();
-  currentSeasonYear = now.getUTCFullYear();
-  currentSeasonMonth = now.getUTCMonth() + 1;
-  try {
-    const res = await fetch(`${API}/leaderboard/season/available`);
-    const data = await res.json();
-    let seasons = data.seasons || [];
-    // Always include the current month even if nobody's played yet this
-    // month, so the picker never opens on an empty/missing selection.
-    if (!seasons.some(s => s.year === currentSeasonYear && s.month === currentSeasonMonth)) {
-      seasons = [{year: currentSeasonYear, month: currentSeasonMonth}, ...seasons];
-    }
-    picker.innerHTML = seasons.map(s => {
-      const label = new Date(s.year, s.month - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'});
-      return `<option value="${s.year}-${s.month}">${label}</option>`;
-    }).join('');
-    picker.value = `${currentSeasonYear}-${currentSeasonMonth}`;
-  } catch(e) {
-    picker.innerHTML = `<option value="${currentSeasonYear}-${currentSeasonMonth}">${new Date(currentSeasonYear, currentSeasonMonth - 1, 1).toLocaleDateString('en-GB', {month:'long', year:'numeric'})}</option>`;
-  }
-}
-
-function onSeasonPickerChange(value){
-  const [year, month] = value.split('-').map(Number);
-  currentSeasonYear = year;
-  currentSeasonMonth = month;
+  document.getElementById('leaderboard-season-label').style.display = period === 'season' ? 'block' : 'none';
+  updateSeasonLabel();
   updateLeaderboardSubtitle();
   if (currentLeaderboardTab === 'players') {
     loadTopPlayersLeaderboard();
