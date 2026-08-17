@@ -783,9 +783,6 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     flex: 0 0 auto;
   }
 
-  .currency-picker { margin: 16px 0; align-self: stretch; justify-content: space-between; }
-  .currency-btn { flex: 1; padding: 9px 8px; font-size: 13px; min-height: 38px; }
-
   #nav-auth-guest { flex-direction: column; gap: 10px; margin-top: 8px; }
   #nav-auth-guest .btn { width: 100%; padding: 13px 20px; font-size: 15px; min-height: 46px; }
   #nav-auth-user { align-self: stretch; }
@@ -894,12 +891,6 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       <a href="https://x.com/5kable" target="_blank" class="nav-discord" title="X / Twitter">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
       </a>
-    </div>
-    <div class="currency-picker" id="currency-picker">
-      <button class="currency-btn" data-code="GBP" onclick="setCurrency('GBP')">£</button>
-      <button class="currency-btn" data-code="USD" onclick="setCurrency('USD')">$</button>
-      <button class="currency-btn" data-code="EUR" onclick="setCurrency('EUR')">€</button>
-      <button class="currency-btn" data-code="AUD" onclick="setCurrency('AUD')">A$</button>
     </div>
     <div id="nav-auth-guest" style="display:flex;gap:8px;">
       <button class="btn btn-outline" onclick="showModal('login')">Sign In</button>
@@ -1116,7 +1107,15 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     <div class="section" id="pricing">
       <div class="section-label" style="text-align:center;">Pricing</div>
       <h2 style="font-size:30px;font-weight:800;text-align:center;margin-bottom:32px;">Start free, upgrade when ready</h2>
-      <p style="text-align:center;color:var(--muted);margin-bottom:32px;max-width:500px;margin-left:auto;margin-right:auto;">Start free with unlimited F7 captures and 3 daily training guides, or try Pro free for 3 days.</p>
+      <p style="text-align:center;color:var(--muted);margin-bottom:24px;max-width:500px;margin-left:auto;margin-right:auto;">Start free with unlimited F7 captures and 3 daily training guides, or try Pro free for 3 days.</p>
+      <div style="display:flex;justify-content:center;margin-bottom:32px;">
+        <div class="currency-picker" id="currency-picker">
+          <button class="currency-btn" data-code="GBP" onclick="setCurrency('GBP')">£</button>
+          <button class="currency-btn" data-code="USD" onclick="setCurrency('USD')">$</button>
+          <button class="currency-btn" data-code="EUR" onclick="setCurrency('EUR')">€</button>
+          <button class="currency-btn" data-code="AUD" onclick="setCurrency('AUD')">A$</button>
+        </div>
+      </div>
       <div class="pricing">
         <div class="price-card">
           <div class="price-name">Free</div>
