@@ -4299,13 +4299,23 @@ document.addEventListener('keydown', e => {
   if (token && user) { updateNav(user); updateNavAvatar(); }
 })();
 
-// If ?ticket=1 is present (from the /support clean-URL redirect), open the
-// New Ticket modal right away -- unlike the ?u= profile jump below, this
-// has no auth dependency, so there's no need to wait on wakeServer()/
-// checkAuth() first. Restores the clean /support URL afterward, same
-// pattern metas.html uses to turn its own redirect param back into a
-// pretty URL.
-if (urlParams.get('ticket')) {
+// Open the New Ticket modal for /support -- unlike the ?u= profile jump
+// below, this has no auth dependency, so there's no need to wait on
+// wakeServer()/checkAuth() first.
+//
+// Checks the PATH, not a ?ticket=1 query param (which is what this used
+// to check). _worker.js's /support handler on Cloudflare doesn't do a
+// real redirect -- it masks the request via env.ASSETS.fetch() with an
+// internally-modified URL, the same trick it uses for /metas/<slug>. That
+// internal URL is where ?ticket=1 got added, but the browser's actual
+// window.location only ever reflects the ORIGINAL incoming request
+// (plain /support, no query string), so checking the query param here
+// never found anything. window.location.pathname, by contrast, does
+// still correctly read '/support' under that masking -- same reason
+// metas.html reads the country slug from the path rather than a param.
+// 404.html's plain client-side-redirect fallback (for GitHub Pages)
+// still lands on this same path either way, so one check covers both.
+if (urlParams.get('ticket') || window.location.pathname === '/support') {
   openNewTicketModal();
   history.replaceState(null, '', '/support');
 }
