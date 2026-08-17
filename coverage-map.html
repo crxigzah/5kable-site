@@ -391,6 +391,7 @@ nav::before {
     <button class="btn active" id="labels-toggle-btn" onclick="toggleLabels()">🏷️ Labels: On</button>
   </div>
   <div id="coverage-zoom-hint" style="display:none;">Zoom in closer to see coverage. At this zoom, Google's own coverage lines render as thick blocks that make it look like whole countries are covered.</div>
+  <div id="zoom-readout" style="text-align:center;color:var(--muted);font-size:11px;margin:-10px 0 14px;">Zoom level: <span id="zoom-readout-num">–</span> (report this number back if the coverage threshold needs tuning)</div>
 
   <div class="map-layout">
     <div id="map-wrap">
@@ -618,9 +619,11 @@ function toggleCoverage(){
 }
 
 function updateCoverageVisibility(){
-  const zoomedInEnough = map.getZoom() >= MIN_COVERAGE_ZOOM;
+  const zoom = map.getZoom();
+  const zoomedInEnough = zoom >= MIN_COVERAGE_ZOOM;
   coverageLayer.setMap(coverageOn && zoomedInEnough ? map : null);
   document.getElementById('coverage-zoom-hint').style.display = (coverageOn && !zoomedInEnough) ? 'block' : 'none';
+  document.getElementById('zoom-readout-num').textContent = zoom;
 }
 
 function toggleLabels(){
