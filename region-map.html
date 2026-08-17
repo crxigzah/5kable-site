@@ -127,7 +127,7 @@
   }
   .app{
     display:grid;
-    grid-template-rows: auto auto 1fr;
+    grid-template-rows: auto 1fr;
     height:100vh;
   }
 
@@ -284,39 +284,21 @@
     #user-dropdown a { padding: 13px 16px; font-size: 14px; }
   }
 
-  /* ---------- header ---------- */
-  header{
+  /* ---------- side panel toolbar (search / labels / coverage count) ----------
+     Used to live in a standalone header row of its own; folded into the
+     side panel instead so the nav is the only bar at the top. */
+  .panel-toolbar{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .panel-toolbar-row{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:16px;
-    padding:14px 22px;
-    background: linear-gradient(180deg, var(--panel), var(--panel) 90%, transparent);
-    border-bottom:1px solid var(--line);
-    z-index:5;
-  }
-  .brand{
-    display:flex;
-    align-items:center;
     gap:10px;
-    font-family: var(--font-display);
   }
-  .home-link{
-    display:flex; align-items:center; justify-content:center;
-    width:38px; height:38px;
-    text-decoration:none;
-  }
-  .brand h1{
-    font-size:18px;
-    font-weight:600;
-    margin:0;
-    letter-spacing:.01em;
-  }
-  .hdr-right{
-    display:flex;
-    align-items:center;
-    gap:14px;
-  }
+  .panel-toolbar .search-wrap input{ width:100%; }
   .count-badge{
     display:flex;
     flex-direction:column;
@@ -800,32 +782,11 @@
   </nav>
   <div class="nav-scrim" id="nav-scrim" onclick="closeMobileNav()"></div>
 
-  <button class="panel-toggle-btn" id="panelToggle">
-    Countries
-    <span class="badge" id="panelToggleBadge" style="display:none;">0</span>
-  </button>
-
-  <header>
-    <div class="brand">
-      <a href="/" class="home-link" title="Back to 5kable">
-        <img src="/favicon-32x32.png" alt="" width="30" height="30" style="border-radius:50%;display:block;">
-      </a>
-    </div>
-    <div class="hdr-right">
-      <div class="search-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input id="searchInput" type="text" placeholder="Find a country…" autocomplete="off">
-      </div>
-      <button class="btn btn-hdr" id="labelsBtn">🏷️ HIDE LABELS</button>
-      <button class="btn btn-hdr" id="backToWorldBtn" style="display:none;">← WORLD MAP</button>
-      <div class="count-badge">
-        <span class="n" id="countBadge">114</span>
-        <span class="l">COVERED REGIONS</span>
-      </div>
-    </div>
-  </header>
-
   <main>
+    <button class="panel-toggle-btn" id="panelToggle">
+      Countries
+      <span class="badge" id="panelToggleBadge" style="display:none;">0</span>
+    </button>
     <div class="map-stage" id="mapStage">
       <div class="hud" id="hud">LAT — · LON —</div>
       <div class="map-tooltip" id="countryHoverTooltip"></div>
@@ -855,6 +816,20 @@
     </div>
 
     <aside id="sidePanel">
+      <div class="panel-section panel-toolbar">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="searchInput" type="text" placeholder="Find a country…" autocomplete="off">
+        </div>
+        <div class="panel-toolbar-row">
+          <button class="btn btn-hdr" id="labelsBtn">🏷️ HIDE LABELS</button>
+          <div class="count-badge">
+            <span class="n" id="countBadge">114</span>
+            <span class="l">COVERED REGIONS</span>
+          </div>
+        </div>
+      </div>
+
       <div class="panel-section" id="countriesPanelHeader" style="border-bottom:none; padding-bottom:6px;">
         <h2>All Covered Countries</h2>
         <div class="selected-empty" style="margin-top:-2px;margin-bottom:8px;">Click a country to see all its regions labeled on the map.</div>
@@ -862,6 +837,7 @@
       <div class="region-list" id="regionList"></div>
 
       <div class="panel-section" id="countryRegionsPanelHeader" style="display:none;border-bottom:none;padding-bottom:6px;">
+        <button class="btn btn-hdr" id="backToWorldBtn" style="display:none;margin-bottom:10px;">← WORLD MAP</button>
         <h2 id="countryRegionsTitle">Regions</h2>
         <div class="selected-empty" style="margin-top:-2px;margin-bottom:8px;">Click a color swatch to assign that region a group, or ✕ to hide it.</div>
         <div style="display:flex;gap:8px;margin-top:8px;">
