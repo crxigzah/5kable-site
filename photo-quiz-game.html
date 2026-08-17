@@ -510,6 +510,23 @@ document.getElementById('nav-links').addEventListener('click', (e) => {
   });
 })();
 
+// Highlight whichever Games dropdown item matches the game currently being
+// played (path + ?type= query, since all three photo-quiz-game modes share
+// one file), and color the "Games" trigger to match so it reads at a
+// glance even before opening the dropdown.
+(function() {
+  const curPath = location.pathname.replace(/\.html$/, '');
+  document.querySelectorAll('.nav-dropdown-menu a[href]').forEach(a => {
+    const url = new URL(a.getAttribute('href'), location.origin);
+    if (url.pathname.replace(/\.html$/, '') === curPath && url.search === location.search) {
+      a.style.color = 'var(--teal)';
+      a.style.fontWeight = '700';
+      const trigger = a.closest('.nav-dropdown-wrap')?.querySelector(':scope > a');
+      if (trigger) trigger.style.color = 'var(--teal)';
+    }
+  });
+})();
+
 // Cached-login nav state -- reads whatever's already in localStorage
 // (same optimistic-from-cache approach index.html itself uses before its
 // own /auth/verify round trip confirms it) rather than re-verifying with
