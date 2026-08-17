@@ -154,15 +154,33 @@ nav::before {
 .btn-primary { background:linear-gradient(135deg,#00c9a7,#00a87d);color:#080810;font-weight:700; }
 .btn-primary:hover { opacity:0.9;transform:translateY(-1px); }
 
-/* Currency selector */
-.currency-picker {
-  display:flex;align-items:center;gap:4px;background:var(--card);border:1px solid var(--border);
-  border-radius:8px;padding:4px;
+/* Currency selector -- a dropdown rather than a fixed row of buttons,
+   since the full common-currency list (19 entries) would never fit as a
+   button row the way the original 4-currency GBP/USD/EUR/AUD set did. */
+.currency-dropdown-wrap { position:relative;display:inline-block; }
+.currency-dropdown-btn {
+  display:flex;align-items:center;gap:8px;
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:10px 16px;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;
+  transition:border-color .2s;
 }
-.currency-btn {
-  padding:3px 8px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:600;
-  background:transparent;color:var(--muted);transition:all .2s;
+.currency-dropdown-btn:hover { border-color:var(--teal); }
+.currency-dropdown-btn svg { flex-shrink:0;transition:transform .2s; }
+.currency-dropdown-wrap.open .currency-dropdown-btn svg { transform:rotate(180deg); }
+.currency-dropdown-menu {
+  display:none;position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  min-width:170px;max-height:280px;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:50;padding:6px 0;
 }
+.currency-dropdown-wrap.open .currency-dropdown-menu { display:block; }
+.currency-option {
+  display:flex;align-items:center;justify-content:space-between;width:100%;
+  background:transparent;border:none;color:var(--muted);font-size:13px;
+  padding:9px 16px;text-align:left;cursor:pointer;transition:background .15s,color .15s;
+}
+.currency-option:hover { background:var(--card2);color:var(--text); }
+.currency-option.active { color:var(--teal);font-weight:700; }
 
 /* Hero */
 .hero { text-align:center;padding:120px 40px 80px;max-width:860px;margin:0 auto;position:relative;z-index:1; }
@@ -380,8 +398,14 @@ nav::before {
 .compare-check.yes.pro { background:rgba(240,165,0,0.18);color:var(--gold); }
 .compare-check.no { background:rgba(255,255,255,0.05);color:var(--muted); }
 .price-name { font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px; }
-.price-amount { font-size:44px;font-weight:800;margin-bottom:4px; }
+/* flex + nowrap so the price and "/ month" never wrap onto separate
+   lines -- some currency symbols (A$, NZ$, HK$...) are wide enough at
+   44px that they used to push "/ month" onto its own line. .price-
+   display's own font-size shrinks via JS (setCurrency) instead, for
+   symbol+amount combinations too wide to fit at full size. */
+.price-amount { font-size:44px;font-weight:800;margin-bottom:4px;display:flex;align-items:baseline;gap:6px;white-space:nowrap; }
 .price-amount .curr { font-size:16px;color:var(--muted);font-weight:400; }
+.price-display.price-display-compact { font-size:0.72em; }
 .price-desc { font-size:13px;color:var(--muted);margin-bottom:24px; }
 .price-features { list-style:none;margin-bottom:28px;flex:1; }
 
@@ -1109,11 +1133,12 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       <h2 style="font-size:30px;font-weight:800;text-align:center;margin-bottom:32px;">Start free, upgrade when ready</h2>
       <p style="text-align:center;color:var(--muted);margin-bottom:24px;max-width:500px;margin-left:auto;margin-right:auto;">Start free with unlimited F7 captures and 3 daily training guides, or try Pro free for 3 days.</p>
       <div style="display:flex;justify-content:center;margin-bottom:32px;">
-        <div class="currency-picker" id="currency-picker">
-          <button class="currency-btn" data-code="GBP" onclick="setCurrency('GBP')">£</button>
-          <button class="currency-btn" data-code="USD" onclick="setCurrency('USD')">$</button>
-          <button class="currency-btn" data-code="EUR" onclick="setCurrency('EUR')">€</button>
-          <button class="currency-btn" data-code="AUD" onclick="setCurrency('AUD')">A$</button>
+        <div class="currency-dropdown-wrap" id="currency-dropdown-wrap">
+          <button class="currency-dropdown-btn" onclick="toggleCurrencyDropdown()">
+            <span id="currency-dropdown-label">GBP £</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+          <div class="currency-dropdown-menu" id="currency-dropdown-menu"></div>
         </div>
       </div>
       <div class="pricing">
@@ -4294,35 +4319,80 @@ wakeServer().then(() => checkAuth()).then(() => {
 });
 
 // ── Currency ──────────────────────────────────────────────
+// Rates are fixed approximations (GBP-based), same as the original
+// 4-currency version -- not a live feed, just a reasonable estimate for
+// display. decimals lets JPY (and any other zero-decimal currency) show
+// as a whole number instead of "¥1898.10".
 const CURRENCIES = {
-  GBP: { symbol: '£', rate: 1 },
-  USD: { symbol: '$', rate: 1.27 },
-  EUR: { symbol: '€', rate: 1.17 },
-  AUD: { symbol: 'A$', rate: 1.96 },
-  CAD: { symbol: 'C$', rate: 1.73 },
+  GBP: { symbol: '£',    rate: 1,    decimals: 2, label: 'GBP' },
+  USD: { symbol: '$',    rate: 1.27, decimals: 2, label: 'USD' },
+  EUR: { symbol: '€',    rate: 1.17, decimals: 2, label: 'EUR' },
+  AUD: { symbol: 'A$',   rate: 1.96, decimals: 2, label: 'AUD' },
+  CAD: { symbol: 'C$',   rate: 1.73, decimals: 2, label: 'CAD' },
+  NZD: { symbol: 'NZ$',  rate: 2.13, decimals: 2, label: 'NZD' },
+  CHF: { symbol: 'CHF',  rate: 1.13, decimals: 2, label: 'CHF' },
+  JPY: { symbol: '¥',    rate: 190,  decimals: 0, label: 'JPY' },
+  SEK: { symbol: 'kr',   rate: 13.3, decimals: 2, label: 'SEK' },
+  NOK: { symbol: 'kr',   rate: 13.5, decimals: 2, label: 'NOK' },
+  DKK: { symbol: 'kr',   rate: 8.7,  decimals: 2, label: 'DKK' },
+  SGD: { symbol: 'S$',   rate: 1.70, decimals: 2, label: 'SGD' },
+  HKD: { symbol: 'HK$',  rate: 9.9,  decimals: 2, label: 'HKD' },
+  INR: { symbol: '₹',    rate: 106,  decimals: 2, label: 'INR' },
+  ZAR: { symbol: 'R',    rate: 23.5, decimals: 2, label: 'ZAR' },
+  MXN: { symbol: 'MX$',  rate: 21.5, decimals: 2, label: 'MXN' },
+  BRL: { symbol: 'R$',   rate: 6.9,  decimals: 2, label: 'BRL' },
+  AED: { symbol: 'AED',  rate: 4.65, decimals: 2, label: 'AED' },
+  PLN: { symbol: 'zł',   rate: 5.0,  decimals: 2, label: 'PLN' },
 };
 let currentCurrency = localStorage.getItem('kbl_currency') || 'GBP';
+if (!CURRENCIES[currentCurrency]) currentCurrency = 'GBP'; // guards against a stale/removed code left in localStorage
 
 function formatPrice(gbpAmount) {
   const c = CURRENCIES[currentCurrency];
-  return c.symbol + (gbpAmount * c.rate).toFixed(2);
+  return c.symbol + (gbpAmount * c.rate).toFixed(c.decimals);
 }
+
+// Built from CURRENCIES rather than hardcoded HTML, same pattern as the
+// leaderboard's mini-game button row -- one list to keep in sync instead
+// of two.
+(function(){
+  const menu = document.getElementById('currency-dropdown-menu');
+  if (!menu) return;
+  menu.innerHTML = Object.entries(CURRENCIES).map(([code, c]) => `
+    <button class="currency-option" data-code="${code}" onclick="setCurrency('${code}')">
+      <span>${c.label}</span><span>${c.symbol}</span>
+    </button>`).join('');
+})();
+
+function toggleCurrencyDropdown(){
+  document.getElementById('currency-dropdown-wrap').classList.toggle('open');
+}
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('currency-dropdown-wrap');
+  if (wrap && wrap.classList.contains('open') && !wrap.contains(e.target)) {
+    wrap.classList.remove('open');
+  }
+});
 
 function setCurrency(code) {
   currentCurrency = code;
   localStorage.setItem('kbl_currency', code);
+  const c = CURRENCIES[code];
   document.querySelectorAll('.price-display').forEach(el => {
     const gbp = parseFloat(el.dataset.gbp);
-    const c = CURRENCIES[code];
-    const val = gbp === 0 ? c.symbol + '0' : c.symbol + (gbp * c.rate).toFixed(2);
+    const val = gbp === 0 ? c.symbol + '0' : c.symbol + (gbp * c.rate).toFixed(c.decimals);
     el.textContent = val;
+    // Symbols like A$/NZ$/HK$ plus a two-decimal amount can be too wide
+    // for the price card at full size -- shrink instead of letting
+    // .price-amount's flex/nowrap force an overflow.
+    el.classList.toggle('price-display-compact', val.length > 6);
   });
-  document.querySelectorAll('.currency-btn').forEach(b => {
-    const active = b.dataset.code === code;
-    b.style.background = active ? 'var(--teal)' : 'transparent';
-    b.style.color = active ? '#080810' : 'var(--muted)';
-    b.style.fontWeight = active ? '700' : '500';
+  document.querySelectorAll('.currency-option').forEach(opt => {
+    opt.classList.toggle('active', opt.dataset.code === code);
   });
+  const labelEl = document.getElementById('currency-dropdown-label');
+  if (labelEl) labelEl.textContent = `${c.label} ${c.symbol}`;
+  document.getElementById('currency-dropdown-wrap')?.classList.remove('open');
 }
 
 // ── Account Settings Modal ────────────────────────────────
