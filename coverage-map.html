@@ -702,7 +702,22 @@ const START_EXPORT_ZOOM = 11; // ceiling -- noticeably less blocky than country-
 // visible as a horizontal seam. Instead: crop it out of every individual
 // tile capture, then draw ONE compliant credit line onto the finished
 // composite -- satisfies the same requirement without the seam artifact.
-const ATTRIBUTION_CROP_PX = 30;
+// Generous on purpose: the bar's real rendered height varies a bit by
+// browser/OS font rendering, and a little extra cropped map content at
+// the bottom of each tile is free (the grid math below derives its
+// degrees-per-pixel from whatever this value leaves, so it self-adjusts)
+// -- erring toward over-cropping is free, under-cropping leaves the bar
+// partially visible.
+const ATTRIBUTION_CROP_PX = 46;
+
+// Tiles are placed edge-to-edge with no overlap, so any sub-pixel
+// difference between the measured tile size and where the browser
+// actually composites a captured frame (rounding, devicePixelRatio
+// quirks) can leave a hairline gap/seam at a tile boundary. Drawing each
+// tile slightly oversized so it overlaps its neighbor by a couple of
+// pixels covers that gap; the overlap harmlessly overdraws past the
+// composite canvas's own edge on the last row/column, which just clips.
+const TILE_OVERLAP_PX = 2;
 
 // Same world-atlas TopoJSON country boundaries region-map.html already
 // uses elsewhere on this site (derived from Natural Earth, public domain)
@@ -918,7 +933,7 @@ async function exportCoverageImage(){
         cctx.drawImage(
           video,
           rect.left * scale, rect.top * scale, rect.width * scale, usableCssHeight * scale,
-          c * tileW, r * tileH, tileW, tileH
+          c * tileW - TILE_OVERLAP_PX/2, r * tileH - TILE_OVERLAP_PX/2, tileW + TILE_OVERLAP_PX, tileH + TILE_OVERLAP_PX
         );
       }
     }
@@ -975,9 +990,18 @@ async function exportCoverageImage(){
 // dimensions vary a lot between a small country and a large one.
 function drawTitleOnCanvas(ctx, width, mainText, subText){
   const scrimHeight = Math.round(width * 0.16);
-  const grad = ctx.createLinearGradient(0, 0, width * 0.55, scrimHeight);
+  // A PURELY VERTICAL gradient -- a diagonal one here previously fills a
+  // WIDE-but-SHORT rectangle unevenly: a point on the rectangle's own
+  // bottom edge but far to the left projects onto the gradient LINE close
+  // to its start (since that projection depends on distance along the
+  // diagonal, not just y), landing near full opacity instead of fading
+  // out -- so the bottom-left corner (exactly where the title text sits)
+  // stayed dark right up to the rectangle's hard edge, a visible box.
+  // A vertical-only gradient fades to transparent by y=scrimHeight
+  // identically at every x, so there's no edge left to see.
+  const grad = ctx.createLinearGradient(0, 0, 0, scrimHeight);
   grad.addColorStop(0, 'rgba(10,10,10,0.75)');
-  grad.addColorStop(0.5, 'rgba(10,10,10,0.4)');
+  grad.addColorStop(0.6, 'rgba(10,10,10,0.35)');
   grad.addColorStop(1, 'rgba(10,10,10,0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, width, scrimHeight);
