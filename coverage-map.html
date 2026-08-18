@@ -266,17 +266,6 @@ nav::before {
   }
   .fs-btn:hover{ border-color:var(--teal); color:var(--teal); }
 
-  /* Rendered over the map only while an export capture is in progress --
-     mimics the title-block look on coverage maps like Plonkit's, but with
-     a gradient scrim behind the text (rather than a solid color block)
-     since it needs to stay legible over whatever terrain colors happen to
-     be under it for any given country, not just one fixed background. */
-  #export-title-overlay{
-    display:none; position:absolute; inset:0 0 auto 0; z-index:15; pointer-events:none;
-    padding:24px 26px; background:linear-gradient(160deg, rgba(10,10,10,.72) 0%, rgba(10,10,10,.4) 45%, transparent 75%);
-  }
-  #export-title-main{ font-size:28px; font-weight:800; color:#fff; letter-spacing:-.3px; text-shadow:0 2px 10px rgba(0,0,0,.5); }
-  #export-title-sub{ font-size:14px; font-weight:600; font-style:italic; color:rgba(255,255,255,.85); margin-top:4px; text-shadow:0 1px 6px rgba(0,0,0,.5); }
   #map-wrap.exporting .fs-btn{ display:none; }
 
   #map-wrap:fullscreen, #pano-panel:fullscreen{ border-radius:0; height:100%; width:100%; }
@@ -410,10 +399,6 @@ nav::before {
     <div id="map-wrap">
       <button class="fs-btn" id="map-fs-btn" onclick="toggleFullscreen('map-wrap','map-fs-btn')" title="Fullscreen map">⛶</button>
       <div id="map"></div>
-      <div id="export-title-overlay">
-        <div id="export-title-main"></div>
-        <div id="export-title-sub"></div>
-      </div>
     </div>
 
     <div id="pano-panel">
@@ -697,6 +682,18 @@ const EXPORT_MAP_STYLE = [
 // data, at the cost of a one-time "share this tab" browser permission
 // prompt -- an acceptable tradeoff for a low-frequency admin utility like
 // this, not something end users interact with.
+// Google's StreetViewCoverageLayer is a raster tile service that's
+// genuinely blocky below ~zoom 14 (see MIN_COVERAGE_ZOOM above) -- a
+// single screenshot at the zoom needed to fit a whole country in frame
+// (~6-8) is unavoidably blurry. There's no way to request finer coverage
+// tiles at a coarse zoom through the public Maps JS API. The workaround
+// here: capture many screenshots at a much finer, far-less-blocky zoom
+// across a grid covering the country, then stitch them into one composite
+// image -- using only the same official public layer, no scraped data.
+const MAX_EXPORT_TILES = 42; // hard cap so a huge country doesn't take forever
+const MIN_EXPORT_ZOOM = 7;   // floor -- never coarser than a rough single-shot
+const START_EXPORT_ZOOM = 11; // ceiling -- noticeably less blocky than country-fit
+
 async function exportCoverageImage(){
   const country = prompt('Country name for the title (e.g. "Cambodia"):');
   if (!country) return;
@@ -714,36 +711,49 @@ async function exportCoverageImage(){
   // "cambodia" would otherwise put an uncapitalized name straight into the
   // title text instead of the properly-cased "Cambodia" Google resolves it to.
   const displayName = (geocodeResult.address_components?.[0]?.long_name) || geocodeResult.formatted_address || country.trim();
+  const slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
   const mapWrap = document.getElementById('map-wrap');
   const exportBtn = document.getElementById('export-btn');
   const originalStyles = labelsOn ? [] : LABELS_OFF_STYLE;
-  const slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const originalCenter = map.getCenter();
+  const originalZoom = map.getZoom();
 
   exportBtn.disabled = true;
-  exportBtn.textContent = 'Rendering…';
   mapWrap.classList.add('exporting');
   map.setOptions({ styles: EXPORT_MAP_STYLE, disableDefaultUI: true });
-  map.fitBounds(bounds);
-  document.getElementById('export-title-main').textContent = `${displayName} Coverage Map`;
-  document.getElementById('export-title-sub').textContent = `5kable.net/metas/${slug}`;
-  document.getElementById('export-title-overlay').style.display = 'block';
+
+  const waitIdle = () => Promise.race([
+    new Promise(resolve => google.maps.event.addListenerOnce(map, 'idle', resolve)),
+    new Promise(resolve => setTimeout(resolve, 3000)),
+  ]);
 
   let stream = null;
   try {
-    // Races the 'idle' event against a fixed timeout -- addListenerOnce can
-    // hang forever if fitBounds() lands on a view Maps considers already
-    // settled (e.g. re-exporting the same country twice in a row), since
-    // 'idle' only fires again on an actual change, not unconditionally.
-    await Promise.race([
-      new Promise(resolve => google.maps.event.addListenerOnce(map, 'idle', resolve)),
-      new Promise(resolve => setTimeout(resolve, 4000)),
-    ]);
-    // Extra settle time for the coverage layer's own tiles specifically --
-    // the Maps API's 'idle' event fires once the BASE map view has
-    // settled, but doesn't wait on the separate StreetViewCoverageLayer
-    // overlay, which has no load-complete event of its own to hook.
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    const boundsNE = bounds.getNorthEast(), boundsSW = bounds.getSouthWest();
+    const countryLatSpan = boundsNE.lat() - boundsSW.lat();
+    const countryLngSpan = boundsNE.lng() - boundsSW.lng();
+    const centerLat = (boundsNE.lat() + boundsSW.lat()) / 2;
+    const centerLng = (boundsNE.lng() + boundsSW.lng()) / 2;
+
+    // Pick the finest zoom that keeps the tile grid under MAX_EXPORT_TILES,
+    // backing off toward MIN_EXPORT_ZOOM for large countries -- keeps
+    // export time roughly bounded regardless of how big the country is.
+    let zoom = START_EXPORT_ZOOM, tileLatSpan, tileLngSpan, cols, rows;
+    while (true) {
+      exportBtn.textContent = `Measuring tile grid (zoom ${zoom})…`;
+      map.setZoom(zoom);
+      map.setCenter({ lat: centerLat, lng: centerLng });
+      await waitIdle();
+      const b = map.getBounds();
+      const ne = b.getNorthEast(), sw = b.getSouthWest();
+      tileLatSpan = ne.lat() - sw.lat();
+      tileLngSpan = ne.lng() - sw.lng();
+      cols = Math.max(1, Math.ceil(countryLngSpan / tileLngSpan));
+      rows = Math.max(1, Math.ceil(countryLatSpan / tileLatSpan));
+      if (cols * rows <= MAX_EXPORT_TILES || zoom <= MIN_EXPORT_ZOOM) break;
+      zoom -= 1;
+    }
 
     exportBtn.textContent = 'Choose "This Tab" when prompted…';
     stream = await navigator.mediaDevices.getDisplayMedia({
@@ -751,24 +761,70 @@ async function exportCoverageImage(){
       preferCurrentTab: true, // Chrome-only convenience; ignored elsewhere
       selfBrowserSurface: 'include',
     });
+    // One stream, reused for every tile below -- getDisplayMedia only ever
+    // prompts once per call, so panning+recapturing from this same stream
+    // many times over doesn't re-prompt.
     const video = document.createElement('video');
     video.srcObject = stream;
     video.muted = true;
     await video.play();
-    await new Promise(resolve => setTimeout(resolve, 250)); // let a real frame land
+    await new Promise(resolve => setTimeout(resolve, 250));
 
     const rect = mapWrap.getBoundingClientRect();
     const scale = video.videoWidth / window.innerWidth;
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(rect.width * scale);
-    canvas.height = Math.round(rect.height * scale);
-    canvas.getContext('2d').drawImage(
-      video,
-      rect.left * scale, rect.top * scale, rect.width * scale, rect.height * scale,
-      0, 0, canvas.width, canvas.height
-    );
+    const tileW = Math.round(rect.width * scale);
+    const tileH = Math.round(rect.height * scale);
 
-    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const composite = document.createElement('canvas');
+    composite.width = cols * tileW;
+    composite.height = rows * tileH;
+    const cctx = composite.getContext('2d');
+
+    // Grid anchored at the country's actual north-west corner -- ceil()
+    // above means the grid can only ever overshoot to the south/east
+    // (a whole number of tiles rounds UP), never the north/west, so only
+    // the bottom-right ever needs trimming after compositing.
+    const gridNorth = boundsNE.lat();
+    const gridWest = boundsSW.lng();
+    const gridSouth = gridNorth - rows * tileLatSpan;
+    const gridEast = gridWest + cols * tileLngSpan;
+
+    let tileIndex = 0;
+    const totalTiles = cols * rows;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        tileIndex++;
+        exportBtn.textContent = `Capturing tile ${tileIndex}/${totalTiles}…`;
+        const tileCenterLat = gridNorth - (r + 0.5) * tileLatSpan;
+        const tileCenterLng = gridWest + (c + 0.5) * tileLngSpan;
+        map.setCenter({ lat: tileCenterLat, lng: tileCenterLng });
+        await waitIdle();
+        // Extra settle time for the coverage layer's own tiles specifically
+        // -- 'idle' fires once the BASE map view has settled, but doesn't
+        // wait on the separate StreetViewCoverageLayer overlay, which has
+        // no load-complete event of its own to hook.
+        await new Promise(resolve => setTimeout(resolve, 900));
+        cctx.drawImage(
+          video,
+          rect.left * scale, rect.top * scale, rect.width * scale, rect.height * scale,
+          c * tileW, r * tileH, tileW, tileH
+        );
+      }
+    }
+
+    const cropRightPx = Math.round((gridEast - boundsNE.lng()) / tileLngSpan * tileW);
+    const cropBottomPx = Math.round((boundsSW.lat() - gridSouth) / tileLatSpan * tileH);
+    const finalW = Math.max(1, composite.width - cropRightPx);
+    const finalH = Math.max(1, composite.height - cropBottomPx);
+
+    const final = document.createElement('canvas');
+    final.width = finalW;
+    final.height = finalH;
+    const fctx = final.getContext('2d');
+    fctx.drawImage(composite, 0, 0, finalW, finalH, 0, 0, finalW, finalH);
+    drawTitleOnCanvas(fctx, finalW, `${displayName} Coverage Map`, `5kable.net/metas/${slug}`);
+
+    const blob = await new Promise(resolve => final.toBlob(resolve, 'image/png'));
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -780,11 +836,38 @@ async function exportCoverageImage(){
   } finally {
     if (stream) stream.getTracks().forEach(t => t.stop());
     map.setOptions({ styles: originalStyles, disableDefaultUI: false });
-    document.getElementById('export-title-overlay').style.display = 'none';
+    map.setCenter(originalCenter);
+    map.setZoom(originalZoom);
     mapWrap.classList.remove('exporting');
     exportBtn.disabled = false;
     exportBtn.textContent = '📸 Export Coverage Image';
   }
+}
+
+// The final image is assembled from many stitched tiles rather than one
+// screenshot, so the title is drawn straight onto the canvas instead of
+// relying on the DOM overlay a single screenshot would have picked up.
+// Sized proportionally to the image width since stitched output
+// dimensions vary a lot between a small country and a large one.
+function drawTitleOnCanvas(ctx, width, mainText, subText){
+  const scrimHeight = Math.round(width * 0.16);
+  const grad = ctx.createLinearGradient(0, 0, width * 0.55, scrimHeight);
+  grad.addColorStop(0, 'rgba(10,10,10,0.75)');
+  grad.addColorStop(0.5, 'rgba(10,10,10,0.4)');
+  grad.addColorStop(1, 'rgba(10,10,10,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, width, scrimHeight);
+
+  const mainSize = Math.max(14, Math.round(width * 0.032));
+  const subSize = Math.max(10, Math.round(width * 0.016));
+  const pad = Math.max(10, Math.round(width * 0.022));
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#fff';
+  ctx.font = `800 ${mainSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.fillText(mainText, pad, pad);
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.font = `italic 600 ${subSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.fillText(subText, pad, pad + mainSize + 6);
 }
 
 function toggleFullscreen(elId, btnId){
