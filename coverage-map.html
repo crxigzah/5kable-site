@@ -266,6 +266,19 @@ nav::before {
   }
   .fs-btn:hover{ border-color:var(--teal); color:var(--teal); }
 
+  /* Rendered over the map only while an export capture is in progress --
+     mimics the title-block look on coverage maps like Plonkit's, but with
+     a gradient scrim behind the text (rather than a solid color block)
+     since it needs to stay legible over whatever terrain colors happen to
+     be under it for any given country, not just one fixed background. */
+  #export-title-overlay{
+    display:none; position:absolute; inset:0 0 auto 0; z-index:15; pointer-events:none;
+    padding:24px 26px; background:linear-gradient(160deg, rgba(10,10,10,.72) 0%, rgba(10,10,10,.4) 45%, transparent 75%);
+  }
+  #export-title-main{ font-size:28px; font-weight:800; color:#fff; letter-spacing:-.3px; text-shadow:0 2px 10px rgba(0,0,0,.5); }
+  #export-title-sub{ font-size:14px; font-weight:600; font-style:italic; color:rgba(255,255,255,.85); margin-top:4px; text-shadow:0 1px 6px rgba(0,0,0,.5); }
+  #map-wrap.exporting .fs-btn{ display:none; }
+
   #map-wrap:fullscreen, #pano-panel:fullscreen{ border-radius:0; height:100%; width:100%; }
   #map-wrap:fullscreen #map{ height:100%; }
   #pano-panel:fullscreen #pano-view{ flex:1; }
@@ -389,6 +402,7 @@ nav::before {
     <button class="btn primary" onclick="jumpToSearch()">Search</button>
     <button class="btn active" id="coverage-toggle-btn" onclick="toggleCoverage()">🔵 Coverage: On</button>
     <button class="btn active" id="labels-toggle-btn" onclick="toggleLabels()">🏷️ Labels: On</button>
+    <button class="btn" id="export-btn" onclick="exportCoverageImage()">📸 Export Coverage Image</button>
   </div>
   <div id="coverage-zoom-hint" style="display:none;">Zoom in a bit to see coverage -- at world view it would just be one meaningless blob.</div>
 
@@ -396,6 +410,10 @@ nav::before {
     <div id="map-wrap">
       <button class="fs-btn" id="map-fs-btn" onclick="toggleFullscreen('map-wrap','map-fs-btn')" title="Fullscreen map">⛶</button>
       <div id="map"></div>
+      <div id="export-title-overlay">
+        <div id="export-title-main"></div>
+        <div id="export-title-sub"></div>
+      </div>
     </div>
 
     <div id="pano-panel">
@@ -645,6 +663,117 @@ function jumpToSearch(){
 document.getElementById('search-box').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') jumpToSearch();
 });
+
+// Approximates the clean, labels-free terrain look of coverage maps like
+// Plonkit's -- Google's default roadmap styling (white/yellow road lines,
+// POI icons, place labels) would visually compete with the coverage
+// layer's own lines, so nearly everything except landscape/water/the
+// country outline is turned off.
+const EXPORT_MAP_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#a8d5a2' }] },
+  { elementType: 'labels', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#4a90c4' }] },
+  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#a8d5a2' }] },
+  { featureType: 'landscape.natural.terrain', elementType: 'geometry', stylers: [{ color: '#8fc98a' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#7fbf7a' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', stylers: [{ visibility: 'off' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  // Google's built-in country border stroke -- not a pixel-perfect country
+  // silhouette clip like Plonkit's, but a real border with no extra
+  // boundary dataset needed, and the closest Maps' own styling language
+  // can get to it.
+  { featureType: 'administrative.country', elementType: 'geometry.stroke', stylers: [{ color: '#111111' }, { weight: 3 }] },
+  { featureType: 'administrative.province', stylers: [{ visibility: 'off' }] },
+];
+
+// Exports a screenshot of the map (with the live Street View coverage
+// layer, styled terrain, and a title overlay) as a downloadable PNG.
+// Can't read the map canvas's pixels directly (canvas.toDataURL /
+// getImageData) -- Google's map tiles are loaded cross-origin without the
+// CORS headers that would allow that, which taints the canvas and blocks
+// any pixel readout. Screen Capture API (getDisplayMedia) sidesteps that
+// entirely since it captures composited screen output, not tile pixel
+// data, at the cost of a one-time "share this tab" browser permission
+// prompt -- an acceptable tradeoff for a low-frequency admin utility like
+// this, not something end users interact with.
+async function exportCoverageImage(){
+  const country = prompt('Country name for the title (e.g. "Cambodia"):');
+  if (!country) return;
+
+  const geocodeResult = await new Promise((resolve) => {
+    geocoder.geocode({ address: country }, (results, status) => {
+      resolve(status === 'OK' && results[0] ? results[0] : null);
+    });
+  });
+  if (!geocodeResult) { alert('Could not find that country — try the full name.'); return; }
+  const bounds = geocodeResult.geometry.bounds || geocodeResult.geometry.viewport;
+  if (!bounds) { alert('Could not determine bounds for that country.'); return; }
+
+  const mapWrap = document.getElementById('map-wrap');
+  const exportBtn = document.getElementById('export-btn');
+  const originalStyles = labelsOn ? [] : LABELS_OFF_STYLE;
+  const slug = country.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+  exportBtn.disabled = true;
+  exportBtn.textContent = 'Rendering…';
+  mapWrap.classList.add('exporting');
+  map.setOptions({ styles: EXPORT_MAP_STYLE, disableDefaultUI: true });
+  map.fitBounds(bounds);
+  document.getElementById('export-title-main').textContent = `${country.trim()} Coverage Map`;
+  document.getElementById('export-title-sub').textContent = `5kable.net/metas/${slug}`;
+  document.getElementById('export-title-overlay').style.display = 'block';
+
+  let stream = null;
+  try {
+    await new Promise(resolve => google.maps.event.addListenerOnce(map, 'idle', resolve));
+    // Extra settle time for the coverage layer's own tiles specifically --
+    // the Maps API's 'idle' event fires once the BASE map view has
+    // settled, but doesn't wait on the separate StreetViewCoverageLayer
+    // overlay, which has no load-complete event of its own to hook.
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    exportBtn.textContent = 'Choose "This Tab" when prompted…';
+    stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { displaySurface: 'browser' },
+      preferCurrentTab: true, // Chrome-only convenience; ignored elsewhere
+      selfBrowserSurface: 'include',
+    });
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.muted = true;
+    await video.play();
+    await new Promise(resolve => setTimeout(resolve, 250)); // let a real frame land
+
+    const rect = mapWrap.getBoundingClientRect();
+    const scale = video.videoWidth / window.innerWidth;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(rect.width * scale);
+    canvas.height = Math.round(rect.height * scale);
+    canvas.getContext('2d').drawImage(
+      video,
+      rect.left * scale, rect.top * scale, rect.width * scale, rect.height * scale,
+      0, 0, canvas.width, canvas.height
+    );
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${slug}-coverage-map.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    if (e.name !== 'NotAllowedError') alert('Export failed: ' + e.message);
+  } finally {
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    map.setOptions({ styles: originalStyles, disableDefaultUI: false });
+    document.getElementById('export-title-overlay').style.display = 'none';
+    mapWrap.classList.remove('exporting');
+    exportBtn.disabled = false;
+    exportBtn.textContent = '📸 Export Coverage Image';
+  }
+}
 
 function toggleFullscreen(elId, btnId){
   const el = document.getElementById(elId);
