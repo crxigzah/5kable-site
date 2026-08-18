@@ -713,11 +713,19 @@ const ATTRIBUTION_CROP_PX = 46;
 // Tiles are placed edge-to-edge with no overlap, so any sub-pixel
 // difference between the measured tile size and where the browser
 // actually composites a captured frame (rounding, devicePixelRatio
-// quirks) can leave a hairline gap/seam at a tile boundary. Drawing each
-// tile slightly oversized so it overlaps its neighbor by a couple of
-// pixels covers that gap; the overlap harmlessly overdraws past the
-// composite canvas's own edge on the last row/column, which just clips.
-const TILE_OVERLAP_PX = 2;
+// quirks) can leave a hairline gap/seam at a tile boundary. A gap means
+// those canvas pixels were never drawn to at all -- canvas defaults
+// undrawn pixels to fully transparent BLACK (rgba(0,0,0,0)), which is
+// exactly why a gap this thin shows up as a solid black line rather than
+// something obviously "missing": the color channel really is black, only
+// the alpha is 0, and PNG viewers/pipelines that don't respect alpha
+// (very common) render that as opaque black. Drawing each tile
+// oversized so it overlaps its neighbors covers the gap outright.
+// Generous on purpose, same reasoning as ATTRIBUTION_CROP_PX above -- a
+// real getDisplayMedia capture's sub-pixel scaling behavior can't be
+// reproduced by a synthetic test stream, so erring toward a bigger
+// margin than seems necessary is the safe direction, not a tiny one.
+const TILE_OVERLAP_PX = 8;
 
 // Same world-atlas TopoJSON country boundaries region-map.html already
 // uses elsewhere on this site (derived from Natural Earth, public domain)
@@ -905,6 +913,12 @@ async function exportCoverageImage(){
     composite.width = cols * tileW;
     composite.height = rows * tileH;
     const cctx = composite.getContext('2d');
+    // Defense-in-depth alongside the tile overlap above: pre-fill with the
+    // export style's own base terrain color, so ANY pixel the tiles don't
+    // end up covering shows as terrain-colored instead of defaulting to
+    // transparent black.
+    cctx.fillStyle = '#a8d5a2';
+    cctx.fillRect(0, 0, composite.width, composite.height);
 
     // Grid anchored at the country's actual north-west corner -- ceil()
     // above means the grid can only ever overshoot to the south/east
