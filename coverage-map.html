@@ -658,7 +658,11 @@ document.getElementById('search-box').addEventListener('keydown', (e) => {
 const EXPORT_MAP_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#a8d5a2' }] },
   { elementType: 'labels', stylers: [{ visibility: 'off' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#4a90c4' }] },
+  // Deliberately desaturated/low-contrast, NOT the usual bright map blue --
+  // recolorCoverageLines() below hunts for exactly that hue range to make
+  // the coverage layer pop, and a normal saturated water blue would get
+  // caught by the same detection and repainted along with it.
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#39445a' }] },
   { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#a8d5a2' }] },
   { featureType: 'landscape.natural.terrain', elementType: 'geometry', stylers: [{ color: '#8fc98a' }] },
   { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#7fbf7a' }] },
@@ -672,6 +676,42 @@ const EXPORT_MAP_STYLE = [
   { featureType: 'administrative.country', elementType: 'geometry.stroke', stylers: [{ color: '#111111' }, { weight: 3 }] },
   { featureType: 'administrative.province', stylers: [{ visibility: 'off' }] },
 ];
+
+// StreetViewCoverageLayer's own rendered color isn't customizable through
+// the Maps JavaScript API at all -- there's no style/color option exposed
+// for it, unlike every other feature above. This is the workaround: since
+// the export is a real canvas by this point (not a live map), pixels
+// matching Google's own blue can be found and repainted directly. HSL
+// hue/saturation/lightness rather than a single exact RGB match, since a
+// captured-video-then-recompressed pixel won't be bit-for-bit identical
+// to Google's source color even where it's clearly still "that blue".
+const COVERAGE_TARGET_COLOR = [255, 32, 145]; // vivid pink, matching the reference look this whole feature was built to approximate
+function recolorCoverageLines(ctx, width, height){
+  const imgData = ctx.getImageData(0, 0, width, height);
+  const d = imgData.data;
+  const [tr, tg, tb] = COVERAGE_TARGET_COLOR;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i], g = d[i+1], b = d[i+2];
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    if (max === min) continue; // pure gray (borders, scrims) -- never coverage
+    const delta = max - min;
+    const lightness = (max + min) / 2;
+    const saturation = delta / (255 - Math.abs(2 * lightness - 255));
+    let hue;
+    if (max === r) hue = ((g - b) / delta) % 6;
+    else if (max === g) hue = (b - r) / delta + 2;
+    else hue = (r - g) / delta + 4;
+    hue = hue * 60;
+    if (hue < 0) hue += 360;
+    // Google's coverage blue sits solidly in this range at meaningful
+    // saturation/lightness -- the desaturated water color above and the
+    // near-black borders/scrims both fall well outside it.
+    if (hue >= 195 && hue <= 235 && saturation > 0.35 && lightness > 60 && lightness < 220) {
+      d[i] = tr; d[i+1] = tg; d[i+2] = tb;
+    }
+  }
+  ctx.putImageData(imgData, 0, 0);
+}
 
 // Exports a screenshot of the map (with the live Street View coverage
 // layer, styled terrain, and a title overlay) as a downloadable PNG.
@@ -977,6 +1017,9 @@ async function exportCoverageImage(){
     final.height = finalH;
     const fctx = final.getContext('2d');
     fctx.drawImage(composite, 0, 0, finalW, finalH, 0, 0, finalW, finalH);
+
+    exportBtn.textContent = 'Recoloring coverage lines…';
+    recolorCoverageLines(fctx, finalW, finalH);
 
     // Same linear degree-to-pixel mapping already used to place every tile
     // above, reused here so the country-shape mask lines up with the
