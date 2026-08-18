@@ -997,6 +997,14 @@ async function exportCoverageImage(){
           document.getElementById('debug-img-raw').src = rawCanvas.toDataURL('image/png');
           document.getElementById('debug-img-cropped').src = croppedCanvas.toDataURL('image/png');
           document.getElementById('debug-close-btn').onclick = () => debugPanel.remove();
+          // Blocking on purpose -- alert() halts JS execution entirely
+          // until dismissed, so there's no race against the export
+          // continuing, no chance of the panel getting covered or torn
+          // down by anything else happening, and no time pressure to
+          // screenshot it fast. The panel is already rendered underneath
+          // by this point, so it's still there (and still interactive)
+          // the moment this dialog is dismissed.
+          alert('Debug tiles are showing behind this dialog. Click OK, then screenshot the panel (it stays open) before closing it.');
         }
       }
     }
