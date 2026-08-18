@@ -710,23 +710,35 @@ async function exportCoverageImage(){
   const bounds = geocodeResult.geometry.bounds || geocodeResult.geometry.viewport;
   if (!bounds) { alert('Could not determine bounds for that country.'); return; }
 
+  // Use the geocoder's own name, not the raw prompt() input -- typing
+  // "cambodia" would otherwise put an uncapitalized name straight into the
+  // title text instead of the properly-cased "Cambodia" Google resolves it to.
+  const displayName = (geocodeResult.address_components?.[0]?.long_name) || geocodeResult.formatted_address || country.trim();
+
   const mapWrap = document.getElementById('map-wrap');
   const exportBtn = document.getElementById('export-btn');
   const originalStyles = labelsOn ? [] : LABELS_OFF_STYLE;
-  const slug = country.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const slug = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
   exportBtn.disabled = true;
   exportBtn.textContent = 'Rendering…';
   mapWrap.classList.add('exporting');
   map.setOptions({ styles: EXPORT_MAP_STYLE, disableDefaultUI: true });
   map.fitBounds(bounds);
-  document.getElementById('export-title-main').textContent = `${country.trim()} Coverage Map`;
+  document.getElementById('export-title-main').textContent = `${displayName} Coverage Map`;
   document.getElementById('export-title-sub').textContent = `5kable.net/metas/${slug}`;
   document.getElementById('export-title-overlay').style.display = 'block';
 
   let stream = null;
   try {
-    await new Promise(resolve => google.maps.event.addListenerOnce(map, 'idle', resolve));
+    // Races the 'idle' event against a fixed timeout -- addListenerOnce can
+    // hang forever if fitBounds() lands on a view Maps considers already
+    // settled (e.g. re-exporting the same country twice in a row), since
+    // 'idle' only fires again on an actual change, not unconditionally.
+    await Promise.race([
+      new Promise(resolve => google.maps.event.addListenerOnce(map, 'idle', resolve)),
+      new Promise(resolve => setTimeout(resolve, 4000)),
+    ]);
     // Extra settle time for the coverage layer's own tiles specifically --
     // the Maps API's 'idle' event fires once the BASE map view has
     // settled, but doesn't wait on the separate StreetViewCoverageLayer
