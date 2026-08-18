@@ -964,63 +964,6 @@ async function exportCoverageImage(){
           rect.left * scale, rect.top * scale, rect.width * scale, usableCssHeight * scale,
           c * tileW - TILE_OVERLAP_PX/2, r * tileH - TILE_OVERLAP_PX/2, tileW + TILE_OVERLAP_PX, tileH + TILE_OVERLAP_PX
         );
-        // TEMPORARY DIAGNOSTIC (remove once the black-line cause is found):
-        // saves the very first tile both as the FULL raw captured frame
-        // (uncropped) and as just the CROPPED region actually fed into the
-        // composite above, as two extra downloads. Answers directly
-        // whether a black bar already exists in one single frame capture
-        // (a per-frame problem) or only appears once tiles are stitched
-        // together (a compositing problem) -- two prior fixes aimed at the
-        // latter had zero visible effect, so this checks the assumption
-        // itself rather than guessing a third blind fix.
-        if (tileIndex === 1) {
-          const rawCanvas = document.createElement('canvas');
-          rawCanvas.width = Math.round(rect.width * scale);
-          rawCanvas.height = Math.round(rect.height * scale);
-          rawCanvas.getContext('2d').drawImage(
-            video,
-            rect.left * scale, rect.top * scale, rect.width * scale, rect.height * scale,
-            0, 0, rawCanvas.width, rawCanvas.height
-          );
-          const croppedCanvas = document.createElement('canvas');
-          croppedCanvas.width = tileW;
-          croppedCanvas.height = tileH;
-          croppedCanvas.getContext('2d').drawImage(
-            video,
-            rect.left * scale, rect.top * scale, rect.width * scale, usableCssHeight * scale,
-            0, 0, tileW, tileH
-          );
-          // Injected directly into the page as visible <img> elements
-          // rather than downloaded or opened in a new tab -- both of
-          // those are automatic-action browser permissions (multiple
-          // downloads, popups) tied to a "trusted user gesture", and by
-          // this point execution is many `await`s removed from the
-          // original button click, well past the window browsers honor
-          // that trust in (confirmed: only the FIRST auto-download came
-          // through last attempt, the second was silently blocked).
-          // Plain DOM insertion needs no such permission at all.
-          const debugPanel = document.createElement('div');
-          debugPanel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0a0a12;overflow:auto;padding:20px;';
-          debugPanel.innerHTML = `
-            <button id="debug-close-btn" style="position:fixed;top:16px;right:16px;z-index:2;padding:10px 18px;background:#1b1f2b;border:1px solid #2f3550;color:#eef0f6;border-radius:8px;cursor:pointer;font-size:13px;">✕ Close</button>
-            <h2 style="color:#eef0f6;font-family:sans-serif;">Debug: full raw capture (uncropped)</h2>
-            <img id="debug-img-raw" style="max-width:100%;border:2px solid #ff6b6b;display:block;margin-bottom:24px;">
-            <h2 style="color:#eef0f6;font-family:sans-serif;">Debug: cropped region actually used</h2>
-            <img id="debug-img-cropped" style="max-width:100%;border:2px solid #00c9a7;display:block;">
-          `;
-          document.body.appendChild(debugPanel);
-          document.getElementById('debug-img-raw').src = rawCanvas.toDataURL('image/png');
-          document.getElementById('debug-img-cropped').src = croppedCanvas.toDataURL('image/png');
-          document.getElementById('debug-close-btn').onclick = () => debugPanel.remove();
-          // Blocking on purpose -- alert() halts JS execution entirely
-          // until dismissed, so there's no race against the export
-          // continuing, no chance of the panel getting covered or torn
-          // down by anything else happening, and no time pressure to
-          // screenshot it fast. The panel is already rendered underneath
-          // by this point, so it's still there (and still interactive)
-          // the moment this dialog is dismissed.
-          alert('Debug tiles are showing behind this dialog. Click OK, then screenshot the panel (it stays open) before closing it.');
-        }
       }
     }
 
