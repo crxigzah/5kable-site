@@ -975,13 +975,28 @@ async function exportCoverageImage(){
             rect.left * scale, rect.top * scale, rect.width * scale, usableCssHeight * scale,
             0, 0, tileW, tileH
           );
-          for (const [name, cv] of [['debug-tile-full-raw', rawCanvas], ['debug-tile-cropped', croppedCanvas]]) {
-            const b = await new Promise(res => cv.toBlob(res, 'image/png'));
-            const u = URL.createObjectURL(b);
-            const dl = document.createElement('a');
-            dl.href = u; dl.download = `${name}.png`; dl.click();
-            URL.revokeObjectURL(u);
-          }
+          // Injected directly into the page as visible <img> elements
+          // rather than downloaded or opened in a new tab -- both of
+          // those are automatic-action browser permissions (multiple
+          // downloads, popups) tied to a "trusted user gesture", and by
+          // this point execution is many `await`s removed from the
+          // original button click, well past the window browsers honor
+          // that trust in (confirmed: only the FIRST auto-download came
+          // through last attempt, the second was silently blocked).
+          // Plain DOM insertion needs no such permission at all.
+          const debugPanel = document.createElement('div');
+          debugPanel.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0a0a12;overflow:auto;padding:20px;';
+          debugPanel.innerHTML = `
+            <button id="debug-close-btn" style="position:fixed;top:16px;right:16px;z-index:2;padding:10px 18px;background:#1b1f2b;border:1px solid #2f3550;color:#eef0f6;border-radius:8px;cursor:pointer;font-size:13px;">✕ Close</button>
+            <h2 style="color:#eef0f6;font-family:sans-serif;">Debug: full raw capture (uncropped)</h2>
+            <img id="debug-img-raw" style="max-width:100%;border:2px solid #ff6b6b;display:block;margin-bottom:24px;">
+            <h2 style="color:#eef0f6;font-family:sans-serif;">Debug: cropped region actually used</h2>
+            <img id="debug-img-cropped" style="max-width:100%;border:2px solid #00c9a7;display:block;">
+          `;
+          document.body.appendChild(debugPanel);
+          document.getElementById('debug-img-raw').src = rawCanvas.toDataURL('image/png');
+          document.getElementById('debug-img-cropped').src = croppedCanvas.toDataURL('image/png');
+          document.getElementById('debug-close-btn').onclick = () => debugPanel.remove();
         }
       }
     }
