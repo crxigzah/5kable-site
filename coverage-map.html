@@ -1018,7 +1018,7 @@ async function exportCoverageImage(){
 // Sized proportionally to the image width since stitched output
 // dimensions vary a lot between a small country and a large one.
 function drawTitleOnCanvas(ctx, width, mainText, subText){
-  const scrimHeight = Math.round(width * 0.16);
+  const scrimHeight = Math.round(width * 0.09);
   // A PURELY VERTICAL gradient -- a diagonal one here previously fills a
   // WIDE-but-SHORT rectangle unevenly: a point on the rectangle's own
   // bottom edge but far to the left projects onto the gradient LINE close
@@ -1035,9 +1035,9 @@ function drawTitleOnCanvas(ctx, width, mainText, subText){
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, width, scrimHeight);
 
-  const mainSize = Math.max(14, Math.round(width * 0.032));
-  const subSize = Math.max(10, Math.round(width * 0.016));
-  const pad = Math.max(10, Math.round(width * 0.022));
+  const mainSize = Math.max(12, Math.round(width * 0.02));
+  const subSize = Math.max(9, Math.round(width * 0.011));
+  const pad = Math.max(8, Math.round(width * 0.015));
   ctx.textBaseline = 'top';
   ctx.fillStyle = '#fff';
   ctx.font = `800 ${mainSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
