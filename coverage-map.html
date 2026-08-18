@@ -658,11 +658,14 @@ document.getElementById('search-box').addEventListener('keydown', (e) => {
 const EXPORT_MAP_STYLE = [
   { elementType: 'geometry', stylers: [{ color: '#a8d5a2' }] },
   { elementType: 'labels', stylers: [{ visibility: 'off' }] },
-  // Deliberately desaturated/low-contrast, NOT the usual bright map blue --
-  // recolorCoverageLines() below hunts for exactly that hue range to make
-  // the coverage layer pop, and a normal saturated water blue would get
-  // caught by the same detection and repainted along with it.
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#39445a' }] },
+  // Deliberately near-gray (very low saturation, hue barely matters) --
+  // recolorCoverageLines() below has to cast a wide net to catch coverage
+  // lines that arrive at the canvas heavily anti-aliased/blended with the
+  // green terrain (thin lines + video-capture compression wash them out a
+  // lot from Google's actual rendered color), and a saturation gate this
+  // low would happily catch any normal water blue too if it weren't kept
+  // this desaturated specifically to duck under it.
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#33363d' }] },
   { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#a8d5a2' }] },
   { featureType: 'landscape.natural.terrain', elementType: 'geometry', stylers: [{ color: '#8fc98a' }] },
   { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#7fbf7a' }] },
@@ -703,10 +706,18 @@ function recolorCoverageLines(ctx, width, height){
     else hue = (r - g) / delta + 4;
     hue = hue * 60;
     if (hue < 0) hue += 360;
-    // Google's coverage blue sits solidly in this range at meaningful
-    // saturation/lightness -- the desaturated water color above and the
-    // near-black borders/scrims both fall well outside it.
-    if (hue >= 195 && hue <= 235 && saturation > 0.35 && lightness > 60 && lightness < 220) {
+    // Wide on purpose: thin coverage lines get heavily anti-aliased into
+    // the surrounding green terrain, and video-capture compression washes
+    // color out further, so most of a real line's pixels land as a pale,
+    // fairly desaturated cyan-teal rather than a pure saturated blue --
+    // testing against actual "pure Google blue" swatches passed easily,
+    // but caught almost none of a real capture's pixels. Widened hue
+    // toward cyan/teal and dropped the saturation floor a lot to compensate.
+    // Safe to go this wide because the water color above is deliberately
+    // near-gray (very low saturation) specifically to duck under this
+    // gate regardless of where its hue happens to land, and terrain green
+    // sits at hue ~112-115°, well clear of this range on the low side.
+    if (hue >= 150 && hue <= 250 && saturation > 0.12 && lightness > 40 && lightness < 240) {
       d[i] = tr; d[i+1] = tg; d[i+2] = tb;
     }
   }
