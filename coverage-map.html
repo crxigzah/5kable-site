@@ -859,12 +859,42 @@ async function exportCoverageImage(){
     const centerLat = (boundsNE.lat() + boundsSW.lat()) / 2;
     const centerLng = (boundsNE.lng() + boundsSW.lng()) / 2;
 
-    // CSS-pixel size is fixed for the whole export (only the map's own
-    // content zooms/pans, not the container), so this can be read once,
-    // before requesting the capture stream. usableCssHeight excludes
-    // Google's required attribution strip along the bottom -- measuring
-    // the grid against this instead of the full height keeps the geo
-    // math and the tile crop below in sync with each other.
+    exportBtn.textContent = 'Choose "This Tab" when prompted…';
+    stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { displaySurface: 'browser' },
+      preferCurrentTab: true, // Chrome-only convenience; ignored elsewhere
+      selfBrowserSurface: 'include',
+    });
+    // One stream, reused for every tile below -- getDisplayMedia only ever
+    // prompts once per call, so panning+recapturing from this same stream
+    // many times over doesn't re-prompt.
+    const video = document.createElement('video');
+    video.srcObject = stream;
+    video.muted = true;
+    await video.play();
+    await new Promise(resolve => setTimeout(resolve, 250));
+
+    // Starting a screen share can change the browser's available viewport
+    // height (a "you are sharing this tab" indicator/border appearing),
+    // and #map-wrap's CSS height is defined in vh units -- so its actual
+    // rendered size can shift right at this point. Google Maps' own
+    // internal canvas does NOT automatically repaint to match a container
+    // resize that its own JS didn't cause; left alone, the map keeps
+    // rendering at its pre-share size and the leftover space (block
+    // content top-aligns, so this shows up at the BOTTOM) renders as
+    // blank/black -- exactly the mystery band from a debug-panel capture
+    // that showed the crop correctly removing Google's attribution text
+    // while an equally-tall black band remained anyway, unaffected by
+    // that crop's margin because it was never attribution at all.
+    // google.maps.event.trigger(map, 'resize') is the documented fix for
+    // this class of bug; re-centering afterward since triggering it can
+    // reset the map's own idea of where it's looking.
+    google.maps.event.trigger(map, 'resize');
+    map.setCenter({ lat: centerLat, lng: centerLng });
+    await waitIdle();
+
+    // Measured AFTER the resize trigger above, not before -- this is the
+    // container's real, final size for the whole capture session.
     const rect = mapWrap.getBoundingClientRect();
     const usableCssHeight = rect.height - ATTRIBUTION_CROP_PX;
 
@@ -889,21 +919,6 @@ async function exportCoverageImage(){
       if (cols * rows <= MAX_EXPORT_TILES || zoom <= MIN_EXPORT_ZOOM) break;
       zoom -= 1;
     }
-
-    exportBtn.textContent = 'Choose "This Tab" when prompted…';
-    stream = await navigator.mediaDevices.getDisplayMedia({
-      video: { displaySurface: 'browser' },
-      preferCurrentTab: true, // Chrome-only convenience; ignored elsewhere
-      selfBrowserSurface: 'include',
-    });
-    // One stream, reused for every tile below -- getDisplayMedia only ever
-    // prompts once per call, so panning+recapturing from this same stream
-    // many times over doesn't re-prompt.
-    const video = document.createElement('video');
-    video.srcObject = stream;
-    video.muted = true;
-    await video.play();
-    await new Promise(resolve => setTimeout(resolve, 250));
 
     const scale = video.videoWidth / window.innerWidth;
     const tileW = Math.round(rect.width * scale);
