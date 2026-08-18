@@ -949,6 +949,40 @@ async function exportCoverageImage(){
           rect.left * scale, rect.top * scale, rect.width * scale, usableCssHeight * scale,
           c * tileW - TILE_OVERLAP_PX/2, r * tileH - TILE_OVERLAP_PX/2, tileW + TILE_OVERLAP_PX, tileH + TILE_OVERLAP_PX
         );
+        // TEMPORARY DIAGNOSTIC (remove once the black-line cause is found):
+        // saves the very first tile both as the FULL raw captured frame
+        // (uncropped) and as just the CROPPED region actually fed into the
+        // composite above, as two extra downloads. Answers directly
+        // whether a black bar already exists in one single frame capture
+        // (a per-frame problem) or only appears once tiles are stitched
+        // together (a compositing problem) -- two prior fixes aimed at the
+        // latter had zero visible effect, so this checks the assumption
+        // itself rather than guessing a third blind fix.
+        if (tileIndex === 1) {
+          const rawCanvas = document.createElement('canvas');
+          rawCanvas.width = Math.round(rect.width * scale);
+          rawCanvas.height = Math.round(rect.height * scale);
+          rawCanvas.getContext('2d').drawImage(
+            video,
+            rect.left * scale, rect.top * scale, rect.width * scale, rect.height * scale,
+            0, 0, rawCanvas.width, rawCanvas.height
+          );
+          const croppedCanvas = document.createElement('canvas');
+          croppedCanvas.width = tileW;
+          croppedCanvas.height = tileH;
+          croppedCanvas.getContext('2d').drawImage(
+            video,
+            rect.left * scale, rect.top * scale, rect.width * scale, usableCssHeight * scale,
+            0, 0, tileW, tileH
+          );
+          for (const [name, cv] of [['debug-tile-full-raw', rawCanvas], ['debug-tile-cropped', croppedCanvas]]) {
+            const b = await new Promise(res => cv.toBlob(res, 'image/png'));
+            const u = URL.createObjectURL(b);
+            const dl = document.createElement('a');
+            dl.href = u; dl.download = `${name}.png`; dl.click();
+            URL.revokeObjectURL(u);
+          }
+        }
       }
     }
 
