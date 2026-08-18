@@ -806,13 +806,36 @@ async function getCountryBoundaryFeature(name){
       || null;
 }
 
+// Chaikin's corner-cutting algorithm: replaces each edge of a closed ring
+// with two new points at its 25%/75% marks, rounding off every vertex.
+// Run over a few iterations this visually smooths the blocky look caused
+// by the underlying boundary data's low resolution, without needing any
+// higher-resolution source data.
+function chaikinSmoothClosedRing(points, iterations){
+  let pts = points;
+  for (let iter = 0; iter < iterations; iter++) {
+    const next = [];
+    const n = pts.length;
+    for (let i = 0; i < n; i++) {
+      const p0 = pts[i];
+      const p1 = pts[(i + 1) % n];
+      next.push([p0[0] + (p1[0] - p0[0]) * 0.25, p0[1] + (p1[1] - p0[1]) * 0.25]);
+      next.push([p0[0] + (p1[0] - p0[0]) * 0.75, p0[1] + (p1[1] - p0[1]) * 0.75]);
+    }
+    pts = next;
+  }
+  return pts;
+}
+
 // "Punches a hole" the shape of the country out of a dark overlay covering
 // the whole canvas -- traces a full-canvas rectangle plus every ring of
 // every polygon in the SAME path, then fills with the 'evenodd' rule so
 // the country's own interior cancels back out of the rectangle's fill,
 // leaving only the area OUTSIDE it shaded. Also re-traces the boundary as
 // a crisp stroke, replacing Google's own cruder administrative.country
-// line with the same accurate polygon used for the mask itself.
+// line with the same accurate polygon used for the mask itself. Ring
+// points are projected once and Chaikin-smoothed before either the fill
+// or the stroke is traced, so the two stay pixel-identical.
 function applyCountryMask(ctx, width, height, feature, project){
   if (!feature) return;
   const polygons = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates]
@@ -820,13 +843,17 @@ function applyCountryMask(ctx, width, height, feature, project){
     : [];
   if (!polygons.length) return;
 
+  const smoothedPolygons = polygons.map(rings => rings.map(ring => {
+    const projected = ring.map(([lng, lat]) => project(lng, lat));
+    return chaikinSmoothClosedRing(projected, 2);
+  }));
+
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, width, height);
-  for (const rings of polygons) {
+  for (const rings of smoothedPolygons) {
     for (const ring of rings) {
-      ring.forEach(([lng, lat], i) => {
-        const [x, y] = project(lng, lat);
+      ring.forEach(([x, y], i) => {
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       });
       ctx.closePath();
@@ -840,11 +867,10 @@ function applyCountryMask(ctx, width, height, feature, project){
   ctx.strokeStyle = '#0d0d0d';
   ctx.lineWidth = Math.max(1.5, width * 0.0016);
   ctx.lineJoin = 'round';
-  for (const rings of polygons) {
+  for (const rings of smoothedPolygons) {
     for (const ring of rings) {
       ctx.beginPath();
-      ring.forEach(([lng, lat], i) => {
-        const [x, y] = project(lng, lat);
+      ring.forEach(([x, y], i) => {
         if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       });
       ctx.closePath();
@@ -1031,6 +1057,23 @@ async function exportCoverageImage(){
 
     exportBtn.textContent = 'Recoloring coverage lines…';
     recolorCoverageLines(fctx, finalW, finalH);
+
+    // Adjacent captured tiles rarely land on byte-identical colors for the
+    // same flat map area (video-frame compression noise), which reads as a
+    // faint grid of blocky seams, most visible over large flat regions like
+    // water. A very small blur smooths that out; running it after the
+    // recolor step (rather than as part of the composite->final copy above)
+    // keeps the coverage lines' own color classification working against
+    // crisp, unblurred pixels, and only softens the freshly solid-colored
+    // line edges slightly instead of muddying pale unrecolored ones.
+    const blurred = document.createElement('canvas');
+    blurred.width = finalW;
+    blurred.height = finalH;
+    const bctx = blurred.getContext('2d');
+    bctx.filter = 'blur(1px)';
+    bctx.drawImage(final, 0, 0);
+    fctx.clearRect(0, 0, finalW, finalH);
+    fctx.drawImage(blurred, 0, 0);
 
     // Same linear degree-to-pixel mapping already used to place every tile
     // above, reused here so the country-shape mask lines up with the
