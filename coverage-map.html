@@ -414,6 +414,7 @@ nav::before {
   </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script>
 function getToken() { return localStorage.getItem('kbl_token'); }
 function getUser()  { try { return JSON.parse(localStorage.getItem('kbl_user')); } catch(e) { return null; } }
@@ -694,6 +695,101 @@ const MAX_EXPORT_TILES = 42; // hard cap so a huge country doesn't take forever
 const MIN_EXPORT_ZOOM = 7;   // floor -- never coarser than a rough single-shot
 const START_EXPORT_ZOOM = 11; // ceiling -- noticeably less blocky than country-fit
 
+// Google's copyright/attribution bar at the bottom of every map view is
+// REQUIRED by their terms and can't be hidden via the API (disableDefaultUI
+// hides zoom/pan/street-view controls, but never the attribution). Left
+// alone, it repeats at every internal tile boundary in the stitched grid,
+// visible as a horizontal seam. Instead: crop it out of every individual
+// tile capture, then draw ONE compliant credit line onto the finished
+// composite -- satisfies the same requirement without the seam artifact.
+const ATTRIBUTION_CROP_PX = 30;
+
+// Same world-atlas TopoJSON country boundaries region-map.html already
+// uses elsewhere on this site (derived from Natural Earth, public domain)
+// -- reused here to mask the export down to just the selected country
+// instead of showing its neighbors in the same terrain colors. 50m
+// resolution (not the coarser 110m) since this needs to look reasonable
+// zoomed in, not just at whole-world scale.
+let worldAtlasFeaturesPromise = null;
+function loadWorldAtlasFeatures(){
+  if (!worldAtlasFeaturesPromise) {
+    worldAtlasFeaturesPromise = fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
+      .then(r => r.json())
+      .then(world => topojson.feature(world, world.objects.countries).features)
+      .catch(() => null);
+  }
+  return worldAtlasFeaturesPromise;
+}
+async function getCountryBoundaryFeature(name){
+  const features = await loadWorldAtlasFeatures();
+  if (!features) return null;
+  const target = name.trim().toLowerCase();
+  return features.find(f => (f.properties?.name || '').toLowerCase() === target)
+      || features.find(f => {
+           const n = (f.properties?.name || '').toLowerCase();
+           return n && (n.includes(target) || target.includes(n));
+         })
+      || null;
+}
+
+// "Punches a hole" the shape of the country out of a dark overlay covering
+// the whole canvas -- traces a full-canvas rectangle plus every ring of
+// every polygon in the SAME path, then fills with the 'evenodd' rule so
+// the country's own interior cancels back out of the rectangle's fill,
+// leaving only the area OUTSIDE it shaded. Also re-traces the boundary as
+// a crisp stroke, replacing Google's own cruder administrative.country
+// line with the same accurate polygon used for the mask itself.
+function applyCountryMask(ctx, width, height, feature, project){
+  if (!feature) return;
+  const polygons = feature.geometry.type === 'Polygon' ? [feature.geometry.coordinates]
+    : feature.geometry.type === 'MultiPolygon' ? feature.geometry.coordinates
+    : [];
+  if (!polygons.length) return;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, width, height);
+  for (const rings of polygons) {
+    for (const ring of rings) {
+      ring.forEach(([lng, lat], i) => {
+        const [x, y] = project(lng, lat);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+    }
+  }
+  ctx.fillStyle = 'rgba(6,7,10,0.82)';
+  ctx.fill('evenodd');
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = '#0d0d0d';
+  ctx.lineWidth = Math.max(1.5, width * 0.0016);
+  ctx.lineJoin = 'round';
+  for (const rings of polygons) {
+    for (const ring of rings) {
+      ctx.beginPath();
+      ring.forEach(([lng, lat], i) => {
+        const [x, y] = project(lng, lat);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      });
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawGoogleAttributionCredit(ctx, width, height){
+  const size = Math.max(9, Math.round(width * 0.009));
+  ctx.textBaseline = 'bottom';
+  ctx.textAlign = 'right';
+  ctx.font = `500 ${size}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.8)';
+  ctx.fillText(`Map data ©${new Date().getFullYear()} Google`, width - 10, height - 8);
+  ctx.textAlign = 'left';
+}
+
 async function exportCoverageImage(){
   const country = prompt('Country name for the title (e.g. "Cambodia"):');
   if (!country) return;
@@ -719,6 +815,10 @@ async function exportCoverageImage(){
   const originalCenter = map.getCenter();
   const originalZoom = map.getZoom();
 
+  // Kicked off now so the network fetch overlaps with the panning/capture
+  // work below instead of adding its own extra wait at the end.
+  const boundaryFeaturePromise = getCountryBoundaryFeature(displayName);
+
   exportBtn.disabled = true;
   mapWrap.classList.add('exporting');
   map.setOptions({ styles: EXPORT_MAP_STYLE, disableDefaultUI: true });
@@ -736,6 +836,15 @@ async function exportCoverageImage(){
     const centerLat = (boundsNE.lat() + boundsSW.lat()) / 2;
     const centerLng = (boundsNE.lng() + boundsSW.lng()) / 2;
 
+    // CSS-pixel size is fixed for the whole export (only the map's own
+    // content zooms/pans, not the container), so this can be read once,
+    // before requesting the capture stream. usableCssHeight excludes
+    // Google's required attribution strip along the bottom -- measuring
+    // the grid against this instead of the full height keeps the geo
+    // math and the tile crop below in sync with each other.
+    const rect = mapWrap.getBoundingClientRect();
+    const usableCssHeight = rect.height - ATTRIBUTION_CROP_PX;
+
     // Pick the finest zoom that keeps the tile grid under MAX_EXPORT_TILES,
     // backing off toward MIN_EXPORT_ZOOM for large countries -- keeps
     // export time roughly bounded regardless of how big the country is.
@@ -747,7 +856,10 @@ async function exportCoverageImage(){
       await waitIdle();
       const b = map.getBounds();
       const ne = b.getNorthEast(), sw = b.getSouthWest();
-      tileLatSpan = ne.lat() - sw.lat();
+      // Scaled to the USABLE portion of the viewport, not the full
+      // container -- Web Mercator's degrees-per-pixel is ~linear over a
+      // range this small, so this stays accurate to the excluded strip.
+      tileLatSpan = (ne.lat() - sw.lat()) * (usableCssHeight / rect.height);
       tileLngSpan = ne.lng() - sw.lng();
       cols = Math.max(1, Math.ceil(countryLngSpan / tileLngSpan));
       rows = Math.max(1, Math.ceil(countryLatSpan / tileLatSpan));
@@ -770,10 +882,9 @@ async function exportCoverageImage(){
     await video.play();
     await new Promise(resolve => setTimeout(resolve, 250));
 
-    const rect = mapWrap.getBoundingClientRect();
     const scale = video.videoWidth / window.innerWidth;
     const tileW = Math.round(rect.width * scale);
-    const tileH = Math.round(rect.height * scale);
+    const tileH = Math.round(usableCssHeight * scale);
 
     const composite = document.createElement('canvas');
     composite.width = cols * tileW;
@@ -806,7 +917,7 @@ async function exportCoverageImage(){
         await new Promise(resolve => setTimeout(resolve, 900));
         cctx.drawImage(
           video,
-          rect.left * scale, rect.top * scale, rect.width * scale, rect.height * scale,
+          rect.left * scale, rect.top * scale, rect.width * scale, usableCssHeight * scale,
           c * tileW, r * tileH, tileW, tileH
         );
       }
@@ -822,6 +933,19 @@ async function exportCoverageImage(){
     final.height = finalH;
     const fctx = final.getContext('2d');
     fctx.drawImage(composite, 0, 0, finalW, finalH, 0, 0, finalW, finalH);
+
+    // Same linear degree-to-pixel mapping already used to place every tile
+    // above, reused here so the country-shape mask lines up with the
+    // imagery underneath it.
+    const project = (lng, lat) => [
+      (lng - gridWest) / tileLngSpan * tileW,
+      (gridNorth - lat) / tileLatSpan * tileH,
+    ];
+    exportBtn.textContent = 'Masking to country outline…';
+    const boundaryFeature = await boundaryFeaturePromise;
+    applyCountryMask(fctx, finalW, finalH, boundaryFeature, project);
+
+    drawGoogleAttributionCredit(fctx, finalW, finalH);
     drawTitleOnCanvas(fctx, finalW, `${displayName} Coverage Map`, `5kable.net/metas/${slug}`);
 
     const blob = await new Promise(resolve => final.toBlob(resolve, 'image/png'));
