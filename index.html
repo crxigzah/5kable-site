@@ -2866,7 +2866,7 @@ async function openTicketThread(id){
     document.getElementById('ticket-thread-messages').innerHTML = renderTicketThreadMessages(data.messages);
     document.getElementById('ticket-thread-messages').style.display = 'flex';
     lastKnownTicketMessageCount = (data.messages || []).length;
-    setTicketReplyLocked(data.status === 'closed' || data.status === 'resolved');
+    setTicketReplyLocked(data.status === 'closed' || data.status === 'resolved' || data.status === 'denied');
     loadTicketUnreadBadge(); // this GET just marked it read server-side
   } catch(e) {
     document.getElementById('ticket-thread-messages').innerHTML = `<div style="color:#ff6b6b;font-size:13px;">${e.message}</div>`;
@@ -2891,7 +2891,7 @@ async function openTicketThread(id){
       statusEl.textContent = s.label;
       statusEl.style.background = s.bg;
       statusEl.style.color = s.color;
-      setTicketReplyLocked(data.status === 'closed' || data.status === 'resolved');
+      setTicketReplyLocked(data.status === 'closed' || data.status === 'resolved' || data.status === 'denied');
     } catch(e) {}
   }, 4000);
 }
