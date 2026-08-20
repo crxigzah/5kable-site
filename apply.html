@@ -430,7 +430,7 @@ const ROLE_DETAILS = {
       "An existing audience is great, but you don't need to have thousands of followers to apply",
       'Most importantly, someone who wants to help grow the geography community alongside 5kable',
     ],
-    commitment: 'A few hours a week, flexible around your schedule.',
+    compensation: 'Both paid and volunteer positions are available for this role.',
     closingNote: "We're not just looking for creators with big audiences, we're looking for people who can make geography fun.",
   },
   'discord-staff': {
@@ -445,7 +445,7 @@ const ROLE_DETAILS = {
       'Availability during active hours in the server',
       'Prior moderation experience is a plus, not required',
     ],
-    commitment: 'A few hours a week, ideally spread across different times of day.',
+    compensation: 'Both paid and volunteer positions are available for this role.',
   },
   'map-makers': {
     duties: [
@@ -458,7 +458,7 @@ const ROLE_DETAILS = {
       'Attention to detail',
       'Ability to write clear, useful guide content',
     ],
-    commitment: 'Flexible, project-based work.',
+    compensation: 'Both paid and volunteer positions are available for this role.',
   },
 };
 
@@ -479,8 +479,8 @@ function renderRoleDetail(roleKey) {
     ${section('🎯', "What you'll do", d.duties)}
     ${section('🔍', "What we're looking for", d.lookingFor)}
     <div class="apply-detail-section">
-      <h3>⏱️ Time commitment</h3>
-      <p>${escapeHtmlLocal(d.commitment)}</p>
+      <h3>💰 Compensation</h3>
+      <p>${escapeHtmlLocal(d.compensation)}</p>
     </div>
     ${closingNote}`;
   detailCard.style.display = 'block';
