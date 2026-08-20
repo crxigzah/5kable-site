@@ -580,15 +580,33 @@ function renderForm() {
   document.getElementById('apply-form').addEventListener('submit', onSubmit);
 }
 
-function renderSuccess() {
-  const label = ROLE_LABELS[roleKey];
+// Covers both a just-submitted application and returning to this page
+// after already applying -- same three end states either way.
+function renderApplicationStatus(status) {
   document.getElementById('apply-detail-card').style.display = 'none';
-  cardEl.innerHTML = `
-    <div class="apply-gate">
-      <div class="apply-gate-icon">✅</div>
-      <h2>Application submitted</h2>
-      <p>Your ${escapeHtmlLocal(label)} application is in. The team will review it and reach out via email if you are a good fit.</p>
-    </div>`;
+  const label = ROLE_LABELS[roleKey];
+  if (status === 'accepted') {
+    cardEl.innerHTML = `
+      <div class="apply-gate">
+        <div class="apply-gate-icon">🎉</div>
+        <h2>Application approved</h2>
+        <p>Your ${escapeHtmlLocal(label)} application was approved — welcome aboard! Check your email for next steps.</p>
+      </div>`;
+  } else if (status === 'denied') {
+    cardEl.innerHTML = `
+      <div class="apply-gate">
+        <div class="apply-gate-icon">📋</div>
+        <h2>Application not approved</h2>
+        <p>Your ${escapeHtmlLocal(label)} application wasn't successful this time.</p>
+      </div>`;
+  } else {
+    cardEl.innerHTML = `
+      <div class="apply-gate">
+        <div class="apply-gate-icon">✅</div>
+        <h2>Application submitted</h2>
+        <p>Your ${escapeHtmlLocal(label)} application is in. The team will review it and reach out via email if you are a good fit.</p>
+      </div>`;
+  }
 }
 
 async function onSubmit(e) {
@@ -648,7 +666,7 @@ async function onSubmit(e) {
       btn.textContent = 'Submit Application';
       return;
     }
-    renderSuccess();
+    renderApplicationStatus('pending');
   } catch (err) {
     errorEl.textContent = 'Something went wrong submitting your application. Please try again.';
     errorEl.style.display = 'block';
@@ -736,6 +754,15 @@ async function initApplyPage() {
     if (!data.linked) {
       renderGate('🔗', 'Connect Discord first', "We need to know who you are on Discord to send this application through and grant the role if you're accepted.",
         '<a href="/" target="_blank" class="btn btn-primary" style="display:inline-block;padding:12px 24px;">Connect Discord</a><p style="color:var(--muted);font-size:12px;margin-top:14px;">Opens the homepage in a new tab — go to Account Settings → Connect Discord, then come back and refresh this page.</p>');
+      return;
+    }
+
+    const statusRes = await fetch(`${API}/apply/status`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, role: roleKey }),
+    });
+    const statusData = await statusRes.json();
+    if (statusData.status && statusData.status !== 'none') {
+      renderApplicationStatus(statusData.status);
       return;
     }
     renderForm();
