@@ -183,6 +183,13 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 .apply-submit-btn:disabled { opacity:0.6;cursor:not-allowed; }
 .apply-error { background:rgba(255,76,106,0.1);border:1px solid rgba(255,76,106,0.3);color:var(--red);
   border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:20px;display:none; }
+.apply-detail-section { margin-bottom:22px; }
+.apply-detail-section:last-child { margin-bottom:0; }
+.apply-detail-section h3 { font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px; }
+.apply-detail-section ul { list-style:none;display:flex;flex-direction:column;gap:8px; }
+.apply-detail-section li { font-size:13px;color:var(--muted);padding-left:18px;position:relative;line-height:1.5; }
+.apply-detail-section li::before { content:'—';position:absolute;left:0;color:var(--teal); }
+.apply-detail-section p { font-size:13px;color:var(--muted);line-height:1.5; }
 </style>
 <link rel="icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -273,6 +280,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 </div>
 
 <div class="apply-wrap">
+  <div class="apply-card" id="apply-detail-card" style="display:none;margin-bottom:20px;"></div>
   <div class="apply-card" id="apply-card">
     <div style="text-align:center;color:var(--muted);padding:20px 0;">Loading…</div>
   </div>
@@ -396,6 +404,69 @@ const ROLE_DESCRIPTIONS = {
   'discord-staff': 'Help moderate the server, welcome new members, and keep things running smoothly.',
   'map-makers': "Help research metas, update guides, and improve 5kable's guide directory.",
 };
+// Placeholder copy -- ask Claude to swap any of this out once you've
+// decided on the real wording for each role.
+const ROLE_DETAILS = {
+  'content-creator': {
+    duties: [
+      'Create videos, clips, or posts about 5kable for TikTok, YouTube, or Instagram',
+      'Show off gameplay, tips, and new features',
+      'Work with the team on campaigns and announcements',
+    ],
+    lookingFor: [
+      'Some existing content or a portfolio that shows your style',
+      'Consistency — posting on a schedule you can actually keep up with',
+      'Genuine enthusiasm for the game',
+    ],
+    commitment: 'A few hours a week, flexible around your schedule.',
+  },
+  'discord-staff': {
+    duties: [
+      'Moderate chat and voice channels',
+      'Help onboard and welcome new members',
+      'Enforce server rules fairly and consistently',
+      'Assist with support tickets and general questions',
+    ],
+    lookingFor: [
+      'A calm, level-headed approach to conflict',
+      'Availability during active hours in the server',
+      'Prior moderation experience is a plus, not required',
+    ],
+    commitment: 'A few hours a week, ideally spread across different times of day.',
+  },
+  'map-makers': {
+    duties: [
+      'Research and verify metas for countries and regions',
+      'Keep existing guides accurate and up to date',
+      "Help expand 5kable's guide directory",
+    ],
+    lookingFor: [
+      'Strong GeoGuessr / Street View meta knowledge',
+      'Attention to detail',
+      'Ability to write clear, useful guide content',
+    ],
+    commitment: 'Flexible, project-based work.',
+  },
+};
+
+function renderRoleDetail(roleKey) {
+  const detailCard = document.getElementById('apply-detail-card');
+  const d = ROLE_DETAILS[roleKey];
+  if (!d) { detailCard.style.display = 'none'; return; }
+  const section = (icon, title, items) => `
+    <div class="apply-detail-section">
+      <h3>${icon} ${escapeHtmlLocal(title)}</h3>
+      <ul>${items.map(i => `<li>${escapeHtmlLocal(i)}</li>`).join('')}</ul>
+    </div>`;
+  detailCard.innerHTML = `
+    ${section('🎯', "What you'll do", d.duties)}
+    ${section('🔍', "What we're looking for", d.lookingFor)}
+    <div class="apply-detail-section">
+      <h3>⏱️ Time commitment</h3>
+      <p>${escapeHtmlLocal(d.commitment)}</p>
+    </div>`;
+  detailCard.style.display = 'block';
+}
 const ROLE_QUESTIONS = {
   'content-creator': [
     { label: 'Why do you want to be a Content Creator?', type: 'paragraph', required: true },
@@ -545,6 +616,7 @@ async function initApplyPage() {
   }
   document.getElementById('apply-role-title').textContent = `Apply: ${ROLE_LABELS[roleKey]}`;
   document.getElementById('apply-role-desc').textContent = ROLE_DESCRIPTIONS[roleKey];
+  renderRoleDetail(roleKey);
 
   fetch(`${API}/apply/role_info?role=${encodeURIComponent(roleKey)}`)
     .then(r => r.json())
