@@ -856,12 +856,6 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <!-- Stripe recommends always loading Elements straight from their own
-       CDN rather than self-hosting/bundling it — that's part of how it
-       stays PCI-compliant and gets their fraud-detection updates. Only
-       actually initialized (see getStripeJs()) the first time someone
-       opens the in-app "Add a card" form, not on every page load. -->
-  <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
 
@@ -4065,45 +4059,77 @@ function initHeroGlobe(){
     heroRenderer.render(heroScene, heroCamera);
   }
 
-  // 10m (1:10,000,000 scale) -- world-atlas's highest-resolution file.
-  // 50m still visibly simplified small islands into rough angular blobs
-  // (Indonesia/Philippines-style archipelagos are the worst case: lots of
-  // small landmasses, each reduced to only a handful of vertices at 50m).
-  // 10m is a larger one-time download, but it's fetched once, cached by
-  // the browser, and this is the only remaining lever for coastline
-  // detail -- the texture resolution and internal-border stroke were
-  // already addressed separately.
-  d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json').then(world => {
-    // At least one feature in this specific 10m file (Maldives, id 462)
-    // has an inverted ring winding -- confirmed by rendering this exact
-    // dataset locally and checking d3.geoBounds() per feature, which
-    // returned [[-180,-90],[180,90]] (the entire sphere) for it alone.
-    // d3-geo is spherical-aware, so a wrongly-wound ring gets interpreted
-    // as "everything except this tiny island" rather than "just this
-    // tiny island" -- filling that feature paints almost the whole
-    // texture solid, which is what turned the globe into a flat teal
-    // sphere with no visible ocean. Filtering out any feature whose
-    // bounds are a degenerate whole-sphere box (rather than hardcoding
-    // Maldives' id) also guards against any other similarly malformed
-    // feature in this dataset.
-    // Kept in lockstep (same filter, same order) so landGeometries can be
-    // handed to topojson.merge() below for the single coastline outline —
-    // merge() needs the raw TopoJSON geometry objects, not GeoJSON
-    // features, so this can't just be derived from `features` alone.
-    const allGeometries = world.objects.countries.geometries;
-    const allFeatures = topojson.feature(world, world.objects.countries).features;
-    const keepIdx = allFeatures.map((f, i) => {
-      const b = d3.geoBounds(f);
-      return (b[0][0] === -180 && b[0][1] === -90 && b[1][0] === 180 && b[1][1] === 90) ? -1 : i;
-    }).filter(i => i !== -1);
-    const features = keepIdx.map(i => allFeatures[i]);
-    const landGeometries = keepIdx.map(i => allGeometries[i]);
-    paintHeroTexture(features, landGeometries, world);
-    bakeDownsampledHeroTexture();
+  function finishHeroGlobeSetup(){
     heroTexture.needsUpdate = true;
     resizeHeroGlobe();
     animateHeroGlobe();
-  }).catch(() => { /* hero globe just doesn't render if this fails — page still works fine */ });
+  }
+
+  function renderHeroGlobeFromScratch(){
+    // 10m (1:10,000,000 scale) -- world-atlas's highest-resolution file.
+    // 50m still visibly simplified small islands into rough angular blobs
+    // (Indonesia/Philippines-style archipelagos are the worst case: lots of
+    // small landmasses, each reduced to only a handful of vertices at 50m).
+    // 10m is a larger one-time download, but it's fetched once, cached by
+    // the browser, and this is the only remaining lever for coastline
+    // detail -- the texture resolution and internal-border stroke were
+    // already addressed separately.
+    d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json').then(world => {
+      // At least one feature in this specific 10m file (Maldives, id 462)
+      // has an inverted ring winding -- confirmed by rendering this exact
+      // dataset locally and checking d3.geoBounds() per feature, which
+      // returned [[-180,-90],[180,90]] (the entire sphere) for it alone.
+      // d3-geo is spherical-aware, so a wrongly-wound ring gets interpreted
+      // as "everything except this tiny island" rather than "just this
+      // tiny island" -- filling that feature paints almost the whole
+      // texture solid, which is what turned the globe into a flat teal
+      // sphere with no visible ocean. Filtering out any feature whose
+      // bounds are a degenerate whole-sphere box (rather than hardcoding
+      // Maldives' id) also guards against any other similarly malformed
+      // feature in this dataset.
+      // Kept in lockstep (same filter, same order) so landGeometries can be
+      // handed to topojson.merge() below for the single coastline outline —
+      // merge() needs the raw TopoJSON geometry objects, not GeoJSON
+      // features, so this can't just be derived from `features` alone.
+      const allGeometries = world.objects.countries.geometries;
+      const allFeatures = topojson.feature(world, world.objects.countries).features;
+      const keepIdx = allFeatures.map((f, i) => {
+        const b = d3.geoBounds(f);
+        return (b[0][0] === -180 && b[0][1] === -90 && b[1][0] === 180 && b[1][1] === 90) ? -1 : i;
+      }).filter(i => i !== -1);
+      const features = keepIdx.map(i => allFeatures[i]);
+      const landGeometries = keepIdx.map(i => allGeometries[i]);
+      paintHeroTexture(features, landGeometries, world);
+      bakeDownsampledHeroTexture();
+      // Cache the finished, already-downsampled texture so every visit
+      // after this one can skip the fetch + per-country coastline paint +
+      // multi-step downsample entirely -- by far the most expensive part
+      // of this page's JS execution time (confirmed via Lighthouse: this
+      // pipeline alone accounted for the bulk of a 5s+ main-thread block).
+      // Versioned key so changing anything about the baking pipeline above
+      // invalidates old cached entries instead of serving a stale result.
+      try {
+        localStorage.setItem(HERO_GLOBE_CACHE_KEY, heroBakedCanvas.toDataURL('image/png'));
+      } catch (e) { /* quota exceeded or storage disabled (private browsing) -- fine, just won't cache this time */ }
+      finishHeroGlobeSetup();
+    }).catch(() => { /* hero globe just doesn't render if this fails — page still works fine */ });
+  }
+
+  const HERO_GLOBE_CACHE_KEY = 'kbl_hero_globe_texture_v1';
+  let cachedHeroTexture = null;
+  try { cachedHeroTexture = localStorage.getItem(HERO_GLOBE_CACHE_KEY); } catch (e) { /* private browsing etc. */ }
+  if (cachedHeroTexture) {
+    const img = new Image();
+    img.onload = () => {
+      heroBakedCtx.clearRect(0, 0, BAKED_W, BAKED_H);
+      heroBakedCtx.drawImage(img, 0, 0, BAKED_W, BAKED_H);
+      finishHeroGlobeSetup();
+    };
+    img.onerror = renderHeroGlobeFromScratch;
+    img.src = cachedHeroTexture;
+  } else {
+    renderHeroGlobeFromScratch();
+  }
 }
 
 let _gaxWorldFeatures = null; // cached parsed features, fetched once per session
@@ -4752,8 +4778,15 @@ let _stripeCardElement = null;
 // Lazily loads and caches the Stripe.js instance using the publishable
 // key from our own backend (never hardcoded in this file), so switching
 // between test/live only ever needs an env var change server-side.
+// Stripe recommends always loading Elements straight from their own CDN
+// rather than self-hosting/bundling it — that's part of how it stays
+// PCI-compliant and gets their fraud-detection updates. Loaded lazily
+// here (used to be a static <script> in <head>, on every page load)
+// since almost nobody who lands on the site ever opens the "Add a
+// card" form that actually needs it.
 async function getStripeJs() {
   if (_stripeJs) return _stripeJs;
+  if (!window.Stripe) await _gaxLoadScript('https://js.stripe.com/v3/');
   const res = await fetch(API + '/stripe/config');
   const data = await res.json();
   if (!data.publishable_key) throw new Error('Stripe is not configured');
