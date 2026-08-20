@@ -1070,8 +1070,14 @@ function lightLogout() {
 // maxresdefault directly, with an hqdefault fallback if that 404s).
 function loadYoutubeEmbed(el) {
   const iframe = document.createElement('iframe');
-  iframe.width = '100%';
-  iframe.height = '100%';
+  // The facade div being replaced got its 16:9 shape from its own
+  // aspect-ratio CSS, not from a sized parent -- a bare iframe with just
+  // width/height="100%" attributes (the old approach here) has nothing
+  // definite to resolve that percentage height against once the facade's
+  // gone, so it collapsed to the browser's small default iframe height
+  // while staying full width. Setting the same aspect-ratio directly on
+  // the iframe keeps its shape independent of the parent's own sizing.
+  iframe.style.cssText = 'width:100%;aspect-ratio:16/9;display:block;border-radius:12px;border:1px solid rgba(0,201,167,0.35);margin-bottom:20px;';
   // rel=0 limits the end-of-video suggested-video panel to this same
   // channel rather than any channel on YouTube -- it can't touch the
   // mid-video "More videos" Card some viewers see, though, since Cards
