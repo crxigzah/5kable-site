@@ -179,6 +179,9 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 }
 .apply-textarea { min-height:110px;resize:vertical; }
 .apply-input:focus, .apply-textarea:focus { outline:none;border-color:var(--teal); }
+.apply-input[type="number"]::-webkit-inner-spin-button,
+.apply-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance:none;margin:0; }
+.apply-input[type="number"] { -moz-appearance:textfield;appearance:textfield; }
 .apply-submit-btn { width:100%;padding:14px;font-size:15px;margin-top:6px; }
 .apply-submit-btn:disabled { opacity:0.6;cursor:not-allowed; }
 .apply-error { background:rgba(255,76,106,0.1);border:1px solid rgba(255,76,106,0.3);color:var(--red);
@@ -490,7 +493,7 @@ function renderRoleDetail(roleKey) {
 // is applying for.
 const COMMON_QUESTIONS = [
   { label: 'Full Name', type: 'short', required: true },
-  { label: 'Age', type: 'number', required: true },
+  { label: 'Age', type: 'number', required: true, min: 16, max: 120, minError: 'Applicants must be over 16' },
   { label: 'Email Address', type: 'email', required: true },
 ];
 const ROLE_QUESTIONS = {
@@ -549,7 +552,9 @@ function renderForm() {
     if (q.type === 'paragraph') {
       input = `<textarea class="apply-textarea" id="apply-q-${i}" ${q.required ? 'required' : ''}></textarea>`;
     } else if (q.type === 'number') {
-      input = `<input type="number" min="16" max="120" class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
+      const minAttr = q.min !== undefined ? `min="${q.min}"` : '';
+      const maxAttr = q.max !== undefined ? `max="${q.max}"` : '';
+      input = `<input type="number" ${minAttr} ${maxAttr} class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
     } else if (q.type === 'email') {
       input = `<input type="email" class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
     } else if (q.type === 'select') {
@@ -568,7 +573,7 @@ function renderForm() {
   }).join('');
   cardEl.innerHTML = `
     <div class="apply-error" id="apply-error"></div>
-    <form id="apply-form">
+    <form id="apply-form" novalidate>
       ${fieldsHtml}
       <button type="submit" class="btn btn-primary apply-submit-btn" id="apply-submit-btn">Submit Application</button>
     </form>`;
@@ -589,9 +594,37 @@ function renderSuccess() {
 async function onSubmit(e) {
   e.preventDefault();
   const questions = getQuestions();
-  const answers = questions.map((q, i) => ({ label: q.label, value: document.getElementById(`apply-q-${i}`).value.trim() }));
   const errorEl = document.getElementById('apply-error');
   errorEl.style.display = 'none';
+
+  // Custom validation instead of the browser's native tooltip (the
+  // form has novalidate) -- lets the age check show branded copy
+  // ("Applicants must be over 16") instead of the generic browser
+  // message.
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    const raw = document.getElementById(`apply-q-${i}`).value.trim();
+    if (q.required && !raw) {
+      errorEl.textContent = 'Please fill out all required fields.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    if (q.type === 'number' && raw) {
+      const num = Number(raw);
+      if (q.min !== undefined && num < q.min) {
+        errorEl.textContent = q.minError || `${q.label} must be at least ${q.min}.`;
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (q.max !== undefined && num > q.max) {
+        errorEl.textContent = `${q.label} must be ${q.max} or under.`;
+        errorEl.style.display = 'block';
+        return;
+      }
+    }
+  }
+
+  const answers = questions.map((q, i) => ({ label: q.label, value: document.getElementById(`apply-q-${i}`).value.trim() }));
   const btn = document.getElementById('apply-submit-btn');
   btn.disabled = true;
   btn.textContent = 'Submitting…';
