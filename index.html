@@ -1430,7 +1430,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   <div style="padding:40px;max-width:700px;margin:0 auto;position:relative;z-index:1;">
     <div style="text-align:center;margin-bottom:28px;">
       <div style="font-size:26px;font-weight:800;" id="leaderboard-page-title">🏆 Top Players</div>
-      <div style="color:var(--muted);font-size:13px;margin-top:6px;" id="leaderboard-page-subtitle">Ranked by total XP across every game mode. Play rounds with the extension active to climb the board.</div>
+      <div style="color:var(--muted);font-size:13px;margin-top:6px;" id="leaderboard-page-subtitle">Ranked by all-time correct region guesses. Play rounds with the extension active to climb the board.</div>
     </div>
     <div style="display:flex;gap:6px;justify-content:center;margin-bottom:12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;max-width:480px;margin-left:auto;margin-right:auto;">
       <button id="leaderboard-tab-players" class="leaderboard-tab-btn" onclick="switchLeaderboardTab('players')" style="flex:1;background:var(--teal);color:#080810;border:none;padding:9px 12px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">🏆 Top Players</button>
@@ -2301,7 +2301,7 @@ function updateLeaderboardSubtitle(){
   if (currentLeaderboardTab === 'players') {
     el.textContent = currentLeaderboardPeriod === 'season'
       ? `Ranked by correct guesses in ${label}. Resets every month, so everyone's got a fresh shot.`
-      : 'Ranked by total XP across every game mode, all time. Play rounds with the extension active to climb the board.';
+      : 'Ranked by all-time correct region guesses. Play rounds with the extension active to climb the board.';
   } else if (currentLeaderboardTab === 'contributors') {
     el.textContent = currentLeaderboardPeriod === 'season'
       ? `Ranked by locations added to the scene library in ${label}. Resets every month, so everyone's got a fresh shot.`
@@ -2384,7 +2384,7 @@ async function loadMyRank(){
     document.getElementById('leaderboard-my-rank-num').textContent = `#${data.rank.toLocaleString()}`;
     document.getElementById('leaderboard-my-rank-detail').textContent = usingSeason
       ? `of ${data.total_players.toLocaleString()} players this season: ${data.season_xp.toLocaleString()} correct guesses`
-      : `of ${data.total_players.toLocaleString()} players: Lv.${data.level} ${data.tier_title}, ${data.total_xp.toLocaleString()} XP`;
+      : `of ${data.total_players.toLocaleString()} players: Lv.${data.level} ${data.tier_title}, ${data.region_guesses.toLocaleString()} guesses`;
     el.style.display = 'flex';
   } catch(e) {
     el.style.display = 'none';
@@ -2414,7 +2414,7 @@ async function loadTopPlayersLeaderboard(){
       const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
       const scoreBlock = usingSeason
         ? `<div style="font-size:13px;font-weight:700;">${row.season_xp.toLocaleString()}</div><div style="font-size:10px;color:var(--muted);">correct</div>`
-        : `<div style="font-size:13px;font-weight:700;">Lv.${row.level}</div><div style="font-size:10px;color:var(--muted);">${row.total_xp.toLocaleString()} XP</div>`;
+        : `<div style="font-size:13px;font-weight:700;">Lv.${row.level}</div><div style="font-size:10px;color:var(--muted);">${row.region_guesses.toLocaleString()} guesses</div>`;
       return `
         <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;${isMe ? 'background:rgba(0,201,167,0.1);border:1px solid var(--teal);' : ''}">
           <div style="width:32px;text-align:center;font-size:${i < 3 ? '18px' : '13px'};font-weight:700;color:${i < 3 ? '#fff' : 'var(--muted)'};flex-shrink:0;">${medal}</div>
