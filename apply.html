@@ -25,7 +25,7 @@
   --gold: #f0a500;
 }
 * { box-sizing:border-box;margin:0;padding:0; }
-body { background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;line-height:1.6;overflow-x:hidden;padding-top:68px; }
+body { background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;line-height:1.6;overflow-x:hidden;padding-top:68px;min-height:100vh;display:flex;flex-direction:column; }
 
 body::before {
   content:'';position:fixed;inset:0;
@@ -164,7 +164,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:6px 14px;
   border-radius:20px;font-size:12px;font-weight:700;border:1px solid;
 }
-.apply-wrap { max-width:640px;margin:0 auto;padding:24px 24px 90px;position:relative;z-index:1; }
+.apply-wrap { max-width:640px;margin:0 auto;padding:24px 24px 90px;position:relative;z-index:1;flex:1 0 auto;width:100%; }
 .apply-card { background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px; }
 .apply-gate { text-align:center;padding:20px 8px; }
 .apply-gate-icon { font-size:38px;margin-bottom:14px; }
@@ -253,7 +253,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 </nav>
 <div class="nav-scrim" id="nav-scrim" onclick="closeMobileNav()"></div>
 
-<div style="position:relative;overflow:hidden;">
+<div style="position:relative;">
   <div class="orb orb1"></div>
   <div class="orb orb2"></div>
   <div class="apply-hero">
@@ -386,7 +386,7 @@ const ROLE_LABELS = { 'content-creator': 'Content Creator', 'discord-staff': 'Di
 const ROLE_DESCRIPTIONS = {
   'content-creator': 'Make videos, clips, or posts that show off 5kable and help it grow.',
   'discord-staff': 'Help moderate the server, welcome new members, and keep things running smoothly.',
-  'map-makers': "Contribute Street View locations and help expand 5kable's map coverage.",
+  'map-makers': "Help research metas, update guides, and improve 5kable's guide directory.",
 };
 const ROLE_QUESTIONS = {
   'content-creator': [
