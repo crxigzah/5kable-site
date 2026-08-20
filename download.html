@@ -1068,11 +1068,15 @@ function lightLogout() {
 // resolution image than the video's actual thumbnail and stretching it
 // blurry to fill the container (the facade's <img> uses the real
 // maxresdefault directly, with an hqdefault fallback if that 404s).
+//
+// The facade's <img> above intentionally still points at YrAHVCrz05E (the
+// PREVIOUS install video) rather than this one -- kept on purpose as the
+// thumbnail when this video replaced it, not a stale leftover.
 function loadYoutubeEmbed(el) {
   const iframe = document.createElement('iframe');
   iframe.width = '100%';
   iframe.height = '100%';
-  iframe.src = 'https://www.youtube.com/embed/YrAHVCrz05E?autoplay=1';
+  iframe.src = 'https://www.youtube.com/embed/s2deQVQv3Kg?autoplay=1';
   iframe.title = '5kable Installation Guide';
   iframe.frameBorder = '0';
   iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
