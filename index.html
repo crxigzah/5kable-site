@@ -3819,22 +3819,30 @@ const WORLDMAP_SUPPORTED_114 = [
 ];
 
 let _gaxWorldLibsPromise = null;
+function _gaxLoadScript(src){
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
+}
+
 function loadWorldMapLibs(){
   if (_gaxWorldLibsPromise) return _gaxWorldLibsPromise;
-  _gaxWorldLibsPromise = new Promise((resolve, reject) => {
-    if (window.d3 && window.topojson) { resolve(); return; }
-    const s1 = document.createElement('script');
-    s1.src = 'https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js';
-    s1.onload = () => {
-      const s2 = document.createElement('script');
-      s2.src = 'https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js';
-      s2.onload = resolve;
-      s2.onerror = reject;
-      document.head.appendChild(s2);
-    };
-    s1.onerror = reject;
-    document.head.appendChild(s1);
-  });
+  // topojson-client is a standalone UMD build -- it doesn't touch the
+  // d3 global at load time, only once actually called (after both
+  // promises below resolve) -- so there's no real dependency forcing
+  // these two to load one after the other. Loading them in parallel
+  // instead of chaining s2's fetch off s1's onload cuts a full
+  // network round-trip out of the globe's startup time.
+  _gaxWorldLibsPromise = (window.d3 && window.topojson)
+    ? Promise.resolve()
+    : Promise.all([
+        _gaxLoadScript('https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js'),
+        _gaxLoadScript('https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js'),
+      ]);
   return _gaxWorldLibsPromise;
 }
 
@@ -3847,14 +3855,9 @@ function loadWorldMapLibs(){
 let _gaxThreePromise = null;
 function loadThreeJs(){
   if (_gaxThreePromise) return _gaxThreePromise;
-  _gaxThreePromise = new Promise((resolve, reject) => {
-    if (window.THREE) { resolve(); return; }
-    const s = document.createElement('script');
-    s.src = 'https://unpkg.com/three@0.128.0/build/three.min.js';
-    s.onload = resolve;
-    s.onerror = reject;
-    document.head.appendChild(s);
-  });
+  _gaxThreePromise = window.THREE
+    ? Promise.resolve()
+    : _gaxLoadScript('https://unpkg.com/three@0.128.0/build/three.min.js');
   return _gaxThreePromise;
 }
 
@@ -6058,12 +6061,21 @@ function closePolicy() {
 window.addEventListener('load', () => {
   updateNavAvatar();
   setCurrency(currentCurrency);
-  // Hero globe — loads its own libraries independently of everything
-  // else on the page, so a slow/failed load here never blocks or
-  // breaks the rest of the site.
-  Promise.all([loadWorldMapLibs(), loadThreeJs()]).then(initHeroGlobe).catch(() => {});
   startLiveViewRefresh();
 });
+
+// Hero globe — kicked off here (a bare statement at the bottom of the
+// page's own script, not inside window.load) rather than waiting for
+// the 'load' event, which only fires once every last resource on the
+// page — images, fonts, everything — has finished. That gate alone was
+// adding the multi-second delay before the globe appeared: its own
+// libraries (Three.js, D3, topojson) hadn't even started downloading
+// until then. This line runs as soon as the parser reaches it, which
+// is already after #heroGlobeCanvas above in the DOM, so nothing here
+// needs to wait on. Loads independently of everything else on the
+// page either way, so a slow/failed load here never blocks or breaks
+// the rest of the site.
+Promise.all([loadWorldMapLibs(), loadThreeJs()]).then(initHeroGlobe).catch(() => {});
 
 // ── Live view refresh ────────────────────────────────────
 // Previously, dashboard stats, leaderboards, and ticket lists only
