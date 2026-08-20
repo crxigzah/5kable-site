@@ -42,8 +42,26 @@ export default {
     // own clean-URL resolution in env.ASSETS.fetch() already serves it at
     // this path with no rule needed here, same as /metas serving
     // metas.html with nothing special beyond the /metas/ case above.
-    // Everything else: identical to Cloudflare Pages' own default behavior
-    // (this is the same asset server it would have used automatically).
-    return env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+    // Advanced Mode (this file) replaces Cloudflare Pages' normal request
+    // handling entirely, which means the usual _headers-file cache-control
+    // mechanism never runs either -- env.ASSETS.fetch() was serving every
+    // static file (logos, favicons, panorama.js) with its bare default of
+    // max-age=0, must-revalidate, so the browser re-validated them on
+    // every single repeat visit instead of using its own cache (flagged by
+    // Lighthouse's "efficient cache lifetimes" audit). None of these
+    // filenames are content-hashed, so a long cache is only safe because
+    // they change rarely -- swapping one of these files for a genuinely
+    // different image under the same name won't show up site-wide for up
+    // to CACHE_MAX_AGE for anyone who already has it cached.
+    if (CACHEABLE_PATH.test(url.pathname)) {
+      const cached = new Response(response.body, response);
+      cached.headers.set('Cache-Control', `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate=86400`);
+      return cached;
+    }
+    return response;
   }
 };
+
+const CACHE_MAX_AGE = 2592000; // 30 days
+const CACHEABLE_PATH = /\.(png|jpe?g|gif|svg|ico|webp|avif|woff2?|ttf|js)$/i;
