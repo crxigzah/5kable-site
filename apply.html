@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apply — 5kable</title>
+<meta name="description" content="Apply for a role on the 5kable team — Content Creator, Discord Staff, or Map Maker.">
+<meta property="og:title" content="Apply — 5kable">
+<meta property="og:description" content="Apply for a role on the 5kable team — Content Creator, Discord Staff, or Map Maker.">
+<meta property="og:image" content="https://5kable.net/apple-touch-icon.png">
+<meta name="robots" content="noindex">
+<style>
+:root {
+  --bg: #080810;
+  --bg2: #0d0d18;
+  --card: #10101e;
+  --card2: #14142a;
+  --border: #1e1e35;
+  --teal: #00c9a7;
+  --teal2: #00a87d;
+  --purple: #7c3aed;
+  --text: #e8e8f5;
+  --muted: #6a6a9a;
+  --red: #ff4c6a;
+  --gold: #f0a500;
+}
+* { box-sizing:border-box;margin:0;padding:0; }
+body { background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;line-height:1.6;overflow-x:hidden;padding-top:68px; }
+
+body::before {
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 70% 55% at 8% 18%, rgba(0,201,167,0.09) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 45% at 92% 8%, rgba(124,58,237,0.09) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 38% at 50% 85%, rgba(0,168,125,0.06) 0%, transparent 58%),
+    radial-gradient(ellipse 38% 30% at 78% 62%, rgba(124,58,237,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 30% 25% at 25% 60%, rgba(0,201,167,0.04) 0%, transparent 45%);
+  pointer-events:none;z-index:0;animation:bgShift 22s ease-in-out infinite alternate;
+}
+@keyframes bgShift {
+  0%   { opacity: 0.75; transform: scale(1) translateY(0); }
+  50%  { opacity: 0.95; transform: scale(1.02) translateY(-6px); }
+  100% { opacity: 1;   transform: scale(1.05) translateY(4px); }
+}
+body::after {
+  content:'';position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,201,167,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,201,167,0.025) 1px, transparent 1px),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 48px 48px, 48px 48px, 200px 200px;
+  pointer-events:none;z-index:0;
+  mask-image:radial-gradient(ellipse 110% 110% at 50% 50%, black 20%, transparent 100%);
+}
+
+nav {
+  display:flex;align-items:center;justify-content:space-between;padding:14px 40px;
+  border-bottom:1px solid var(--border);position:fixed;top:0;left:0;right:0;z-index:100;
+}
+nav::before {
+  content:'';position:absolute;inset:0;
+  background:rgba(8,8,16,0.92);backdrop-filter:blur(20px);z-index:-1;
+}
+.nav-logo {
+  display:flex;align-items:center;gap:10px;cursor:pointer;
+  color:var(--text);font-size:17px;font-weight:700;letter-spacing:0.5px;text-decoration:none;
+}
+.nav-logo img { width:38px;height:38px;object-fit:contain; }
+.nav-links { display:flex;gap:20px;align-items:center; }
+.nav-links a { color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:color .2s;position:relative; }
+.nav-links a:hover { color:var(--text); }
+.nav-links a::after {
+  content:'';position:absolute;bottom:-4px;left:0;width:0;height:1px;background:var(--teal);transition:width .3s ease;
+}
+.nav-links a:hover::after { width:100%; }
+.nav-socials { display:flex;align-items:center;gap:14px; }
+.nav-discord { color:var(--muted);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:5px;transition:color .2s; }
+.nav-discord:hover { color:#5865F2; }
+.nav-discord:hover svg { transform: rotate(-10deg) scale(1.2); transition: transform .2s; }
+.btn { padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s; }
+.btn-outline { background:transparent;border:1px solid rgba(0,201,167,0.4);color:var(--teal); }
+.btn-outline:hover { background:var(--teal);color:#080810; }
+.btn-primary { background:linear-gradient(135deg,#00c9a7,#00a87d);color:#080810;font-weight:700; }
+.btn-primary:hover { opacity:0.9;transform:translateY(-1px); }
+
+.orb { position:absolute;border-radius:50%;filter:blur(80px);opacity:0.18;pointer-events:none; }
+.orb1 { width:500px;height:500px;background:#f0a500;top:-80px;left:-160px; }
+.orb2 { width:420px;height:420px;background:#7c3aed;top:20px;right:-140px; }
+
+footer {
+  text-align:center;padding:48px 40px;
+  border-top:1px solid var(--border);color:var(--muted);font-size:13px;
+  background:var(--card);position:relative;z-index:1;
+}
+.footer-links { display:flex;justify-content:center;gap:24px;margin-bottom:16px;flex-wrap:wrap; }
+.footer-links a { color:var(--muted);text-decoration:none;font-size:13px;transition:color .2s; }
+.footer-links a:hover { color:var(--teal); }
+
+.nav-dropdown-wrap { position:relative;display:flex;align-items:center;height:100%; }
+.nav-dropdown-wrap > a { cursor:pointer;display:flex;align-items:center;gap:3px; }
+.nav-dropdown-menu {
+  display:none;position:absolute;top:calc(100% + 4px);left:50%;transform:translateX(-50%);
+  background:var(--card);border:1px solid var(--border);border-radius:12px;min-width:200px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:300;overflow:hidden;padding:6px 0;
+}
+.nav-dropdown-wrap.open .nav-dropdown-menu { display:block; }
+.nav-dropdown-menu a {
+  display:block;padding:10px 18px;color:var(--muted);font-size:13px;text-decoration:none;
+  transition:background .15s, color .15s;white-space:nowrap;cursor:pointer;
+}
+.nav-dropdown-menu a:hover { background:var(--card2);color:var(--text); }
+.nav-dropdown-menu a::after { display:none !important; }
+.nav-metas-badge::after { display:none !important; }
+
+html { scroll-behavior: smooth; overflow-x: hidden; }
+
+.nav-hamburger {
+  display:none;flex-direction:column;justify-content:center;gap:5px;
+  width:44px;height:44px;background:transparent;border:none;cursor:pointer;padding:0;z-index:210;
+}
+.nav-hamburger span { display:block;width:22px;height:2px;background:var(--text);margin:0 auto;transition:transform .2s, opacity .2s; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.nav-scrim { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:90; }
+.nav-scrim.open { display:block; }
+
+@media (max-width: 820px) {
+  body.nav-open-lock { overflow: hidden; }
+  .nav-hamburger { display: flex; }
+  nav { padding: 12px 16px; }
+  .nav-links {
+    position: fixed;top: 0; right: 0; bottom: 0;width: 300px; max-width: 85vw;
+    background: var(--card, #10101e);border-left: 1px solid var(--border);
+    flex-direction: column;align-items: stretch;gap: 0;padding: 72px 20px 24px;
+    overflow-y: auto;transform: translateX(100%);transition: transform .25s ease;
+    z-index: 200;box-shadow: -12px 0 40px rgba(0,0,0,0.5);
+  }
+  .nav-links.open { transform: translateX(0); display: flex; }
+  .nav-links a { font-size: 16px;padding: 14px 4px;border-bottom: 1px solid var(--border);min-height: 44px;display: flex;align-items: center; }
+  .nav-links a:last-child { border-bottom: none; }
+  .nav-links a.nav-metas-badge { align-self: flex-start; min-height: 0; margin: 8px 0; }
+  .nav-dropdown-wrap { height: auto; display: block; }
+  .nav-dropdown-wrap > a { width: 100%; padding: 14px 4px; border-bottom: 1px solid var(--border); justify-content: space-between; }
+  .nav-dropdown-menu { position: static; transform: none; display: none;box-shadow: none; border: none; background: var(--bg2);margin: 0 0 4px; padding: 4px 0 4px 16px; }
+  .nav-dropdown-wrap.open .nav-dropdown-menu { display: block; }
+  .nav-dropdown-menu a { font-size: 15px; padding: 12px 4px; border-bottom: none; }
+  .nav-socials { flex-wrap: wrap; gap: 10px; padding: 16px 4px; border-bottom: 1px solid var(--border); }
+  .nav-links .nav-socials a.nav-discord { min-width: 38px; min-height: 38px; padding: 0; border-bottom: none;justify-content: center; background: var(--card2, rgba(255,255,255,0.04));border-radius: 10px; flex: 0 0 auto; }
+  #nav-auth-guest { flex-direction: column; gap: 10px; margin-top: 8px; }
+  #nav-auth-guest .btn { width: 100%; padding: 13px 20px; font-size: 15px; min-height: 46px; }
+  #nav-auth-user { align-self: stretch; }
+  #nav-auth-user > button { width: 100%; justify-content: center; padding: 12px 16px; }
+  #user-dropdown { position: static; box-shadow: none; margin-top: 8px; width: 100%; }
+  #user-dropdown a { padding: 13px 16px; font-size: 14px; }
+  .apply-hero h1 { font-size: 30px !important; }
+}
+
+/* ── Apply page specific ── */
+.apply-hero { max-width:680px;margin:0 auto;padding:70px 24px 20px;text-align:center;position:relative;z-index:1; }
+.apply-hero h1 { font-size:38px;font-weight:800;letter-spacing:-1px;margin-bottom:10px; }
+.apply-hero p { color:var(--muted);font-size:15px;max-width:520px;margin:0 auto; }
+.apply-urgency-badge {
+  display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:6px 14px;
+  border-radius:20px;font-size:12px;font-weight:700;border:1px solid;
+}
+.apply-wrap { max-width:640px;margin:0 auto;padding:24px 24px 90px;position:relative;z-index:1; }
+.apply-card { background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px; }
+.apply-gate { text-align:center;padding:20px 8px; }
+.apply-gate-icon { font-size:38px;margin-bottom:14px; }
+.apply-gate h2 { font-size:18px;margin-bottom:8px; }
+.apply-gate p { color:var(--muted);font-size:13px;margin-bottom:22px;max-width:400px;margin-left:auto;margin-right:auto; }
+.apply-field { margin-bottom:22px; }
+.apply-field label { display:block;font-size:13px;font-weight:600;margin-bottom:8px; }
+.apply-field .req-mark { color:var(--red);margin-left:2px; }
+.apply-input, .apply-textarea {
+  width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-family:inherit;font-size:14px;padding:12px 14px;transition:border-color .15s;
+}
+.apply-textarea { min-height:110px;resize:vertical; }
+.apply-input:focus, .apply-textarea:focus { outline:none;border-color:var(--teal); }
+.apply-submit-btn { width:100%;padding:14px;font-size:15px;margin-top:6px; }
+.apply-submit-btn:disabled { opacity:0.6;cursor:not-allowed; }
+.apply-error { background:rgba(255,76,106,0.1);border:1px solid rgba(255,76,106,0.3);color:var(--red);
+  border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:20px;display:none; }
+</style>
+<link rel="icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+</head>
+<body>
+<nav>
+  <div class="nav-logo" style="display:flex;align-items:center;">
+    <a href="/" style="display:flex;align-items:center;text-decoration:none;">
+      <img src="/nav-logo.png" alt="5kable">
+    </a>
+  </div>
+  <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links" id="nav-links">
+    <a href="/download">⬇️ Download</a>
+    <div class="nav-dropdown-wrap" style="display:flex;align-items:center;">
+      <a style="display:flex;align-items:center;gap:4px;">
+        🎮 Games
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </a>
+      <div class="nav-dropdown-menu">
+        <a href="/photo-quiz-game.html?type=fifty_fifty">🎲 50/50</a>
+        <a href="/photo-quiz-game.html?type=bollard">🚧 Bollard Bingo</a>
+        <a href="/camera-gen-game.html">🎥 Camera Generation Game</a>
+        <a href="/photo-quiz-game.html?type=google_car">🚙 Guess the Google Car</a>
+      </div>
+    </div>
+    <div class="nav-dropdown-wrap" style="display:flex;align-items:center;">
+      <a style="display:flex;align-items:center;gap:4px;">
+        🛠️ Tools
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="flex-shrink:0;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </a>
+      <div class="nav-dropdown-menu">
+        <a href="/coverage-map.html">🛰️ Coverage Map</a>
+        <a href="/region-map.html">🗺️ Region Map</a>
+      </div>
+    </div>
+    <a href="/rules">📋 Rules</a>
+    <a href="/leaderboard">🏆 Leaderboard</a>
+    <a href="/metas" class="nav-metas-badge" style="color:#00c9a7;font-weight:700;background:rgba(0,201,167,0.1);border:1px solid rgba(0,201,167,0.25);padding:4px 12px;border-radius:20px;font-size:12px;text-decoration:none;transition:background .2s;" onmouseover="this.style.background='rgba(0,201,167,0.2)'" onmouseout="this.style.background='rgba(0,201,167,0.1)'">🗺️ Metas</a>
+
+    <div class="nav-socials">
+      <a href="https://discord.gg/YAmvxvXmw8" target="_blank" class="nav-discord" title="Discord">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.079.11 18.1.128 18.114a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+      </a>
+    </div>
+    <div id="nav-auth-guest" style="display:flex;gap:8px;">
+      <a href="/" class="btn btn-outline">Sign In</a>
+      <a href="/" class="btn btn-primary">Get Started</a>
+    </div>
+    <div id="nav-auth-user" style="display:none;align-items:center;position:relative;">
+      <button onclick="toggleUserMenu()" style="display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">
+        <div id="nav-avatar" style="width:24px;height:24px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#080810;"></div>
+        <span id="nav-username">Account</span> ▾
+      </button>
+      <div id="user-dropdown" style="display:none;position:absolute;right:0;top:calc(100% + 8px);background:var(--card);border:1px solid var(--border);border-radius:12px;min-width:200px;box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:200;overflow:hidden;">
+        <a href="/" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;text-decoration:none;">📊 Dashboard</a>
+        <a href="/" style="display:block;padding:11px 16px;color:var(--text);font-size:13px;text-decoration:none;">⚙️ Account Settings</a>
+        <div style="border-top:1px solid var(--border);">
+          <a onclick="lightLogout()" style="display:block;padding:11px 16px;color:var(--red);font-size:13px;cursor:pointer;">🚪 Sign Out</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+<div class="nav-scrim" id="nav-scrim" onclick="closeMobileNav()"></div>
+
+<div style="position:relative;overflow:hidden;">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="apply-hero">
+    <h1 id="apply-role-title">Loading…</h1>
+    <p id="apply-role-desc">&nbsp;</p>
+    <div id="apply-urgency-badge" style="display:none;"></div>
+  </div>
+</div>
+
+<div class="apply-wrap">
+  <div class="apply-card" id="apply-card">
+    <div style="text-align:center;color:var(--muted);padding:20px 0;">Loading…</div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-links">
+    <a href="/support">Contact</a>
+    <a href="/#policy=credits">Credits</a>
+    <a href="/#policy=fairuse">Fair Use</a>
+    <a href="/#faq">FAQ</a>
+    <a href="/#features">Features</a>
+    <a href="/#pricing">Pricing</a>
+    <a href="/#policy=privacy">Privacy Policy</a>
+    <a href="/#policy=refund">Refunds</a>
+    <a href="/rules">Rules</a>
+    <a href="/#policy=tos">Terms of Service</a>
+  </div>
+  <div style="margin-bottom:8px;font-size:16px;font-weight:700;background:linear-gradient(135deg,#00c9a7,#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">5kable</div>
+  <div>Learning · Accuracy · Training · Perfection</div>
+  <div style="margin-top:8px;font-size:11px;opacity:0.5;">© 2026 5kable</div>
+</footer>
+
+<script>
+const API = 'https://api.5kable.net';
+function getToken() { return localStorage.getItem('kbl_token'); }
+function getUser()  { try { return JSON.parse(localStorage.getItem('kbl_user')); } catch(e) { return null; } }
+
+function toggleMobileNav() {
+  document.getElementById('nav-links').classList.toggle('open');
+  document.getElementById('nav-scrim').classList.toggle('open');
+  document.getElementById('nav-hamburger').classList.toggle('open');
+  document.body.classList.toggle('nav-open-lock');
+}
+function closeMobileNav() {
+  document.getElementById('nav-links').classList.remove('open');
+  document.getElementById('nav-scrim').classList.remove('open');
+  document.getElementById('nav-hamburger').classList.remove('open');
+  document.body.classList.remove('nav-open-lock');
+}
+document.getElementById('nav-links').addEventListener('click', (e) => {
+  if (e.target.tagName === 'A' && !e.target.closest('.nav-dropdown-wrap')) closeMobileNav();
+});
+
+(function() {
+  const canHover = window.matchMedia('(hover: hover)').matches;
+  document.querySelectorAll('.nav-dropdown-wrap').forEach(wrap => {
+    let closeTimer;
+    const menu = wrap.querySelector('.nav-dropdown-menu');
+    if (canHover) {
+      wrap.addEventListener('mouseenter', () => { clearTimeout(closeTimer); wrap.classList.add('open'); });
+      wrap.addEventListener('mouseleave', () => { closeTimer = setTimeout(() => wrap.classList.remove('open'), 120); });
+      if (menu) {
+        menu.addEventListener('mouseenter', () => clearTimeout(closeTimer));
+        menu.addEventListener('mouseleave', () => { closeTimer = setTimeout(() => wrap.classList.remove('open'), 120); });
+      }
+    }
+    const trigger = wrap.querySelector(':scope > a');
+    if (trigger) {
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.nav-dropdown-wrap.open').forEach(w => { if (w !== wrap) w.classList.remove('open'); });
+        wrap.classList.toggle('open');
+      });
+    }
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.nav-dropdown-wrap')) {
+      document.querySelectorAll('.nav-dropdown-wrap.open').forEach(w => w.classList.remove('open'));
+    }
+  });
+})();
+
+(function() {
+  const token = getToken();
+  const user = getUser();
+  if (!token || !user) return;
+  document.getElementById('nav-auth-guest').style.display = 'none';
+  document.getElementById('nav-auth-user').style.display = 'flex';
+  document.getElementById('nav-username').textContent = user.username || 'Account';
+  const navAv = document.getElementById('nav-avatar');
+  const img = localStorage.getItem('kbl_avatar_img');
+  if (img) {
+    navAv.innerHTML = '<img src="' + img + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+    navAv.style.background = 'transparent';
+  } else {
+    navAv.style.background = localStorage.getItem('kbl_avatar_color') || '#00c9a7';
+    navAv.textContent = (user.username || '?')[0].toUpperCase();
+  }
+})();
+
+function toggleUserMenu() {
+  const dd = document.getElementById('user-dropdown');
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+function closeUserMenu() {
+  const dd = document.getElementById('user-dropdown');
+  if (dd) dd.style.display = 'none';
+}
+document.addEventListener('click', e => {
+  const menu = document.getElementById('nav-auth-user');
+  if (menu && !menu.contains(e.target)) closeUserMenu();
+});
+function lightLogout() {
+  localStorage.removeItem('kbl_token');
+  localStorage.removeItem('kbl_user');
+  location.reload();
+}
+function escapeHtmlLocal(s){
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ── Apply page ──────────────────────────────────────────────
+// Questions live entirely here (not fetched from the backend) --
+// /apply/submit just trusts whatever {label, value} pairs this page
+// sends, so editing a role's question set is a pure frontend change,
+// no backend deploy needed.
+const ROLE_LABELS = { 'content-creator': 'Content Creator', 'discord-staff': 'Discord Staff', 'map-makers': 'Map Maker' };
+const ROLE_DESCRIPTIONS = {
+  'content-creator': 'Make videos, clips, or posts that show off 5kable and help it grow.',
+  'discord-staff': 'Help moderate the server, welcome new members, and keep things running smoothly.',
+  'map-makers': "Contribute Street View locations and help expand 5kable's map coverage.",
+};
+const ROLE_QUESTIONS = {
+  'content-creator': [
+    { label: 'Why do you want to be a Content Creator?', type: 'paragraph', required: true },
+    { label: 'Links to your content (socials, portfolio)', type: 'paragraph', required: true },
+    { label: 'What type of content do you want to make?', type: 'short', required: true },
+    { label: 'How often could you realistically post?', type: 'short', required: false },
+    { label: 'Relevant experience (if any)', type: 'paragraph', required: false },
+  ],
+  'discord-staff': [
+    { label: 'Why do you want to be Discord Staff?', type: 'paragraph', required: true },
+    { label: 'Prior moderation experience (if any)', type: 'paragraph', required: false },
+    { label: 'What timezone are you in?', type: 'short', required: true },
+    { label: 'How would you handle a heated argument between two members?', type: 'paragraph', required: true },
+    { label: 'How much time can you commit weekly?', type: 'short', required: false },
+  ],
+  'map-makers': [
+    { label: 'Why do you want to be a Map Maker?', type: 'paragraph', required: true },
+    { label: 'Which countries/regions are you most knowledgeable about?', type: 'short', required: true },
+    { label: 'Experience with GeoGuessr or Street View meta (camera generation, region ID, etc.)?', type: 'paragraph', required: false },
+    { label: 'Link to any existing map/scene contributions (if any)', type: 'short', required: false },
+    { label: 'How much time can you commit weekly?', type: 'short', required: false },
+  ],
+};
+const URGENCY_DISPLAY = {
+  low:    { emoji: '🔴', text: 'Not currently needed', color: '#ED4245' },
+  medium: { emoji: '🟡', text: 'Could use more',       color: '#FEE75C' },
+  high:   { emoji: '🟢', text: 'Urgently needed',       color: '#57F287' },
+};
+
+const roleKey = new URLSearchParams(location.search).get('role');
+const cardEl = document.getElementById('apply-card');
+
+function renderGate(icon, title, body, actionHtml) {
+  cardEl.innerHTML = `
+    <div class="apply-gate">
+      <div class="apply-gate-icon">${icon}</div>
+      <h2>${title}</h2>
+      <p>${body}</p>
+      ${actionHtml || ''}
+    </div>`;
+}
+
+function renderForm() {
+  const questions = ROLE_QUESTIONS[roleKey];
+  const fieldsHtml = questions.map((q, i) => {
+    const input = q.type === 'paragraph'
+      ? `<textarea class="apply-textarea" id="apply-q-${i}" ${q.required ? 'required' : ''}></textarea>`
+      : `<input type="text" class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
+    return `
+      <div class="apply-field">
+        <label for="apply-q-${i}">${escapeHtmlLocal(q.label)}${q.required ? '<span class="req-mark">*</span>' : ''}</label>
+        ${input}
+      </div>`;
+  }).join('');
+  cardEl.innerHTML = `
+    <div class="apply-error" id="apply-error"></div>
+    <form id="apply-form">
+      ${fieldsHtml}
+      <button type="submit" class="btn btn-primary apply-submit-btn" id="apply-submit-btn">Submit Application</button>
+    </form>`;
+  document.getElementById('apply-form').addEventListener('submit', onSubmit);
+}
+
+function renderSuccess() {
+  const label = ROLE_LABELS[roleKey];
+  cardEl.innerHTML = `
+    <div class="apply-gate">
+      <div class="apply-gate-icon">✅</div>
+      <h2>Application submitted</h2>
+      <p>Your ${escapeHtmlLocal(label)} application is in. The team will review it and reach out on Discord with a decision.</p>
+    </div>`;
+}
+
+async function onSubmit(e) {
+  e.preventDefault();
+  const questions = ROLE_QUESTIONS[roleKey];
+  const answers = questions.map((q, i) => ({ label: q.label, value: document.getElementById(`apply-q-${i}`).value.trim() }));
+  const errorEl = document.getElementById('apply-error');
+  errorEl.style.display = 'none';
+  const btn = document.getElementById('apply-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+  try {
+    const res = await fetch(`${API}/apply/submit`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: getToken(), role: roleKey, answers }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      errorEl.textContent = data.error || 'Something went wrong submitting your application.';
+      errorEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Submit Application';
+      return;
+    }
+    renderSuccess();
+  } catch (err) {
+    errorEl.textContent = 'Something went wrong submitting your application. Please try again.';
+    errorEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Submit Application';
+  }
+}
+
+async function initApplyPage() {
+  if (!roleKey || !ROLE_LABELS[roleKey]) {
+    document.getElementById('apply-role-title').textContent = 'Unknown role';
+    document.getElementById('apply-role-desc').textContent = 'This application link looks broken — check the button in Discord again.';
+    renderGate('❓', "That role doesn't exist", "Double check the link — it should look like apply.html?role=content-creator.");
+    return;
+  }
+  document.getElementById('apply-role-title').textContent = `Apply: ${ROLE_LABELS[roleKey]}`;
+  document.getElementById('apply-role-desc').textContent = ROLE_DESCRIPTIONS[roleKey];
+
+  fetch(`${API}/apply/role_info?role=${encodeURIComponent(roleKey)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) return;
+      const u = URGENCY_DISPLAY[data.urgency] || URGENCY_DISPLAY.medium;
+      const badge = document.getElementById('apply-urgency-badge');
+      badge.style.display = 'inline-flex';
+      badge.style.color = u.color;
+      badge.style.borderColor = u.color + '55';
+      badge.style.background = u.color + '18';
+      badge.textContent = `${u.emoji} ${u.text}`;
+    })
+    .catch(() => {});
+
+  const token = getToken();
+  if (!token) {
+    renderGate('🔒', 'Sign in to apply', 'You need a 5kable account (with Discord connected) to submit an application.',
+      '<a href="/" class="btn btn-primary" style="display:inline-block;padding:12px 24px;">Sign In</a>');
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API}/discord/status`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      renderGate('🔒', 'Sign in to apply', 'You need a 5kable account (with Discord connected) to submit an application.',
+        '<a href="/" class="btn btn-primary" style="display:inline-block;padding:12px 24px;">Sign In</a>');
+      return;
+    }
+    if (!data.linked) {
+      renderGate('🔗', 'Connect Discord first', "We need to know who you are on Discord to send this application through and grant the role if you're accepted.",
+        '<a href="/" target="_blank" class="btn btn-primary" style="display:inline-block;padding:12px 24px;">Connect Discord</a><p style="color:var(--muted);font-size:12px;margin-top:14px;">Opens the homepage in a new tab — go to Account Settings → Connect Discord, then come back and refresh this page.</p>');
+      return;
+    }
+    renderForm();
+  } catch (e) {
+    renderGate('⚠️', 'Something went wrong', "Couldn't check your account status. Please refresh and try again.");
+  }
+}
+initApplyPage();
+</script>
+</body>
+</html>
