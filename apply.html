@@ -582,9 +582,20 @@ function renderForm() {
   document.getElementById('apply-form').addEventListener('submit', onSubmit);
 }
 
+// Roughly formats the time left until reapplying is allowed again --
+// doesn't need to be precise to the minute, just give the applicant a
+// realistic sense of the wait (see DISCORD_APPLICATION_REAPPLY_DAYS /
+// apply_status in app.py, which is what reapplyAt actually comes from).
+function formatReapplyWait(reapplyAtIso) {
+  const ms = new Date(reapplyAtIso) - new Date();
+  if (ms <= 0) return null;
+  const days = Math.ceil(ms / 86400000);
+  return days <= 1 ? 'in about a day' : `in about ${days} days`;
+}
+
 // Covers both a just-submitted application and returning to this page
 // after already applying -- same three end states either way.
-function renderApplicationStatus(status) {
+function renderApplicationStatus(status, reapplyAt) {
   document.getElementById('apply-detail-card').style.display = 'none';
   const label = ROLE_LABELS[roleKey];
   if (status === 'accepted') {
@@ -595,11 +606,12 @@ function renderApplicationStatus(status) {
         <p>Your ${escapeHtmlLocal(label)} application was approved — welcome aboard! Check your email for next steps.</p>
       </div>`;
   } else if (status === 'denied') {
+    const wait = reapplyAt ? formatReapplyWait(reapplyAt) : null;
     cardEl.innerHTML = `
       <div class="apply-gate">
         <div class="apply-gate-icon">📋</div>
         <h2>Application not approved</h2>
-        <p>Your ${escapeHtmlLocal(label)} application wasn't successful this time.</p>
+        <p>Your ${escapeHtmlLocal(label)} application wasn't successful this time.${wait ? ` You can apply again ${wait}.` : ' You can apply again now.'}</p>
       </div>`;
   } else {
     cardEl.innerHTML = `
@@ -764,7 +776,7 @@ async function initApplyPage() {
     });
     const statusData = await statusRes.json();
     if (statusData.status && statusData.status !== 'none') {
-      renderApplicationStatus(statusData.status);
+      renderApplicationStatus(statusData.status, statusData.reapply_at);
       return;
     }
     renderForm();
