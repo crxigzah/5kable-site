@@ -1648,7 +1648,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     <div class="dash-header">
       <div>
         <div class="dash-welcome">🎫 My Tickets</div>
-        <div style="color:var(--muted);font-size:14px;margin-top:4px;">Questions, bugs, feature ideas, meta corrections — anything. We reply here.</div>
+        <div style="color:var(--muted);font-size:14px;margin-top:4px;">Questions, bugs, feature ideas, meta corrections and or anything. We reply here.</div>
       </div>
       <button class="btn btn-primary" onclick="openNewTicketModal()">+ New Ticket</button>
     </div>
@@ -2742,10 +2742,15 @@ const TICKET_STATUS_STYLE = {
   in_progress: { label: 'In Progress', bg: 'rgba(94,179,255,0.15)', color: '#5eb3ff' },
   resolved:    { label: 'Resolved',    bg: 'rgba(0,201,167,0.15)',  color: '#00c9a7' },
   closed:      { label: 'Closed',      bg: 'rgba(136,136,170,0.15)',color: '#8888aa' },
+  // Only ever set on category='application' tickets (see admin_set_ticket_status
+  // in app.py) -- the applicant-facing equivalent of the admin panel's own
+  // Approved/Rejected labels for these two statuses.
+  accepted:    { label: 'Approved',    bg: 'rgba(0,201,167,0.15)',  color: '#00c9a7' },
+  denied:      { label: 'Rejected',    bg: 'rgba(255,107,107,0.15)',color: '#ff6b6b' },
 };
 const TICKET_CATEGORY_LABEL = {
   bug: '🐛 Bug', feature: '💡 Feature', meta: '🗺️ Meta', billing: '💳 Billing',
-  account: '👤 Account', other: '💬 Other',
+  account: '👤 Account', other: '💬 Other', application: '🎓 Application',
 };
 
 let currentTicketId = null;
