@@ -271,6 +271,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 
 <footer>
   <div class="footer-links">
+    <a href="/apply.html">Apply</a>
     <a href="/support">Contact</a>
     <a href="/#policy=credits">Credits</a>
     <a href="/#policy=fairuse">Fair Use</a>
@@ -491,8 +492,44 @@ async function onSubmit(e) {
   }
 }
 
+const ROLE_ICONS = { 'content-creator': '🎬', 'discord-staff': '🛡️', 'map-makers': '🗺️' };
+
+function renderRolePicker() {
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:flex;flex-direction:column;gap:14px;';
+  Object.keys(ROLE_LABELS).forEach(key => {
+    const card = document.createElement('a');
+    card.href = `apply.html?role=${key}`;
+    card.style.cssText = 'display:flex;align-items:center;gap:14px;padding:18px;background:var(--bg2);border:1px solid var(--border);border-radius:12px;text-decoration:none;color:var(--text);transition:border-color .15s;';
+    card.addEventListener('mouseover', () => card.style.borderColor = 'var(--teal)');
+    card.addEventListener('mouseout', () => card.style.borderColor = 'var(--border)');
+    card.innerHTML = `
+      <div style="font-size:26px;flex-shrink:0;">${ROLE_ICONS[key]}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;font-size:15px;">${escapeHtmlLocal(ROLE_LABELS[key])}</div>
+        <div style="color:var(--muted);font-size:12px;margin-top:2px;">${escapeHtmlLocal(ROLE_DESCRIPTIONS[key])}</div>
+      </div>
+      <div class="apply-picker-urgency" id="apply-picker-urgency-${key}" style="font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;"></div>`;
+    grid.appendChild(card);
+    fetch(`${API}/apply/role_info?role=${key}`).then(r => r.json()).then(data => {
+      if (data.error) return;
+      const u = URGENCY_DISPLAY[data.urgency] || URGENCY_DISPLAY.medium;
+      const el = document.getElementById(`apply-picker-urgency-${key}`);
+      if (el) { el.textContent = `${u.emoji} ${u.text}`; el.style.color = u.color; }
+    }).catch(() => {});
+  });
+  cardEl.innerHTML = '';
+  cardEl.appendChild(grid);
+}
+
 async function initApplyPage() {
-  if (!roleKey || !ROLE_LABELS[roleKey]) {
+  if (!roleKey) {
+    document.getElementById('apply-role-title').textContent = 'Apply for a Role';
+    document.getElementById('apply-role-desc').textContent = 'Pick a role below to see what it involves and apply.';
+    renderRolePicker();
+    return;
+  }
+  if (!ROLE_LABELS[roleKey]) {
     document.getElementById('apply-role-title').textContent = 'Unknown role';
     document.getElementById('apply-role-desc').textContent = 'This application link looks broken — check the button in Discord again.';
     renderGate('❓', "That role doesn't exist", "Double check the link — it should look like apply.html?role=content-creator.");
