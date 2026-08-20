@@ -485,6 +485,14 @@ function renderRoleDetail(roleKey) {
     ${closingNote}`;
   detailCard.style.display = 'block';
 }
+// Asked on every role's form, ahead of that role's own questions --
+// basic identity info the team needs regardless of which role someone
+// is applying for.
+const COMMON_QUESTIONS = [
+  { label: 'Full Name', type: 'short', required: true },
+  { label: 'Age', type: 'number', required: true },
+  { label: 'Email Address', type: 'email', required: true },
+];
 const ROLE_QUESTIONS = {
   'content-creator': [
     { label: 'Why do you want to be a Content Creator?', type: 'paragraph', required: true },
@@ -527,12 +535,23 @@ function renderGate(icon, title, body, actionHtml) {
     </div>`;
 }
 
+function getQuestions() {
+  return COMMON_QUESTIONS.concat(ROLE_QUESTIONS[roleKey]);
+}
+
 function renderForm() {
-  const questions = ROLE_QUESTIONS[roleKey];
+  const questions = getQuestions();
   const fieldsHtml = questions.map((q, i) => {
-    const input = q.type === 'paragraph'
-      ? `<textarea class="apply-textarea" id="apply-q-${i}" ${q.required ? 'required' : ''}></textarea>`
-      : `<input type="text" class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
+    let input;
+    if (q.type === 'paragraph') {
+      input = `<textarea class="apply-textarea" id="apply-q-${i}" ${q.required ? 'required' : ''}></textarea>`;
+    } else if (q.type === 'number') {
+      input = `<input type="number" min="13" max="120" class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
+    } else if (q.type === 'email') {
+      input = `<input type="email" class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
+    } else {
+      input = `<input type="text" class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
+    }
     return `
       <div class="apply-field">
         <label for="apply-q-${i}">${escapeHtmlLocal(q.label)}${q.required ? '<span class="req-mark">*</span>' : ''}</label>
@@ -560,7 +579,7 @@ function renderSuccess() {
 
 async function onSubmit(e) {
   e.preventDefault();
-  const questions = ROLE_QUESTIONS[roleKey];
+  const questions = getQuestions();
   const answers = questions.map((q, i) => ({ label: q.label, value: document.getElementById(`apply-q-${i}`).value.trim() }));
   const errorEl = document.getElementById('apply-error');
   errorEl.style.display = 'none';
