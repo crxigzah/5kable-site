@@ -493,7 +493,7 @@ function renderRoleDetail(roleKey) {
 // is applying for.
 const COMMON_QUESTIONS = [
   { label: 'Full Name', type: 'short', required: true },
-  { label: 'Age', type: 'number', required: true, min: 16, max: 120, minError: 'Applicants must be over 16' },
+  { label: 'Age', type: 'number', required: true, min: 16, max: 120, minError: 'The minimum age required for this role is 16.' },
   { label: 'Email Address', type: 'email', required: true },
 ];
 const ROLE_QUESTIONS = {
@@ -501,24 +501,24 @@ const ROLE_QUESTIONS = {
     { label: 'Why do you want to be a Content Creator for 5kable?', type: 'paragraph', required: true },
     { label: 'Links to your content (socials, portfolio)', type: 'paragraph', required: true },
     { label: 'What type of content do you want to make?', type: 'short', required: true },
-    { label: 'How often could you realistically post?', type: 'short', required: false },
-    { label: 'Relevant experience (if any)', type: 'paragraph', required: false },
+    { label: 'How often could you realistically post?', type: 'short', required: true },
+    { label: 'Relevant experience (if any)', type: 'paragraph', required: true },
     { label: 'Are you looking for a paid or volunteer position?', type: 'select', required: true, options: ['Paid', 'Volunteer', 'Either / No preference'] },
   ],
   'discord-staff': [
     { label: 'Why do you want to be Discord Staff?', type: 'paragraph', required: true },
-    { label: 'Prior moderation experience (if any)', type: 'paragraph', required: false },
+    { label: 'Prior moderation experience (if any)', type: 'paragraph', required: true },
     { label: 'What timezone are you in?', type: 'short', required: true },
     { label: 'How would you handle a heated argument between two members?', type: 'paragraph', required: true },
-    { label: 'How much time can you commit weekly?', type: 'short', required: false },
+    { label: 'How much time can you commit weekly?', type: 'short', required: true },
     { label: 'Are you looking for a paid or volunteer position?', type: 'select', required: true, options: ['Paid', 'Volunteer', 'Either / No preference'] },
   ],
   'map-makers': [
     { label: 'Why do you want to be a Map Maker?', type: 'paragraph', required: true },
     { label: 'Which countries/regions are you most knowledgeable about?', type: 'short', required: true },
-    { label: 'Experience with GeoGuessr or Street View meta (camera generation, region ID, etc.)?', type: 'paragraph', required: false },
-    { label: 'Link to any existing map/scene contributions (if any)', type: 'short', required: false },
-    { label: 'How much time can you commit weekly?', type: 'short', required: false },
+    { label: 'Experience with GeoGuessr or Street View meta (camera generation, region ID, etc.)?', type: 'paragraph', required: true },
+    { label: 'Link to any existing map/scene contributions (if any)', type: 'short', required: true },
+    { label: 'How much time can you commit weekly?', type: 'short', required: true },
     { label: 'Are you looking for a paid or volunteer position?', type: 'select', required: true, options: ['Paid', 'Volunteer', 'Either / No preference'] },
   ],
 };
@@ -599,8 +599,10 @@ async function onSubmit(e) {
 
   // Custom validation instead of the browser's native tooltip (the
   // form has novalidate) -- lets the age check show branded copy
-  // ("Applicants must be over 16") instead of the generic browser
-  // message.
+  // instead of the generic browser message, and lets the email check
+  // actually run (novalidate silences type="email"'s built-in format
+  // check too, not just required/min/max).
+  const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   for (let i = 0; i < questions.length; i++) {
     const q = questions[i];
     const raw = document.getElementById(`apply-q-${i}`).value.trim();
@@ -621,6 +623,11 @@ async function onSubmit(e) {
         errorEl.style.display = 'block';
         return;
       }
+    }
+    if (q.type === 'email' && raw && !EMAIL_PATTERN.test(raw)) {
+      errorEl.textContent = 'Please enter a valid email address.';
+      errorEl.style.display = 'block';
+      return;
     }
   }
 
