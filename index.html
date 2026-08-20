@@ -4358,6 +4358,26 @@ wakeServer().then(() => checkAuth()).then(() => {
   if (profileUsername) goToPublicProfile(profileUsername);
 });
 
+// The secondary standalone pages (download.html, apply.html, metas.html,
+// etc.) can't switch views themselves -- they don't load the dashboard/
+// tickets/settings state at all, only the lightweight nav. Their
+// Dashboard/Stats/Tickets/Account Settings links instead point back here
+// with ?view=<name>, and this is what actually opens the right thing once
+// this page (and its login state) has loaded, instead of just dropping
+// the visitor on the landing page with an extra click still needed.
+// Requires being logged in like the on-page nav links do -- a signed-out
+// visitor just lands on the normal landing page, same as clicking the
+// logo would.
+wakeServer().then(() => checkAuth()).then(() => {
+  if (!getToken()) return;
+  switch (urlParams.get('view')) {
+    case 'dashboard': goToDashboard(); break;
+    case 'stats': goToStats(); break;
+    case 'tickets': goToTickets(); break;
+    case 'account': showAccountSettings(); break;
+  }
+});
+
 // ── Currency ──────────────────────────────────────────────
 // Rates are fixed approximations (GBP-based), same as the original
 // 4-currency version -- not a live feed, just a reasonable estimate for
