@@ -412,13 +412,26 @@ const ROLE_DETAILS = {
       'Create videos, clips, or posts about 5kable for TikTok, YouTube, or Instagram',
       'Show off gameplay, tips, and new features',
       'Work with the team on campaigns and announcements',
+      'Showcase how 5kable can help players improve their geography skills',
+      'Come up with creative challenges, tutorials, tips, and entertaining geography content',
+      'Help introduce 5kable to new players and the wider geography community',
+      'Give feedback and suggestions to help improve the product',
+      'Build your own unique style around the brand rather than simply reading advertisements',
     ],
     lookingFor: [
       'Some existing content or a portfolio that shows your style',
-      'Consistency — posting on a schedule you can actually keep up with',
-      'Genuine enthusiasm for the game',
+      'Proven ability to showcase a brand to an audience',
+      'A genuine interest in 5kable and geography',
+      'Creative people who can make geography content entertaining',
+      'Good communication and willingness to work with the team',
+      "Someone who can naturally promote 5kable without making content feel like an advertisement",
+      'A creator with their own style, ideas, and personality',
+      'Experience creating content for TikTok, YouTube, Twitch, or similar platforms is a bonus',
+      "An existing audience is great, but you don't need to have thousands of followers to apply",
+      'Most importantly, someone who wants to help grow the geography community alongside 5kable',
     ],
     commitment: 'A few hours a week, flexible around your schedule.',
+    closingNote: "We're not just looking for creators with big audiences — we're looking for people who can make geography fun.",
   },
   'discord-staff': {
     duties: [
@@ -458,13 +471,18 @@ function renderRoleDetail(roleKey) {
       <h3>${icon} ${escapeHtmlLocal(title)}</h3>
       <ul>${items.map(i => `<li>${escapeHtmlLocal(i)}</li>`).join('')}</ul>
     </div>`;
+  const closingNote = d.closingNote ? `
+    <div class="apply-detail-section" style="border-top:1px solid var(--border);padding-top:20px;">
+      <p style="font-style:italic;color:var(--text);">${escapeHtmlLocal(d.closingNote)}</p>
+    </div>` : '';
   detailCard.innerHTML = `
     ${section('🎯', "What you'll do", d.duties)}
     ${section('🔍', "What we're looking for", d.lookingFor)}
     <div class="apply-detail-section">
       <h3>⏱️ Time commitment</h3>
       <p>${escapeHtmlLocal(d.commitment)}</p>
-    </div>`;
+    </div>
+    ${closingNote}`;
   detailCard.style.display = 'block';
 }
 const ROLE_QUESTIONS = {
