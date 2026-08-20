@@ -161,8 +161,8 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
 .apply-hero h1 { font-size:38px;font-weight:800;letter-spacing:-1px;margin-bottom:10px; }
 .apply-hero p { color:var(--muted);font-size:15px;max-width:520px;margin:0 auto; }
 .apply-urgency-badge {
-  display:inline-flex;align-items:center;gap:6px;margin-top:16px;padding:6px 14px;
-  border-radius:20px;font-size:12px;font-weight:700;
+  display:inline-flex;align-items:center;gap:6px;margin-top:16px;
+  font-size:12px;font-weight:700;
 }
 .apply-wrap { max-width:640px;margin:0 auto;padding:24px 24px 90px;position:relative;z-index:1;flex:1 0 auto;width:100%; }
 .apply-card { background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px; }
@@ -554,7 +554,6 @@ async function initApplyPage() {
       const badge = document.getElementById('apply-urgency-badge');
       badge.style.display = 'inline-flex';
       badge.style.color = u.color;
-      badge.style.background = u.color + '18';
       badge.textContent = `${u.emoji} ${u.text}`;
     })
     .catch(() => {});
