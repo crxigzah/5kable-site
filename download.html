@@ -930,7 +930,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     <div style="text-align:center;margin-bottom:28px;">
       <div class="section-label" style="margin-bottom:10px;">See It In Action</div>
       <h2 style="font-size:30px;font-weight:800;letter-spacing:-0.5px;margin-bottom:10px;">Watch It <span class="grad">Work</span></h2>
-      <p style="color:var(--muted);font-size:15px;max-width:460px;margin:0 auto;">A 60 second walkthrough, then real training guides pulled straight from the community library.</p>
+      <p style="color:var(--muted);font-size:15px;max-width:460px;margin:0 auto;">A 20 second walkthrough, then real training guides pulled straight from the community library.</p>
     </div>
     <div id="yt-facade" class="dl-shot" style="position:relative;border-radius:12px;overflow:hidden;background:#0d0d18;border:1px solid rgba(0,201,167,0.35);aspect-ratio:16/9;margin-bottom:20px;cursor:pointer;" onclick="loadYoutubeEmbed(this)">
       <img src="https://img.youtube.com/vi/s2deQVQv3Kg/maxresdefault.jpg" onerror="this.onerror=null;this.src='https://img.youtube.com/vi/s2deQVQv3Kg/hqdefault.jpg';" alt="5kable Installation Guide" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block;">
@@ -1072,7 +1072,12 @@ function loadYoutubeEmbed(el) {
   const iframe = document.createElement('iframe');
   iframe.width = '100%';
   iframe.height = '100%';
-  iframe.src = 'https://www.youtube.com/embed/s2deQVQv3Kg?autoplay=1';
+  // rel=0 limits the end-of-video suggested-video panel to this same
+  // channel rather than any channel on YouTube -- it can't touch the
+  // mid-video "More videos" Card some viewers see, though, since Cards
+  // are set on the video itself in YouTube Studio and are deliberately
+  // not something an embedder's URL params can suppress.
+  iframe.src = 'https://www.youtube.com/embed/s2deQVQv3Kg?autoplay=1&rel=0';
   iframe.title = '5kable Installation Guide';
   iframe.frameBorder = '0';
   iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
