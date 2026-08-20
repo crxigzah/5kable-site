@@ -549,7 +549,7 @@ function renderForm() {
     if (q.type === 'paragraph') {
       input = `<textarea class="apply-textarea" id="apply-q-${i}" ${q.required ? 'required' : ''}></textarea>`;
     } else if (q.type === 'number') {
-      input = `<input type="number" min="13" max="120" class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
+      input = `<input type="number" min="16" max="120" class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
     } else if (q.type === 'email') {
       input = `<input type="email" class="apply-input" id="apply-q-${i}" ${q.required ? 'required' : ''}>`;
     } else if (q.type === 'select') {
