@@ -572,10 +572,10 @@ function renderForm() {
       </div>`;
   }).join('');
   cardEl.innerHTML = `
-    <div class="apply-error" id="apply-error"></div>
     <form id="apply-form" novalidate>
       ${fieldsHtml}
       <button type="submit" class="btn btn-primary apply-submit-btn" id="apply-submit-btn">Submit Application</button>
+      <div class="apply-error" id="apply-error" style="margin-bottom:0;margin-top:20px;"></div>
     </form>`;
   document.getElementById('apply-form').addEventListener('submit', onSubmit);
 }
