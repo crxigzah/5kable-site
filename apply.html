@@ -577,11 +577,12 @@ function renderForm() {
 
 function renderSuccess() {
   const label = ROLE_LABELS[roleKey];
+  document.getElementById('apply-detail-card').style.display = 'none';
   cardEl.innerHTML = `
     <div class="apply-gate">
       <div class="apply-gate-icon">✅</div>
       <h2>Application submitted</h2>
-      <p>Your ${escapeHtmlLocal(label)} application is in. The team will review it and reach out on Discord with a decision.</p>
+      <p>Your ${escapeHtmlLocal(label)} application is in. The team will review it and reach out via email if you are a good fit.</p>
     </div>`;
 }
 
