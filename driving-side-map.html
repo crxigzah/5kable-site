@@ -11,17 +11,17 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Coverage Map — 5kable</title>
-<meta name="description" content="See exactly which countries and regions have Street View coverage for map-guessing games.">
-<link rel="canonical" href="https://5kable.net/coverage-map.html">
-<meta property="og:url" content="https://5kable.net/coverage-map.html">
+<title>Driving Side Map — 5kable</title>
+<meta name="description" content="See which side of the road every country drives on -- a quick reference map for geography training and travel.">
+<link rel="canonical" href="https://5kable.net/driving-side-map.html">
+<meta property="og:url" content="https://5kable.net/driving-side-map.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Coverage Map — 5kable">
-<meta property="og:description" content="See exactly which countries and regions have Street View coverage for map-guessing games.">
+<meta property="og:title" content="Driving Side Map — 5kable">
+<meta property="og:description" content="See which side of the road every country drives on -- a quick reference map for geography training and travel.">
 <meta property="og:image" content="https://5kable.net/apple-touch-icon.png">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Coverage Map — 5kable">
-<meta name="twitter:description" content="See exactly which countries and regions have Street View coverage for map-guessing games.">
+<meta name="twitter:title" content="Driving Side Map — 5kable">
+<meta name="twitter:description" content="See which side of the road every country drives on -- a quick reference map for geography training and travel.">
 <meta name="twitter:image" content="https://5kable.net/apple-touch-icon.png">
 <link rel="icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -51,15 +51,6 @@ nav {
   border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;
   width:100%;box-sizing:border-box;
 }
-/* The frosted-glass effect lives on a pseudo-element behind nav's content,
-   not on `nav` itself. backdrop-filter (like transform/filter/perspective/
-   will-change:transform) makes its element the CONTAINING BLOCK for any
-   position:fixed descendant, instead of the real viewport -- that broke the
-   mobile off-canvas nav-links panel further down, whose top:0/bottom:0 was
-   silently resolving against nav's own ~96px height instead of the full
-   screen, squashing the whole slide-out menu into a sliver near the top.
-   Moving the blur to ::before keeps the exact same visual (painted behind
-   nav's real content either way) without nav itself tripping that rule. */
 nav::before {
   content:'';position:absolute;inset:0;
   background:rgba(8,8,16,0.92);backdrop-filter:blur(20px);z-index:-1;
@@ -76,15 +67,11 @@ nav::before {
 .nav-socials { display:flex;align-items:center;gap:14px; }
 .nav-discord { color:var(--muted);text-decoration:none;font-size:13px;display:flex;align-items:center;gap:5px;transition:color .2s; }
 .nav-discord:hover { color:#5865F2; }
-/* Nav-scoped button classes (not the page's own .btn) so the toolbar's
-   Search/Coverage/Labels buttons -- which already use .btn -- are
-   completely unaffected. */
 .nav-btn { padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .2s; }
 .nav-btn-outline { background:transparent;border:1px solid rgba(0,201,167,0.4);color:var(--teal); }
 .nav-btn-outline:hover { background:var(--teal);color:#080810; }
 .nav-btn-primary { background:linear-gradient(135deg,#00c9a7,#00a87d);color:#080810;font-weight:700; }
 .nav-btn-primary:hover { opacity:0.9;transform:translateY(-1px); }
-/* Policies dropdown */
 .nav-dropdown-wrap { position:relative;display:flex;align-items:center;height:100%; }
 .nav-dropdown-wrap > a { cursor:pointer;display:flex;align-items:center;gap:3px; }
 .nav-dropdown-menu {
@@ -92,7 +79,6 @@ nav::before {
   background:var(--card);border:1px solid var(--border);border-radius:12px;min-width:200px;
   box-shadow:0 20px 60px rgba(0,0,0,0.6);z-index:300;overflow:hidden;padding:6px 0;
 }
-/* invisible bridge so mouse can travel from trigger to menu */
 .nav-dropdown-menu::before {
   content:'';position:absolute;top:-8px;left:0;right:0;height:8px;
 }
@@ -103,7 +89,6 @@ nav::before {
 }
 .nav-dropdown-menu a:hover { background:var(--card2);color:var(--text); }
 .nav-dropdown-menu a::after { display:none !important; }
-/* ── Mobile hamburger (hidden on desktop) ─────────────────── */
 .nav-hamburger {
   display: none;
   flex-direction: column;
@@ -213,16 +198,13 @@ nav::before {
   #user-dropdown a { padding: 13px 16px; font-size: 14px; }
 }
 
-  main{ width:100%; max-width:1500px; padding:28px 20px 40px; display:flex; flex-direction:column; align-items:center; }
-  h1{ font-size:24px; margin:0 0 24px; text-align:center; }
+  main{ width:100%; max-width:1200px; padding:28px 20px 40px; display:flex; flex-direction:column; align-items:center; }
+  h1{ font-size:24px; margin:0 0 8px; text-align:center; }
+  .ds-subtitle{ color:var(--muted); font-size:14px; max-width:560px; text-align:center; margin:0 0 22px; line-height:1.6; }
 
   .toolbar{
     width:100%; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center;
-    margin-bottom:16px;
-  }
-  #coverage-zoom-hint{
-    width:100%; max-width:560px; text-align:center; color:var(--purple); font-size:12px;
-    line-height:1.5; margin:-6px 0 16px;
+    margin-bottom:10px;
   }
   .toolbar input[type=text]{
     background:var(--panel2); border:1px solid var(--border); color:var(--text);
@@ -234,29 +216,42 @@ nav::before {
   }
   .btn:hover{ border-color:var(--teal); }
   .btn.primary{ background:rgba(0,201,167,0.15); border-color:rgba(0,201,167,0.35); color:var(--teal); }
-  .btn.active{ background:rgba(0,201,167,0.22); border-color:var(--teal); color:var(--teal); }
 
-  .map-layout{ width:100%; display:flex; gap:16px; align-items:flex-start; justify-content:center; }
+  #ds-search-error{ display:none; width:100%; max-width:560px; text-align:center; color:var(--red); font-size:12px; margin:-2px 0 14px; }
 
   #map-wrap{
-    flex:1.2; min-width:0; height:65vh; min-height:420px; border-radius:14px; overflow:hidden;
+    width:100%; height:65vh; min-height:420px; border-radius:14px; overflow:hidden;
     border:1px solid var(--border); box-shadow:0 20px 50px rgba(0,0,0,0.35); position:relative;
+    background:var(--panel);
   }
-  #map{ width:100%; height:100%; }
+  #map{ width:100%; height:100%; display:block; }
 
-  #pano-panel{
-    flex:1; min-width:0; height:65vh; min-height:420px; background:var(--panel);
-    border:1px solid var(--border); border-radius:14px; overflow:hidden; display:flex; flex-direction:column;
-    position:relative;
+  .country{ stroke:var(--bg); stroke-width:0.5; cursor:pointer; }
+  .country:hover{ filter:brightness(1.2); }
+  .side-left{ fill:var(--purple); }
+  .side-right{ fill:var(--teal); }
+  .side-nodata{ fill:#242440; }
+  /* non-scaling-stroke keeps this a thin outline regardless of zoom level --
+     without it, the stroke scales with the same transform as the map
+     itself, so at high zoom (right after a search jumps in close) it
+     balloons past the size of small countries and reads as a solid white
+     fill instead of a highlight border. */
+  .country.flash-highlight{ stroke:#fff; stroke-width:2; vector-effect:non-scaling-stroke; }
+
+  #ds-tooltip{
+    position:fixed; pointer-events:none; background:var(--panel2); border:1px solid var(--border);
+    border-radius:8px; padding:8px 12px; font-size:13px; z-index:500; display:none;
+    box-shadow:0 10px 30px rgba(0,0,0,0.5); line-height:1.5; max-width:220px;
   }
-  #pano-view{ width:100%; flex:1; background:var(--panel2); }
-  #pano-placeholder{
-    flex:1; display:flex; align-items:center; justify-content:center; text-align:center;
-    color:var(--muted); font-size:13px; padding:24px; line-height:1.6;
+  #ds-tooltip strong{ display:block; margin-bottom:2px; }
+
+  #ds-legend{
+    position:absolute; right:14px; bottom:14px; background:rgba(16,16,30,0.85);
+    border:1px solid var(--border); border-radius:10px; padding:10px 14px; font-size:12px;
+    backdrop-filter:blur(6px);
   }
-  #pano-footer{ padding:12px; border-top:1px solid var(--border); display:flex; gap:8px; }
-  #pano-footer .btn{ flex:1; font-size:12px; padding:9px 10px; }
-  #pano-status{ font-size:11px; color:var(--muted); padding:0 12px 10px; text-align:center; }
+  .legend-row{ display:flex; align-items:center; gap:8px; margin:4px 0; color:var(--muted); }
+  .legend-swatch{ width:13px; height:13px; border-radius:3px; flex-shrink:0; }
 
   .fs-btn{
     position:absolute; top:10px; right:10px; z-index:20;
@@ -265,25 +260,11 @@ nav::before {
     display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);
   }
   .fs-btn:hover{ border-color:var(--teal); color:var(--teal); }
+  #map-wrap:fullscreen{ border-radius:0; height:100%; width:100%; }
 
-  #map-wrap:fullscreen, #pano-panel:fullscreen{ border-radius:0; height:100%; width:100%; }
-  #map-wrap:fullscreen #map{ height:100%; }
-  #pano-panel:fullscreen #pano-view{ flex:1; }
-
-  @media (max-width:900px){
-    .map-layout{ flex-direction:column; align-items:center; }
-    #pano-panel{ width:100%; max-width:560px; height:300px; }
-    #map-wrap{ width:100%; max-width:560px; }
+  #ds-map-error{
+    display:none; padding:40px 20px; text-align:center; color:var(--muted); font-size:13px;
   }
-
-  #config-warning{
-    width:100%; max-width:640px; background:rgba(255,107,107,0.08); border:1px solid rgba(255,107,107,0.3);
-    color:var(--red); border-radius:12px; padding:18px 20px; font-size:13px; line-height:1.6; margin-bottom:20px;
-  }
-  #config-warning code{ background:var(--panel2); padding:1px 6px; border-radius:4px; font-size:12px; }
-  #config-warning a{ color:var(--teal); }
-
-  .pac-container{ z-index:9999; }
 </style>
 </head>
 <body>
@@ -373,44 +354,26 @@ nav::before {
 <div class="nav-scrim" id="nav-scrim" onclick="closeMobileNav()"></div>
 
 <main>
-  <h1>🛰️ Coverage Map</h1>
-
-  <div id="config-warning" style="display:none;">
-    <strong>⚠️ Google Maps API key needed.</strong><br>
-    This page needs its own Google Maps JavaScript API key to work — open <code>coverage-map.html</code> and replace
-    <code>YOUR_GOOGLE_MAPS_API_KEY</code> with a real key from the
-    <a href="https://console.cloud.google.com/google/maps-apis" target="_blank">Google Cloud Console</a>
-    (enable the <strong>Maps JavaScript API</strong> and <strong>Places API</strong> on that project — Places is needed
-    for the search-suggestions dropdown).
-    Google also offers a no-billing-required <strong>Maps Demo Key</strong> if you just want to test this out first.
-  </div>
+  <p class="ds-subtitle">Every country in the world, colored by which side of the road it drives on. Hover any country for details, or search to jump straight to one.</p>
 
   <div class="toolbar">
-    <input type="text" id="search-box" placeholder="Jump to a country or city...">
-    <button class="btn primary" onclick="jumpToSearch()">Search</button>
-    <button class="btn active" id="coverage-toggle-btn" onclick="toggleCoverage()">🔵 Coverage: On</button>
-    <button class="btn active" id="labels-toggle-btn" onclick="toggleLabels()">🏷️ Labels: On</button>
+    <input type="text" id="search-box" placeholder="Jump to a country...">
+    <button class="btn primary" onclick="jumpToCountry()">Search</button>
   </div>
-  <div id="coverage-zoom-hint" style="display:none;">Zoom in a bit to see coverage -- at world view it would just be one meaningless blob.</div>
+  <div id="ds-search-error"></div>
 
-  <div class="map-layout">
-    <div id="map-wrap">
-      <button class="fs-btn" id="map-fs-btn" onclick="toggleFullscreen('map-wrap','map-fs-btn')" title="Fullscreen map">⛶</button>
-      <div id="map"></div>
-    </div>
-
-    <div id="pano-panel">
-      <button class="fs-btn" id="pano-fs-btn" onclick="toggleFullscreen('pano-panel','pano-fs-btn')" title="Fullscreen preview">⛶</button>
-      <div id="pano-placeholder">Click anywhere on a blue coverage line to preview that spot here.</div>
-      <div id="pano-view" style="display:none;"></div>
-      <div id="pano-status"></div>
-      <div id="pano-footer" style="display:none;">
-        <button class="btn" onclick="removeMarker()">✕ Remove marker</button>
-        <a class="btn primary" id="open-in-maps-btn" href="#" target="_blank" rel="noopener" style="text-decoration:none;text-align:center;">🗺️ Open in Google Maps</a>
-      </div>
+  <div id="map-wrap">
+    <button class="fs-btn" id="map-fs-btn" onclick="toggleFullscreen('map-wrap')" title="Fullscreen map">⛶</button>
+    <svg id="map"></svg>
+    <div id="ds-map-error">Could not load the map. Please refresh the page.</div>
+    <div id="ds-legend">
+      <div class="legend-row"><span class="legend-swatch" style="background:var(--teal);"></span>Right</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:var(--purple);"></span>Left</div>
+      <div class="legend-row"><span class="legend-swatch" style="background:#242440;"></span>No data</div>
     </div>
   </div>
 </main>
+<div id="ds-tooltip"></div>
 
 <script>
 function getToken() { return localStorage.getItem('kbl_token'); }
@@ -463,7 +426,7 @@ document.getElementById('nav-links').addEventListener('click', (e) => {
 })();
 
 // Highlight whichever Tools dropdown item matches the current page (this
-// page itself, Coverage Map) and color the trigger to match, same
+// page itself, Driving Side Map) and color the trigger to match, same
 // approach as the Games dropdown's active-highlight on photo-quiz-game.html.
 (function() {
   const curPath = location.pathname.replace(/\.html$/, '');
@@ -517,137 +480,8 @@ function lightLogout() {
   localStorage.removeItem('kbl_user');
   location.reload();
 }
-</script>
-<script>
-let map, coverageLayer, geocoder, streetViewService, panorama, marker, autocomplete;
-let coverageOn = true;
-let labelsOn = true;
 
-const LABELS_OFF_STYLE = [{ elementType: 'labels', stylers: [{ visibility: 'off' }] }];
-
-// google.maps.StreetViewCoverageLayer has no styling API at all -- no line
-// width, color, or opacity option, nothing beyond setMap()/getMap(). There's
-// no way to fade it in gradually; it's Google's fixed rendering or nothing.
-// Below this zoom it's hidden entirely (world/continent view, where it
-// would read as one giant meaningless blob); from here up it's shown at
-// whatever Google renders, which is genuinely blocky around 4-8 and only
-// resolves into thin, road-accurate lines by roughly zoom 14.
-const MIN_COVERAGE_ZOOM = 4;
-
-function initCoverageMap(){
-  geocoder = new google.maps.Geocoder();
-  streetViewService = new google.maps.StreetViewService();
-
-  map = new google.maps.Map(document.getElementById('map'), {
-    center: { lat: 20, lng: 0 },
-    zoom: 3,
-    streetViewControl: false,
-    fullscreenControl: false,
-  });
-
-  coverageLayer = new google.maps.StreetViewCoverageLayer();
-  updateCoverageVisibility();
-  map.addListener('zoom_changed', updateCoverageVisibility);
-
-  panorama = new google.maps.StreetViewPanorama(document.getElementById('pano-view'), {
-    addressControl: false, showRoadLabels: false, motionTracking: false, fullscreenControl: false,
-  });
-
-  map.addListener('click', (e) => handleMapClick(e.latLng));
-
-  // Autocomplete dropdown on the search box
-  autocomplete = new google.maps.places.Autocomplete(document.getElementById('search-box'), {
-    fields: ['geometry', 'name'],
-  });
-  autocomplete.addListener('place_changed', () => {
-    const place = autocomplete.getPlace();
-    if (!place.geometry) return;
-    const bounds = place.geometry.viewport || place.geometry.bounds;
-    if (bounds) map.fitBounds(bounds); else { map.setCenter(place.geometry.location); map.setZoom(12); }
-  });
-}
-
-function handleMapClick(latLng){
-  const statusEl = document.getElementById('pano-status');
-  statusEl.textContent = 'Checking for coverage...';
-  streetViewService.getPanorama({
-    location: latLng, radius: 50, source: google.maps.StreetViewSource.OUTDOOR
-  }, (data, status) => {
-    if (status === 'OK') {
-      const pos = data.location.latLng;
-      placeMarker(pos);
-      panorama.setPano(data.location.pano);
-      panorama.setPov({ heading: 0, pitch: 0 });
-      showPano();
-      statusEl.textContent = data.location.description || '';
-      document.getElementById('open-in-maps-btn').href =
-        `https://www.google.com/maps/@?api=1&map_action=pano&pano=${data.location.pano}`;
-    } else {
-      statusEl.textContent = 'No Street View coverage within ~50m of that click — try clicking closer to a blue line.';
-    }
-  });
-}
-
-function placeMarker(position){
-  if (marker) marker.setPosition(position);
-  else marker = new google.maps.Marker({ position, map, title: 'Preview location' });
-}
-
-function removeMarker(){
-  if (marker) { marker.setMap(null); marker = null; }
-  document.getElementById('pano-status').textContent = '';
-  hidePano();
-}
-
-function showPano(){
-  document.getElementById('pano-placeholder').style.display = 'none';
-  document.getElementById('pano-view').style.display = 'block';
-  document.getElementById('pano-footer').style.display = 'flex';
-}
-function hidePano(){
-  document.getElementById('pano-placeholder').style.display = 'flex';
-  document.getElementById('pano-view').style.display = 'none';
-  document.getElementById('pano-footer').style.display = 'none';
-}
-
-function toggleCoverage(){
-  coverageOn = !coverageOn;
-  updateCoverageVisibility();
-  const btn = document.getElementById('coverage-toggle-btn');
-  btn.textContent = coverageOn ? '🔵 Coverage: On' : '⚪ Coverage: Off';
-  btn.classList.toggle('active', coverageOn);
-}
-
-function updateCoverageVisibility(){
-  const zoomedInEnough = map.getZoom() >= MIN_COVERAGE_ZOOM;
-  coverageLayer.setMap(coverageOn && zoomedInEnough ? map : null);
-  document.getElementById('coverage-zoom-hint').style.display = (coverageOn && !zoomedInEnough) ? 'block' : 'none';
-}
-
-function toggleLabels(){
-  labelsOn = !labelsOn;
-  map.setOptions({ styles: labelsOn ? [] : LABELS_OFF_STYLE });
-  const btn = document.getElementById('labels-toggle-btn');
-  btn.textContent = labelsOn ? '🏷️ Labels: On' : '🏷️ Labels: Off';
-  btn.classList.toggle('active', labelsOn);
-}
-
-function jumpToSearch(){
-  const query = document.getElementById('search-box').value.trim();
-  if (!query || !geocoder) return;
-  geocoder.geocode({ address: query }, (results, status) => {
-    if (status === 'OK' && results[0]) {
-      map.fitBounds(results[0].geometry.viewport || results[0].geometry.bounds);
-    } else {
-      alert('Could not find that place — try a different search.');
-    }
-  });
-}
-document.getElementById('search-box').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') jumpToSearch();
-});
-
-function toggleFullscreen(elId, btnId){
+function toggleFullscreen(elId){
   const el = document.getElementById(elId);
   if (document.fullscreenElement === el) {
     document.exitFullscreen();
@@ -657,42 +491,102 @@ function toggleFullscreen(elId, btnId){
     });
   }
 }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script>
+// Compiled from samayo/country-json's country-by-driving-side.json,
+// cross-referenced against mledoze/countries.json for ISO 3166-1 numeric
+// codes (the same "id" field world-atlas's TopoJSON country shapes use) --
+// not committed to memory, pulled from real reference data so this isn't
+// guessing at ~250 countries' traffic conventions from scratch. A handful
+// of territories world-atlas includes but that dataset didn't cover
+// (Taiwan, Curaçao, Sint Maarten, St-Martin, St-Barthélemy, Åland) were
+// filled in by hand -- all well-established right-hand-traffic cases.
+const LEFT_IDS = new Set(['028','036','044','050','052','064','072','086','090','092','096','136','144','162','166','184','196','212','238','242','292','296','308','328','344','356','360','372','388','392','404','426','446','454','458','462','470','480','500','508','516','520','524','540','548','554','570','586','598','612','626','654','659','660','662','670','690','702','710','716','740','748','764','772','776','780','796','798','800','826','831','832','833','834','876','882','894']);
+const RIGHT_IDS = new Set(['004','008','010','012','016','020','024','031','032','040','048','051','056','060','068','070','074','076','084','100','104','108','112','116','120','124','132','140','148','152','156','158','170','174','175','178','180','188','191','192','203','204','208','214','218','222','226','231','232','233','234','239','246','248','250','254','258','260','262','266','268','270','275','276','288','300','304','312','316','320','324','332','334','336','340','348','352','364','368','376','380','384','398','400','408','410','414','417','418','422','428','430','434','438','440','442','450','466','474','478','484','492','496','498','499','504','512','528','531','533','534','558','562','566','574','578','580','581','583','584','585','591','600','604','608','616','620','624','630','634','638','642','643','646','652','663','666','674','678','682','686','688','694','703','704','705','706','724','728','729','732','744','752','756','760','762','768','784','788','792','795','804','807','818','840','850','854','858','860','862','887']);
 
-// Whichever element is fullscreen (or neither), keep icons in sync and make
-// sure Maps/Street View redraw correctly at their new size either way —
-// this fires on Esc-key exits too, not just our own button.
-document.addEventListener('fullscreenchange', () => {
-  const mapFsBtn = document.getElementById('map-fs-btn');
-  const panoFsBtn = document.getElementById('pano-fs-btn');
-  const fsEl = document.fullscreenElement;
-  mapFsBtn.textContent = fsEl && fsEl.id === 'map-wrap' ? '✕' : '⛶';
-  panoFsBtn.textContent = fsEl && fsEl.id === 'pano-panel' ? '✕' : '⛶';
-  setTimeout(() => {
-    if (map) google.maps.event.trigger(map, 'resize');
-    if (panorama) google.maps.event.trigger(panorama, 'resize');
-  }, 100);
+function sideOf(id){
+  if (LEFT_IDS.has(id)) return 'left';
+  if (RIGHT_IDS.has(id)) return 'right';
+  return 'nodata';
+}
+function countryName(d){ return (d.properties && d.properties.name) || 'Unknown'; }
+
+const width = 960, height = 500;
+const svg = d3.select('#map').attr('viewBox', `0 0 ${width} ${height}`);
+const projection = d3.geoNaturalEarth1().scale(165).translate([width/2, height/2 + 10]);
+const path = d3.geoPath(projection);
+const g = svg.append('g');
+const zoom = d3.zoom().scaleExtent([1, 8]).on('zoom', (event) => g.attr('transform', event.transform));
+svg.call(zoom);
+
+let countryFeatures = [];
+let countryPaths = null;
+
+d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json').then(world => {
+  const allFeatures = topojson.feature(world, world.objects.countries).features;
+  // Same whole-sphere degenerate-geometry guard as the homepage hero globe
+  // (world-atlas's 10m file has at least one bad-winding feature -- e.g.
+  // Maldives -- whose d3.geoBounds() comes back as the entire sphere,
+  // which would otherwise paint almost the whole map one color).
+  countryFeatures = allFeatures.filter(f => {
+    const b = d3.geoBounds(f);
+    return !(b[0][0] === -180 && b[0][1] === -90 && b[1][0] === 180 && b[1][1] === 90);
+  });
+
+  countryPaths = g.selectAll('path.country')
+    .data(countryFeatures)
+    .join('path')
+    .attr('class', d => `country side-${sideOf(String(d.id))}`)
+    .attr('d', path)
+    .on('mousemove', showTooltip)
+    .on('mouseleave', hideTooltip);
+}).catch(() => {
+  document.getElementById('ds-map-error').style.display = 'block';
 });
 
-function handleMapsAuthFailure(){
-  document.getElementById('config-warning').style.display = 'block';
-  document.querySelector('.map-layout').style.display = 'none';
+function showTooltip(event, d){
+  const tip = document.getElementById('ds-tooltip');
+  const side = sideOf(String(d.id));
+  const label = side === 'left' ? 'Drives on the <strong style="color:var(--purple);">LEFT</strong>'
+    : side === 'right' ? 'Drives on the <strong style="color:var(--teal);">RIGHT</strong>'
+    : 'No data';
+  tip.innerHTML = `<strong>${countryName(d)}</strong>${label}`;
+  tip.style.display = 'block';
+  tip.style.left = (event.clientX + 14) + 'px';
+  tip.style.top = (event.clientY + 14) + 'px';
 }
-window.gm_authFailure = handleMapsAuthFailure;
-</script>
-<script>
-  (function(){
-    const key = 'AIzaSyBhcV4E74jmlUv5dcCZThOEutgqiYqGQp0';
-    if (key === 'YOUR_GOOGLE_MAPS_API_KEY') {
-      document.getElementById('config-warning').style.display = 'block';
-      document.querySelector('.map-layout').style.display = 'none';
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${key}&libraries=places&callback=initCoverageMap&v=weekly&loading=async`;
-    script.async = true;
-    document.head.appendChild(script);
-  })();
-</script>
+function hideTooltip(){ document.getElementById('ds-tooltip').style.display = 'none'; }
 
+function jumpToCountry(){
+  const raw = document.getElementById('search-box').value.trim();
+  const q = raw.toLowerCase();
+  const errEl = document.getElementById('ds-search-error');
+  errEl.style.display = 'none';
+  if (!q || !countryFeatures.length) return;
+
+  const match = countryFeatures.find(f => countryName(f).toLowerCase() === q)
+    || countryFeatures.find(f => countryName(f).toLowerCase().includes(q));
+  if (!match) {
+    errEl.textContent = `Couldn't find "${raw}" -- try the country's full name.`;
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const [[x0, y0], [x1, y1]] = path.bounds(match);
+  const dx = Math.max(x1 - x0, 1), dy = Math.max(y1 - y0, 1);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const scale = Math.max(1, Math.min(8, 0.7 / Math.max(dx / width, dy / height)));
+  const translate = [width / 2 - scale * cx, height / 2 - scale * cy];
+  svg.transition().duration(600).call(zoom.transform, d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale));
+
+  if (countryPaths) {
+    countryPaths.classed('flash-highlight', pd => pd === match);
+    setTimeout(() => countryPaths.classed('flash-highlight', false), 1800);
+  }
+}
+document.getElementById('search-box').addEventListener('keydown', e => { if (e.key === 'Enter') jumpToCountry(); });
+</script>
 </body>
 </html>
