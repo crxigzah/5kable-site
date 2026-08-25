@@ -680,6 +680,26 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// Guide photos and map badges are all served straight from Supabase
+// Storage, which rate-limits (429s) a burst of near-simultaneous
+// requests -- a guide with several images loading at once can trip
+// this even though every file genuinely exists (confirmed directly
+// against storage.objects, not a missing/deleted upload). Retrying
+// after a short, increasing delay recovers cleanly once the burst
+// passes, instead of leaving a permanently broken icon over a real
+// photo. Caps at 4 attempts so a genuinely missing image still just
+// shows broken, rather than retrying forever.
+function guideImgRetry(el) {
+  const attempt = (parseInt(el.dataset.retryAttempt || '0', 10)) + 1;
+  if (attempt > 4) return;
+  el.dataset.retryAttempt = attempt;
+  const baseSrc = el.dataset.retryBaseSrc || el.src;
+  el.dataset.retryBaseSrc = baseSrc;
+  setTimeout(() => {
+    el.src = baseSrc + (baseSrc.includes('?') ? '&' : '?') + '_retry=' + attempt;
+  }, attempt * 1000);
+}
+
 // Lightweight markdown-style formatting: **bold** and *italic*. escapeHtml
 // runs first so any raw HTML in stored text is neutralized, then only our
 // own <strong>/<em> tags get added on top.
@@ -1393,7 +1413,7 @@ function renderGuide(c, data) {
           // the browser HTML-decodes an event-handler attribute BEFORE
           // parsing it as JS, so an escaped quote decodes right back into a
           // real one and still breaks out of the string literal.
-          return `<div style="margin:20px 0;">${block.data.src ? `<div class="enlargeable-photo" data-src="${escapeHtml(block.data.src)}" onclick="openLightbox(this.dataset.src)"><img src="${escapeHtml(block.data.src)}" style="width:100%;border-radius:12px;display:block;"><div class="expand-icon">${EXPAND_ICON}</div></div>` : ''}${block.data.caption ? `<div style="text-align:center;font-size:13px;color:var(--muted);margin-top:8px;">${escapeHtml(block.data.caption)}</div>` : ''}</div>`;
+          return `<div style="margin:20px 0;">${block.data.src ? `<div class="enlargeable-photo" data-src="${escapeHtml(block.data.src)}" onclick="openLightbox(this.dataset.src)"><img src="${escapeHtml(block.data.src)}" loading="lazy" onerror="guideImgRetry(this)" style="width:100%;border-radius:12px;display:block;"><div class="expand-icon">${EXPAND_ICON}</div></div>` : ''}${block.data.caption ? `<div style="text-align:center;font-size:13px;color:var(--muted);margin-top:8px;">${escapeHtml(block.data.caption)}</div>` : ''}</div>`;
         case 'tip': {
           const rTR = prevAttach ? '0' : '12px', rBR = nextAttach ? '0' : '12px';
           const mt = prevAttach ? '0' : '16px', mb = nextAttach ? '0' : '16px';
@@ -1413,13 +1433,13 @@ function renderGuide(c, data) {
           return `<div style="display:grid;grid-template-columns:${itWidth==='100'?'1fr':itWidth+'% 1fr'};gap:24px;align-items:start;margin:${mt} 0 ${mb};background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--border);border-radius:${rT} ${rT} ${rB} ${rB};padding:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.03);">
             <div>
               <div class="${block.data.src ? 'enlargeable-photo' : ''}" ${block.data.src ? `data-src="${escapeHtml(block.data.src)}" onclick="openLightbox(this.dataset.src)"` : ''} style="position:relative;">
-                ${block.data.src ? `<img src="${escapeHtml(block.data.src)}" style="width:100%;height:auto;display:block;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"><div class="expand-icon">${EXPAND_ICON}</div>` : ''}
+                ${block.data.src ? `<img src="${escapeHtml(block.data.src)}" loading="lazy" onerror="guideImgRetry(this)" style="width:100%;height:auto;display:block;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.4);"><div class="expand-icon">${EXPAND_ICON}</div>` : ''}
               </div>
               ${block.data.caption ? `<div style="text-align:center;font-size:12px;color:var(--muted);margin-top:8px;font-style:italic;">${escapeHtml(block.data.caption)}</div>` : ''}
             </div>
             <div>
               <p style="color:#c0c0d8;line-height:1.85;font-size:15px;margin:0 0 14px;white-space:pre-wrap;">${mdToHtml(block.data.text||'')}</p>
-              ${itMap ? `<img src="${escapeHtml(itMap)}" style="width:${itMapSize}px;max-width:100%;display:block;border-radius:6px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4));">` : ''}
+              ${itMap ? `<img src="${escapeHtml(itMap)}" loading="lazy" onerror="guideImgRetry(this)" style="width:${itMapSize}px;max-width:100%;display:block;border-radius:6px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4));">` : ''}
             </div>
           </div>`;
         }
@@ -1694,7 +1714,7 @@ document.addEventListener('keydown', (e) => {
 });
 </script>
 <div id="lightbox-overlay" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:2000;align-items:center;justify-content:center;cursor:zoom-out;padding:40px;box-sizing:border-box;">
-  <img id="lightbox-img" src="" style="width:min(90vw, 900px);height:min(85vh, 700px);object-fit:contain;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.6);cursor:default;" onclick="event.stopPropagation()">
+  <img id="lightbox-img" src="" onerror="guideImgRetry(this)" style="width:min(90vw, 900px);height:min(85vh, 700px);object-fit:contain;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.6);cursor:default;" onclick="event.stopPropagation()">
   <button onclick="closeLightbox()" style="position:absolute;top:20px;right:28px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;width:40px;height:40px;border-radius:50%;font-size:20px;cursor:pointer;line-height:1;">✕</button>
 </div>
 <div id="report-modal-overlay" onclick="if(event.target===this) closeReportModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2100;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;">
