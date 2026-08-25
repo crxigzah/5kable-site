@@ -1470,6 +1470,7 @@ function renderGuide(c, data) {
     document.getElementById('cv-body').innerHTML = `
       <div style="max-width:100%;">${html}</div>
       <div style="text-align:center;margin-top:48px;">
+        ${data.test_map_url ? `<a href="${escapeHtml(data.test_map_url)}" target="_blank" rel="noopener" style="display:inline-block;background:rgba(0,201,167,0.15);border:1px solid #00c9a7;color:#00c9a7;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none;font-size:14px;margin-bottom:14px;">🗺️ Test Yourself on the Map</a><br>` : ''}
         <button onclick="showMap()" style="background:var(--card);border:1px solid var(--border);color:var(--muted);padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;transition:all .2s;" onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">← Back to World Map</button>
       </div>`;
     return;
