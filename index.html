@@ -1993,7 +1993,14 @@ function switchTab(tab) {
 }
 
 // ── Register ──────────────────────────────────────────────
+let registerInFlight = false;
+
 async function register() {
+  if (registerInFlight) return;
+  registerInFlight = true;
+  const btn = document.querySelector('#form-register .form-btn');
+  btn?.setAttribute('disabled', 'true');
+  try {
   const username = document.getElementById('reg-username').value.trim();
   const email    = document.getElementById('reg-email').value.trim();
   const password = document.getElementById('reg-password').value;
@@ -2022,6 +2029,10 @@ async function register() {
     closeModal();
     showDashboard(data.user, data.token);
   } catch(e) { errEl.textContent = 'Could not connect to server. Try again.'; errEl.style.display = 'block'; }
+  } finally {
+    registerInFlight = false;
+    btn?.removeAttribute('disabled');
+  }
 }
 
 let pendingVerifyToken = null;
@@ -2763,7 +2774,7 @@ async function loadTicketUnreadBadge(){
   const token = getToken();
   if (!token) { dot.style.display = 'none'; countEl.style.display = 'none'; return; }
   try {
-    const res = await fetch(`${API}/tickets/unread_count?token=${encodeURIComponent(token)}`);
+    const res = await fetch(`${API}/tickets/unread_count`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
     const data = await res.json();
     const count = data.unread_count || 0;
     dot.style.display = count > 0 ? 'block' : 'none';
@@ -2780,7 +2791,7 @@ async function loadMyTickets(){
   const token = getToken();
   if (!token) { listEl.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:30px 0;">Please log in to view your tickets.</div>'; return; }
   try {
-    const res = await fetch(`${API}/tickets/mine?token=${encodeURIComponent(token)}`);
+    const res = await fetch(`${API}/tickets/mine`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || 'Could not load tickets');
     const tickets = data.tickets || [];
@@ -2853,7 +2864,7 @@ async function openTicketThread(id){
   lastKnownTicketMessageCount = 0;
   const token = getToken();
   try {
-    const res = await fetch(`${API}/tickets/${id}?token=${encodeURIComponent(token)}`);
+    const res = await fetch(`${API}/tickets/${id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
     const data = await res.json();
     if (!res.ok || data.error) throw new Error(data.error || 'Could not load ticket');
     document.getElementById('ticket-thread-subject').textContent = data.subject;
@@ -2879,7 +2890,7 @@ async function openTicketThread(id){
   ticketThreadPollInterval = setInterval(async () => {
     if (!currentTicketId) return;
     try {
-      const res = await fetch(`${API}/tickets/${currentTicketId}?token=${encodeURIComponent(getToken())}`);
+      const res = await fetch(`${API}/tickets/${currentTicketId}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token: getToken()}) });
       const data = await res.json();
       if (!res.ok || data.error) return;
       const count = (data.messages || []).length;
@@ -3002,11 +3013,6 @@ document.addEventListener('click', e => {
   const menu = document.getElementById('nav-auth-user');
   if (menu && !menu.contains(e.target)) closeUserMenu();
 });
-
-function showPaymentMethods() {
-  closeUserMenu();
-  alert('Payment methods coming soon manage your saved cards via the Stripe customer portal.');
-}
 
 
 
@@ -3252,11 +3258,16 @@ async function loadDashboardExtras(token){
     // baseline rather than celebrating (so everyone's first dashboard
     // visit doesn't show a random "rank up" for a rank they've had for
     // weeks).
+    // tier (above) only carries icon/title/color for rendering -- it has
+    // no .level field, so this comparison needs the tier's own rank
+    // threshold from _gaxTierForLevel (the same lookup renderRewardsRoadmap
+    // uses), not the player's raw level, so it fires on rank-up specifically.
+    const tierRankLevel = _gaxTierForLevel(level).level;
     const lastTierLevel = localStorage.getItem('kbl_last_tier_level');
-    if (lastTierLevel !== null && tier.level > parseInt(lastTierLevel, 10)) {
+    if (lastTierLevel !== null && tierRankLevel > parseInt(lastTierLevel, 10)) {
       celebrateLevelUp(tier, level);
     }
-    localStorage.setItem('kbl_last_tier_level', String(tier.level));
+    localStorage.setItem('kbl_last_tier_level', String(tierRankLevel));
   } catch(e) {
     if (titleEl) titleEl.textContent = "Couldn't load level right now";
   }
@@ -4358,23 +4369,28 @@ if (urlParams.get('ticket') || window.location.pathname === '/support') {
 
 // Wake server and check auth
 // If ?u=<username> is present, jump to that public profile once auth has
-// settled.
+// settled. Also handles ?view=<name> (see comment below) in the same
+// chain -- checkAuth() itself is expensive (verifies the token, refreshes
+// the nav, and re-fetches achievements/tickets/referral data), and having
+// two separate wakeServer().then(checkAuth()) chains here meant it ran
+// twice on every single page load, not just when both params happened to
+// be present -- including a real user-visible bug where loadAchievements()
+// could see the same pre-update "seen" localStorage flag from both calls
+// and schedule the same "Achievement Unlocked!" toast twice.
 wakeServer().then(() => checkAuth()).then(() => {
   const profileUsername = urlParams.get('u');
   if (profileUsername) goToPublicProfile(profileUsername);
-});
 
-// The secondary standalone pages (download.html, apply.html, metas.html,
-// etc.) can't switch views themselves -- they don't load the dashboard/
-// tickets/settings state at all, only the lightweight nav. Their
-// Dashboard/Stats/Tickets/Account Settings links instead point back here
-// with ?view=<name>, and this is what actually opens the right thing once
-// this page (and its login state) has loaded, instead of just dropping
-// the visitor on the landing page with an extra click still needed.
-// Requires being logged in like the on-page nav links do -- a signed-out
-// visitor just lands on the normal landing page, same as clicking the
-// logo would.
-wakeServer().then(() => checkAuth()).then(() => {
+  // The secondary standalone pages (download.html, apply.html, metas.html,
+  // etc.) can't switch views themselves -- they don't load the dashboard/
+  // tickets/settings state at all, only the lightweight nav. Their
+  // Dashboard/Stats/Tickets/Account Settings links instead point back here
+  // with ?view=<name>, and this is what actually opens the right thing once
+  // this page (and its login state) has loaded, instead of just dropping
+  // the visitor on the landing page with an extra click still needed.
+  // Requires being logged in like the on-page nav links do -- a signed-out
+  // visitor just lands on the normal landing page, same as clicking the
+  // logo would.
   if (!getToken()) return;
   switch (urlParams.get('view')) {
     case 'dashboard': goToDashboard(); break;
@@ -4744,7 +4760,7 @@ function showAccountSettings() {
         </div>
       </div>
 
-      <button onclick="saveAccountSettings()" style="width:100%;padding:13px;background:linear-gradient(135deg,#00c9a7,#00a87d);color:#080810;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">Save Changes</button>
+      <button id="save-account-settings-btn" onclick="saveAccountSettings()" style="width:100%;padding:13px;background:linear-gradient(135deg,#00c9a7,#00a87d);color:#080810;border:none;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">Save Changes</button>
       <div id="settings-msg" style="text-align:center;font-size:12px;margin-top:10px;min-height:18px;"></div>
     </div>`;
   document.body.appendChild(overlay);
@@ -5501,7 +5517,14 @@ async function disable2FA() {
   } catch(e) { if(msg){msg.style.color='#ff4c6a';msg.textContent='Connection error';} }
 }
 
+let saveAccountSettingsInFlight = false;
+
 async function saveAccountSettings() {
+  if (saveAccountSettingsInFlight) return;
+  saveAccountSettingsInFlight = true;
+  const btn = document.getElementById('save-account-settings-btn');
+  btn?.setAttribute('disabled', 'true');
+  try {
   const name   = (document.getElementById('settings-displayname')?.value || '').trim();
   const msg    = document.getElementById('settings-msg');
   const curPwd = document.getElementById('settings-current-pwd')?.value || '';
@@ -5546,6 +5569,10 @@ async function saveAccountSettings() {
   msg.style.color = '#00c9a7';
   msg.textContent = '✓ Changes saved!';
   setTimeout(() => { const m = document.getElementById('gax-settings-modal'); if(m) m.remove(); }, 1400);
+  } finally {
+    saveAccountSettingsInFlight = false;
+    btn?.removeAttribute('disabled');
+  }
 }
 
 async function loadBadgesIntoSettings(){

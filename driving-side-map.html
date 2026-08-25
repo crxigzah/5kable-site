@@ -564,7 +564,12 @@ function jumpToCountry(){
   const q = raw.toLowerCase();
   const errEl = document.getElementById('ds-search-error');
   errEl.style.display = 'none';
-  if (!q || !countryFeatures.length) return;
+  if (!q) return;
+  if (!countryFeatures.length) {
+    errEl.textContent = `Map data is still loading — try again in a moment.`;
+    errEl.style.display = 'block';
+    return;
+  }
 
   const match = countryFeatures.find(f => countryName(f).toLowerCase() === q)
     || countryFeatures.find(f => countryName(f).toLowerCase().includes(q));

