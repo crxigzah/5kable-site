@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git fetch *)",
+      "Bash(git -C * fetch *)",
+      "mcp__github__actions_list",
+      "mcp__github__actions_get",
+      "mcp__github__get_latest_release",
+      "mcp__Claude_Code_Remote__list_repos",
+      "mcp__github__pull_request_read",
+      "mcp__github__get_job_logs",
+      "mcp__Supabase__query_logs",
+      "mcp__github__list_releases"
+    ]
+  }
+}
