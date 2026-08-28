@@ -259,6 +259,28 @@ footer {
 }
 .enlargeable-photo:hover .expand-icon { opacity:1; }
 .enlargeable-photo:hover .expand-icon { background:rgba(0,0,0,0.75); }
+
+/* Quiz Mode: covers each tip/warning block's own text so a reader has
+   to actively recall it before checking, instead of just reading past
+   it. Only the text is hidden -- the block's colored icon/label stays
+   visible so it's still obvious a tip is there, just not what it says. */
+.quiz-hideable { position:relative; }
+.quiz-reveal-overlay {
+  display:none;position:absolute;inset:0;align-items:center;justify-content:center;
+  background:var(--card2);border:1px dashed var(--border);border-radius:8px;
+  color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;text-align:center;
+  padding:10px;transition:background .15s,color .15s;
+}
+.quiz-reveal-overlay:hover { background:var(--card);color:var(--teal); }
+.quiz-mode-active .quiz-hideable:not(.quiz-revealed) > p { visibility:hidden; }
+.quiz-mode-active .quiz-hideable:not(.quiz-revealed) .quiz-reveal-overlay { display:flex; }
+.quiz-rate-row { display:none;gap:8px;margin-top:8px; }
+.quiz-rate-btn {
+  flex:1;padding:6px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;
+  border:1px solid var(--border);background:var(--card2);color:var(--muted);transition:all .15s;
+}
+.quiz-rate-btn.picked-yes { background:rgba(0,201,167,0.15);border-color:#00c9a7;color:#00c9a7; }
+.quiz-rate-btn.picked-no { background:rgba(255,107,107,0.15);border-color:#ff6b6b;color:#ff6b6b; }
 </style>
 </head>
 <body>
@@ -689,6 +711,54 @@ function escapeHtml(s) {
 // http(s) links.
 function safeGuideUrl(url) {
   return /^https?:\/\//i.test(String(url || '').trim()) ? url : '#';
+}
+
+// Quiz Mode -- turns a guide's tip/warning blocks into a recall check:
+// the text is hidden until tapped, then the reader self-rates whether
+// they knew it. Pure client-side (no backend, no persistence) -- state
+// lives on window.quiz* globals set fresh by renderGuide() each time a
+// guide loads, since these run from inline onclick handlers rather than
+// closing over renderGuide's own locals.
+function toggleQuizMode(){
+  const body = document.getElementById('cv-body');
+  const btn = document.getElementById('quiz-mode-toggle');
+  window.quizModeActive = !window.quizModeActive;
+  body.classList.toggle('quiz-mode-active', window.quizModeActive);
+  btn.textContent = window.quizModeActive ? '🧠 Quiz Mode: On' : '🧠 Quiz Mode: Off';
+  const summary = document.getElementById('quiz-summary');
+  summary.style.display = window.quizModeActive ? 'block' : 'none';
+  updateQuizSummary();
+  if (window.quizModeActive) {
+    document.getElementById('quiz-mode-toggle').scrollIntoView({behavior:'smooth', block:'center'});
+  }
+}
+
+function revealQuizCard(idx){
+  const card = document.getElementById('quiz-card-' + idx);
+  if (!card || card.classList.contains('quiz-revealed')) return;
+  card.classList.add('quiz-revealed');
+  document.getElementById('quiz-rate-' + idx).style.display = 'flex';
+  window.quizStats.revealed++;
+  updateQuizSummary();
+}
+
+function rateQuizCard(idx, knew, btnEl){
+  const row = document.getElementById('quiz-rate-' + idx);
+  if (!row || row.dataset.rated) return; // one rating per card
+  row.dataset.rated = '1';
+  Array.from(row.children).forEach(b => {
+    b.disabled = true;
+    b.classList.toggle('picked-yes', b === btnEl && knew);
+    b.classList.toggle('picked-no', b === btnEl && !knew);
+  });
+  if (knew) { window.quizStats.knew++; updateQuizSummary(); }
+}
+
+function updateQuizSummary(){
+  const summary = document.getElementById('quiz-summary');
+  if (!summary) return;
+  const total = (window.quizCardIndices || []).length;
+  summary.textContent = `${window.quizStats.revealed}/${total} revealed · ${window.quizStats.knew} knew it`;
 }
 
 // Guide photos and map badges are all served straight from Supabase
@@ -1401,6 +1471,10 @@ async function showCountry(c) {
 function renderGuide(c, data) {
   // Block-based manual guide
   if (data.blocks && data.blocks.length) {
+    // Filled in by the tip/warning cases below as they render, since
+    // block index isn't known ahead of the .map() -- used to build the
+    // Quiz Mode toggle + "X/Y revealed" summary after the fact.
+    const quizCardIndices = [];
     const html = data.blocks.map((block, blockIdx, blockArr) => {
       const prevAttach = blockIdx > 0 && blockArr[blockIdx-1].data && blockArr[blockIdx-1].data.attachBelow;
       const nextAttach = block.data && block.data.attachBelow && blockIdx < blockArr.length - 1;
@@ -1428,12 +1502,14 @@ function renderGuide(c, data) {
         case 'tip': {
           const rTR = prevAttach ? '0' : '12px', rBR = nextAttach ? '0' : '12px';
           const mt = prevAttach ? '0' : '16px', mb = nextAttach ? '0' : '16px';
-          return `<div style="background:rgba(0,201,167,0.08);border-left:4px solid #00c9a7;border-radius:0 ${rTR} ${rBR} 0;padding:16px 20px;margin:${mt} 0 ${mb};"><div style="font-size:12px;font-weight:700;color:#00c9a7;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">💡 Tip</div><p style="color:#c0c0d8;line-height:1.7;font-size:15px;margin:0;white-space:pre-wrap;">${mdToHtml(block.data.text||'')}</p></div>`;
+          quizCardIndices.push(blockIdx);
+          return `<div style="background:rgba(0,201,167,0.08);border-left:4px solid #00c9a7;border-radius:0 ${rTR} ${rBR} 0;padding:16px 20px;margin:${mt} 0 ${mb};"><div style="font-size:12px;font-weight:700;color:#00c9a7;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">💡 Tip</div><div class="quiz-hideable" id="quiz-card-${blockIdx}"><p style="color:#c0c0d8;line-height:1.7;font-size:15px;margin:0;white-space:pre-wrap;">${mdToHtml(block.data.text||'')}</p><div class="quiz-reveal-overlay" onclick="revealQuizCard(${blockIdx})">🧠 Guess before revealing — tap to check</div></div><div class="quiz-rate-row" id="quiz-rate-${blockIdx}"><button class="quiz-rate-btn" onclick="rateQuizCard(${blockIdx},true,this)">✅ Knew it</button><button class="quiz-rate-btn" onclick="rateQuizCard(${blockIdx},false,this)">❌ Didn't know it</button></div></div>`;
         }
         case 'warning': {
           const rTR = prevAttach ? '0' : '12px', rBR = nextAttach ? '0' : '12px';
           const mt = prevAttach ? '0' : '16px', mb = nextAttach ? '0' : '16px';
-          return `<div style="background:rgba(255,107,107,0.08);border-left:4px solid #ff6b6b;border-radius:0 ${rTR} ${rBR} 0;padding:16px 20px;margin:${mt} 0 ${mb};"><div style="font-size:12px;font-weight:700;color:#ff6b6b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">⚠️ Easy to Confuse With</div><p style="color:#c0c0d8;line-height:1.7;font-size:15px;margin:0;white-space:pre-wrap;">${mdToHtml(block.data.text||'')}</p></div>`;
+          quizCardIndices.push(blockIdx);
+          return `<div style="background:rgba(255,107,107,0.08);border-left:4px solid #ff6b6b;border-radius:0 ${rTR} ${rBR} 0;padding:16px 20px;margin:${mt} 0 ${mb};"><div style="font-size:12px;font-weight:700;color:#ff6b6b;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">⚠️ Easy to Confuse With</div><div class="quiz-hideable" id="quiz-card-${blockIdx}"><p style="color:#c0c0d8;line-height:1.7;font-size:15px;margin:0;white-space:pre-wrap;">${mdToHtml(block.data.text||'')}</p><div class="quiz-reveal-overlay" onclick="revealQuizCard(${blockIdx})">🧠 Guess before revealing — tap to check</div></div><div class="quiz-rate-row" id="quiz-rate-${blockIdx}"><button class="quiz-rate-btn" onclick="rateQuizCard(${blockIdx},true,this)">✅ Knew it</button><button class="quiz-rate-btn" onclick="rateQuizCard(${blockIdx},false,this)">❌ Didn't know it</button></div></div>`;
         }
         case 'img-text': {
           const itWidth = block.data.imgWidth || '55';
@@ -1498,7 +1574,19 @@ function renderGuide(c, data) {
       }
     }).join('');
 
+    // Quiz Mode state is reset per guide render -- rateQuizCard/
+    // revealQuizCard below read these globals rather than closing over
+    // local vars, since they're invoked from inline onclick handlers
+    // outside this function's scope.
+    window.quizCardIndices = quizCardIndices;
+    window.quizStats = { revealed: 0, knew: 0 };
+    window.quizModeActive = false;
+
     document.getElementById('cv-body').innerHTML = `
+      ${quizCardIndices.length ? `<div style="text-align:center;margin-bottom:20px;">
+        <button id="quiz-mode-toggle" onclick="toggleQuizMode()" style="background:rgba(124,58,237,0.12);border:1px solid rgba(124,58,237,0.4);color:#a78bfa;font-weight:700;padding:10px 20px;border-radius:10px;cursor:pointer;font-size:14px;">🧠 Quiz Mode: Off</button>
+        <div id="quiz-summary" style="font-size:12px;color:var(--muted);margin-top:8px;display:none;"></div>
+      </div>` : ''}
       <div style="max-width:100%;">${html}</div>
       <div style="text-align:center;margin-top:48px;">
         ${data.test_map_url ? `<a href="${escapeHtml(safeGuideUrl(data.test_map_url))}" target="_blank" rel="noopener" style="display:inline-block;background:rgba(0,201,167,0.15);border:1px solid #00c9a7;color:#00c9a7;font-weight:700;padding:12px 24px;border-radius:10px;text-decoration:none;font-size:14px;margin-bottom:14px;">🗺️ Test Yourself on the Map</a><br>` : ''}
