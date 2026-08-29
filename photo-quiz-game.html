@@ -441,16 +441,6 @@ nav::before {
     <div class="score-item"><div class="score-num" id="score-best">0</div><div class="score-label">Best Streak</div></div>
   </div>
 
-  <div class="practice-filter-bar" style="max-width:640px;margin:0 auto 18px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
-      <div style="font-size:13px;color:var(--muted);" id="practice-filter-status">Practicing all countries</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="weak-spot-btn" onclick="practiceWeakSpots()" style="background:rgba(0,201,167,0.12);border:1px solid rgba(0,201,167,0.35);color:var(--teal);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🎯 Practice My Weak Spots</button>
-        <button id="clear-filter-btn" onclick="clearPracticeFilter()" style="display:none;background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✕ Clear</button>
-      </div>
-    </div>
-  </div>
-
   <div class="game-layout">
     <div class="quiz-card">
       <div id="quiz-body">
@@ -743,102 +733,15 @@ async function reportBestStreak(newBest){
   } catch(e) {}
 }
 
-// Countries the Photo Quiz has coverage for -- kept in sync with
-// QUIZ_COUNTRY_POOL in app.py, since a country picked here that isn't in
-// the backend's pool would just always come back empty.
-const PRACTICE_COUNTRY_POOL = [
-  "Albania","Andorra","Argentina","Australia","Austria","Bangladesh","Belgium",
-  "Bhutan","Bolivia","Botswana","Brazil","Bulgaria","Cambodia","Canada","Chile",
-  "Colombia","Costa Rica","Croatia","Cyprus","Czechia","Denmark",
-  "Dominican Republic","Ecuador","Estonia","Eswatini","Finland","France",
-  "Georgia","Germany","Ghana","Greece","Greenland","Guatemala","Hungary",
-  "Iceland","India","Indonesia","Ireland","Israel","Italy","Japan","Jordan",
-  "Kazakhstan","Kenya","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho",
-  "Liechtenstein","Lithuania","Luxembourg","Madagascar","Malaysia","Malta",
-  "Mexico","Monaco","Mongolia","Montenegro","Namibia","Nepal","Netherlands",
-  "New Zealand","Nigeria","North Macedonia","Norway","Oman","Pakistan",
-  "Palestine","Panama","Peru","Philippines","Poland","Portugal","Qatar",
-  "Romania","Russia","Rwanda","San Marino","Sao Tome and Principe","Senegal",
-  "Serbia","Singapore","Slovakia","Slovenia","South Africa","South Korea",
-  "Spain","Sri Lanka","Sweden","Switzerland","Taiwan","Thailand","Tunisia",
-  "Turkey","Uganda","Ukraine","United Arab Emirates","United Kingdom",
-  "United States of America","Uruguay","Vietnam",
-  "Bermuda","Curaçao","Faroe Islands","Guam","Isle of Man","Jersey",
-  "Northern Mariana Islands","American Samoa","Puerto Rico",
-  "United States Virgin Islands","Christmas Island","Réunion"
-].sort();
-
-let activeCountryFilter = [];
-
-function updatePracticeFilterStatus(){
-  const statusEl = document.getElementById('practice-filter-status');
-  const clearBtn = document.getElementById('clear-filter-btn');
-  if (activeCountryFilter.length >= 2) {
-    statusEl.textContent = `Practicing: ${activeCountryFilter.join(', ')}`;
-    clearBtn.style.display = '';
-  } else {
-    statusEl.textContent = 'Practicing all countries';
-    clearBtn.style.display = 'none';
-  }
-}
-
-function clearPracticeFilter(){
-  activeCountryFilter = [];
-  updatePracticeFilterStatus();
-  loadNext();
-}
-
-// Seeds the filter from the player's own real mixup data (worst-accuracy
-// countries with at least a few attempts logged, see guess_insights'
-// weak_countries) rather than a manual pick -- turns "you keep getting
-// this wrong" into an actual targeted drill.
-async function practiceWeakSpots(){
-  const token = getToken();
-  if (!token) {
-    alert('Sign in to practice your weak spots -- this uses your real guess history.');
-    return;
-  }
-  const btn = document.getElementById('weak-spot-btn');
-  btn.disabled = true;
-  btn.textContent = '🎯 Loading...';
-  try {
-    const res = await fetch(`${API}/guess/insights`, {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ token })
-    });
-    const data = await res.json();
-    const weak = (data.weak_countries || []).map(c => c.country).filter(c => PRACTICE_COUNTRY_POOL.includes(c));
-    if (weak.length < 2) {
-      alert("Not enough game history yet to find your weak spots -- play a few more real rounds first.");
-      return;
-    }
-    activeCountryFilter = weak;
-    updatePracticeFilterStatus();
-    loadNext();
-  } catch(e) {
-    alert('Could not load your weak spots right now -- try again in a moment.');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '🎯 Practice My Weak Spots';
-  }
-}
-
 async function loadNext(){
   answered = false;
   document.getElementById('quiz-body').innerHTML = '<div class="loading">Loading a scene...</div>';
   try {
-    let url = API + '/photo_quiz/random?type=' + encodeURIComponent(quizType);
-    if (activeCountryFilter.length >= 2) {
-      url += '&countries=' + encodeURIComponent(activeCountryFilter.join(','));
-    }
-    const res = await fetch(url);
+    const res = await fetch(API + '/photo_quiz/random?type=' + encodeURIComponent(quizType));
     if (res.status === 404){
       let msg = 'No images have been added for this game yet — check back soon!';
       try { const errData = await res.json(); if (errData.error) msg = errData.error; } catch(e) {}
-      const clearLink = activeCountryFilter.length >= 2
-        ? ' <a href="javascript:void(0)" onclick="clearPracticeFilter()" style="color:var(--teal);">Clear the filter</a> to practice all countries instead.'
-        : '';
-      document.getElementById('quiz-body').innerHTML = `<div class="empty-state">${msg}${clearLink}</div>`;
+      document.getElementById('quiz-body').innerHTML = `<div class="empty-state">${msg}</div>`;
       return;
     }
     const data = await res.json();
