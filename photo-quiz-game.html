@@ -446,14 +446,8 @@ nav::before {
       <div style="font-size:13px;color:var(--muted);" id="practice-filter-status">Practicing all countries</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <button id="weak-spot-btn" onclick="practiceWeakSpots()" style="background:rgba(0,201,167,0.12);border:1px solid rgba(0,201,167,0.35);color:var(--teal);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🎯 Practice My Weak Spots</button>
-        <button onclick="togglePracticePicker()" style="background:var(--card2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">🌍 Choose Countries</button>
         <button id="clear-filter-btn" onclick="clearPracticeFilter()" style="display:none;background:transparent;border:1px solid var(--border);color:var(--muted);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">✕ Clear</button>
       </div>
-    </div>
-    <div id="practice-picker" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-      <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Select the countries you want quizzed on (2+ to filter):</div>
-      <select id="practice-country-select" multiple size="8" style="width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:6px;font-size:13px;"></select>
-      <button onclick="applyPracticePicker()" style="margin-top:8px;background:var(--teal);border:none;color:#080810;padding:7px 16px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;">Apply</button>
     </div>
   </div>
 
@@ -776,24 +770,6 @@ const PRACTICE_COUNTRY_POOL = [
 
 let activeCountryFilter = [];
 
-function populatePracticePicker(){
-  const sel = document.getElementById('practice-country-select');
-  if (sel.options.length) return; // already populated
-  sel.innerHTML = PRACTICE_COUNTRY_POOL.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-}
-
-function togglePracticePicker(){
-  const picker = document.getElementById('practice-picker');
-  const showing = picker.style.display !== 'none';
-  if (showing) { picker.style.display = 'none'; return; }
-  populatePracticePicker();
-  // Reflect whatever filter's already active so re-opening the picker
-  // doesn't lose a filter that was just set via "Practice My Weak Spots".
-  const sel = document.getElementById('practice-country-select');
-  Array.from(sel.options).forEach(o => { o.selected = activeCountryFilter.includes(o.value); });
-  picker.style.display = 'block';
-}
-
 function updatePracticeFilterStatus(){
   const statusEl = document.getElementById('practice-filter-status');
   const clearBtn = document.getElementById('clear-filter-btn');
@@ -804,19 +780,6 @@ function updatePracticeFilterStatus(){
     statusEl.textContent = 'Practicing all countries';
     clearBtn.style.display = 'none';
   }
-}
-
-function applyPracticePicker(){
-  const sel = document.getElementById('practice-country-select');
-  const picked = Array.from(sel.selectedOptions).map(o => o.value);
-  if (picked.length === 1) {
-    alert('Pick at least 2 countries to filter on (or none, for all countries).');
-    return;
-  }
-  activeCountryFilter = picked;
-  updatePracticeFilterStatus();
-  document.getElementById('practice-picker').style.display = 'none';
-  loadNext();
 }
 
 function clearPracticeFilter(){
@@ -846,12 +809,11 @@ async function practiceWeakSpots(){
     const data = await res.json();
     const weak = (data.weak_countries || []).map(c => c.country).filter(c => PRACTICE_COUNTRY_POOL.includes(c));
     if (weak.length < 2) {
-      alert("Not enough game history yet to find your weak spots -- play a few more real rounds first (or use Choose Countries to pick manually).");
+      alert("Not enough game history yet to find your weak spots -- play a few more real rounds first.");
       return;
     }
     activeCountryFilter = weak;
     updatePracticeFilterStatus();
-    document.getElementById('practice-picker').style.display = 'none';
     loadNext();
   } catch(e) {
     alert('Could not load your weak spots right now -- try again in a moment.');
