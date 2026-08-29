@@ -4791,13 +4791,23 @@ async function loadNotificationPrefsIntoSettings(){
           <span class="gax-toggle-slider"></span>
         </label>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
         <div>
           <div style="font-size:13px;font-weight:600;">Referral rewards</div>
           <div style="font-size:11px;color:#6a6a9a;">When your invite earns you XP</div>
         </div>
         <label class="gax-toggle">
           <input type="checkbox" id="pref-notify-referrals" ${data.notify_referrals ? 'checked' : ''}>
+          <span class="gax-toggle-slider"></span>
+        </label>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:13px;font-weight:600;">Weekly recap &amp; streak reminders</div>
+          <div style="font-size:11px;color:#6a6a9a;">Your week's stats, and a nudge if a daily challenge streak is about to lapse</div>
+        </div>
+        <label class="gax-toggle">
+          <input type="checkbox" id="pref-notify-digest" ${data.notify_digest ? 'checked' : ''}>
           <span class="gax-toggle-slider"></span>
         </label>
       </div>
@@ -5552,11 +5562,15 @@ async function saveAccountSettings() {
 
   const notifyTicketsEl = document.getElementById('pref-notify-tickets');
   const notifyReferralsEl = document.getElementById('pref-notify-referrals');
+  const notifyDigestEl = document.getElementById('pref-notify-digest');
   if (notifyTicketsEl && notifyReferralsEl) {
     try {
       await fetch(API + '/account/notification_prefs/update', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ token: getToken(), notify_tickets: notifyTicketsEl.checked, notify_referrals: notifyReferralsEl.checked })
+        body: JSON.stringify({
+          token: getToken(), notify_tickets: notifyTicketsEl.checked, notify_referrals: notifyReferralsEl.checked,
+          notify_digest: notifyDigestEl ? notifyDigestEl.checked : true
+        })
       });
     } catch(e) {} // non-critical — don't block the rest of the save on this
   }
