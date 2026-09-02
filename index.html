@@ -4131,35 +4131,30 @@ function initHeroGlobe(){
       const landGeometries = keepIdx.map(i => allGeometries[i]);
       paintHeroTexture(features, landGeometries, world);
       bakeDownsampledHeroTexture();
-      // Cache the finished, already-downsampled texture so every visit
-      // after this one can skip the fetch + per-country coastline paint +
-      // multi-step downsample entirely -- by far the most expensive part
-      // of this page's JS execution time (confirmed via Lighthouse: this
-      // pipeline alone accounted for the bulk of a 5s+ main-thread block).
-      // Versioned key so changing anything about the baking pipeline above
-      // invalidates old cached entries instead of serving a stale result.
-      try {
-        localStorage.setItem(HERO_GLOBE_CACHE_KEY, heroBakedCanvas.toDataURL('image/png'));
-      } catch (e) { /* quota exceeded or storage disabled (private browsing) -- fine, just won't cache this time */ }
       finishHeroGlobeSetup();
     }).catch(() => { /* hero globe just doesn't render if this fails — page still works fine */ });
   }
 
-  const HERO_GLOBE_CACHE_KEY = 'kbl_hero_globe_texture_v1';
-  let cachedHeroTexture = null;
-  try { cachedHeroTexture = localStorage.getItem(HERO_GLOBE_CACHE_KEY); } catch (e) { /* private browsing etc. */ }
-  if (cachedHeroTexture) {
-    const img = new Image();
-    img.onload = () => {
-      heroBakedCtx.clearRect(0, 0, BAKED_W, BAKED_H);
-      heroBakedCtx.drawImage(img, 0, 0, BAKED_W, BAKED_H);
-      finishHeroGlobeSetup();
-    };
-    img.onerror = renderHeroGlobeFromScratch;
-    img.src = cachedHeroTexture;
-  } else {
-    renderHeroGlobeFromScratch();
-  }
+  // The world's coastlines don't change, so there's no reason to re-fetch
+  // a multi-MB TopoJSON file and re-run the per-country coastline paint +
+  // multi-step downsample above in every single visitor's browser -- that
+  // pipeline alone was confirmed via Lighthouse to account for 8s+ of JS
+  // execution and the bulk of the page's Total Blocking Time. The exact
+  // same paintHeroTexture()/bakeDownsampledHeroTexture() logic above is
+  // now instead run once, offline (Node + node-canvas + the same 10m
+  // dataset), and its output shipped as this static file -- loading it is
+  // just one small image request instead of that entire compute pipeline.
+  // renderHeroGlobeFromScratch() stays as a fallback for the (extremely
+  // unlikely) case this file is ever missing, rather than the globe not
+  // rendering at all.
+  const img = new Image();
+  img.onload = () => {
+    heroBakedCtx.clearRect(0, 0, BAKED_W, BAKED_H);
+    heroBakedCtx.drawImage(img, 0, 0, BAKED_W, BAKED_H);
+    finishHeroGlobeSetup();
+  };
+  img.onerror = renderHeroGlobeFromScratch;
+  img.src = '/hero-globe-texture.webp';
 }
 
 let _gaxWorldFeatures = null; // cached parsed features, fetched once per session
