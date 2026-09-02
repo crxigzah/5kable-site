@@ -3891,14 +3891,7 @@ function loadThreeJs(){
 // atmosphere glow. Purely decorative, no click/hover interactivity.
 function initHeroGlobe(){
   const canvas = document.getElementById('heroGlobeCanvas');
-  if (!canvas || !window.THREE || !window.d3 || !window.topojson) return;
-
-  const TEX_W = 4096, TEX_H = 2048;
-  const heroProj = d3.geoEquirectangular().scale(TEX_W / (2 * Math.PI)).translate([TEX_W / 2, TEX_H / 2]);
-  const heroTexCanvas = document.createElement('canvas');
-  heroTexCanvas.width = TEX_W; heroTexCanvas.height = TEX_H;
-  const heroTexCtx = heroTexCanvas.getContext('2d');
-  const heroPathGen = d3.geoPath(heroProj, heroTexCtx);
+  if (!canvas || !window.THREE) return;
 
   // The texture actually handed to WebGL is this much smaller, pre-
   // downsampled canvas, not the raw 4096x2048 paint above. Confirmed by
@@ -3928,84 +3921,6 @@ function initHeroGlobe(){
   const heroBakedCanvas = document.createElement('canvas');
   heroBakedCanvas.width = BAKED_W; heroBakedCanvas.height = BAKED_H;
   const heroBakedCtx = heroBakedCanvas.getContext('2d');
-
-  function bakeDownsampledHeroTexture(){
-    // Repeated halving (rather than one giant resize) is what actually
-    // produces a clean result -- verified locally; a single large-ratio
-    // drawImage, even with imageSmoothingQuality:'high', visibly
-    // undersamples fine coastline detail compared to stepping down.
-    let step = heroTexCanvas, w = TEX_W, h = TEX_H;
-    while (w > BAKED_W * 2) {
-      const nw = Math.max(BAKED_W, Math.floor(w / 2));
-      const nh = Math.max(BAKED_H, Math.floor(h / 2));
-      const next = document.createElement('canvas');
-      next.width = nw; next.height = nh;
-      const nctx = next.getContext('2d');
-      nctx.imageSmoothingEnabled = true;
-      nctx.imageSmoothingQuality = 'high';
-      nctx.drawImage(step, 0, 0, w, h, 0, 0, nw, nh);
-      step = next; w = nw; h = nh;
-    }
-    heroBakedCtx.imageSmoothingEnabled = true;
-    heroBakedCtx.imageSmoothingQuality = 'high';
-    heroBakedCtx.clearRect(0, 0, BAKED_W, BAKED_H);
-    heroBakedCtx.drawImage(step, 0, 0, w, h, 0, 0, BAKED_W, BAKED_H);
-  }
-
-  function paintHeroTexture(features, landGeometries, world){
-    // Fully opaque fills — the previous 55%-opacity ocean fill on a
-    // transparent canvas was very likely why the globe read as washed
-    // out/low-quality rather than solid. A subtle gradient (rather than
-    // flat fill) also fakes a bit of depth/shading on what's otherwise
-    // an unshaded texture.
-    const oceanGrad = heroTexCtx.createLinearGradient(0, 0, 0, TEX_H);
-    oceanGrad.addColorStop(0, '#10101e');
-    oceanGrad.addColorStop(0.5, '#080810');
-    oceanGrad.addColorStop(1, '#10101e');
-    heroTexCtx.fillStyle = oceanGrad;
-    heroTexCtx.fillRect(0, 0, TEX_W, TEX_H);
-
-    // No per-country BORDER stroke — with the 10m dataset's real coastline
-    // detail, stroking every individual country outline in a contrasting
-    // color draws in every INTERNAL political border too (Brazil/Bolivia/
-    // Peru, every European border, etc.), which is a lot of thin lines
-    // packed close together and reads as noise once minified.
-    //
-    // Each feature still gets its OWN beginPath()/fill() — batching every
-    // country into a single path+fill (as a previous version of this did)
-    // hits the canvas's default "nonzero" winding rule: with thousands of
-    // separate rings from the 10m dataset, enough of them end up
-    // touching/overlapping after projection that the winding rule fills
-    // the gaps between them too, turning the globe into a solid teal
-    // sphere with no visible ocean at all. But two ADJACENT countries'
-    // independently-anti-aliased fill edges don't perfectly compose at
-    // their shared border, leaving a faint 1px seam of ocean color
-    // showing through — invisible once the globe itself was rendering
-    // blurry (a separate bug, now fixed), but visible as "missing"
-    // border definition once it sharpened up. Stroking each fill in the
-    // SAME color as the fill welds that seam shut without drawing a
-    // visible line.
-    features.forEach(f => {
-      heroTexCtx.beginPath();
-      heroPathGen(f);
-      heroTexCtx.fillStyle = '#00c9a7';
-      heroTexCtx.fill();
-      heroTexCtx.lineWidth = 1.5;
-      heroTexCtx.strokeStyle = '#00c9a7';
-      heroTexCtx.stroke();
-    });
-
-    // A single visible coastline outline, drawn once around the whole
-    // landmass merged into one shape (topojson.merge) rather than per
-    // country — merging drops every shared internal border, leaving only
-    // the true exterior coastline. This is what actually gives the
-    // landmass visible edge definition instead of just color contrast.
-    heroTexCtx.beginPath();
-    heroPathGen(topojson.merge(world, landGeometries));
-    heroTexCtx.lineWidth = 2.5;
-    heroTexCtx.strokeStyle = '#0d3d34';
-    heroTexCtx.stroke();
-  }
 
   const heroScene = new THREE.Scene();
   const heroCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
@@ -4096,43 +4011,135 @@ function initHeroGlobe(){
   }
 
   function renderHeroGlobeFromScratch(){
-    // 10m (1:10,000,000 scale) -- world-atlas's highest-resolution file.
-    // 50m still visibly simplified small islands into rough angular blobs
-    // (Indonesia/Philippines-style archipelagos are the worst case: lots of
-    // small landmasses, each reduced to only a handful of vertices at 50m).
-    // 10m is a larger one-time download, but it's fetched once, cached by
-    // the browser, and this is the only remaining lever for coastline
-    // detail -- the texture resolution and internal-border stroke were
-    // already addressed separately.
-    d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json').then(world => {
-      // At least one feature in this specific 10m file (Maldives, id 462)
-      // has an inverted ring winding -- confirmed by rendering this exact
-      // dataset locally and checking d3.geoBounds() per feature, which
-      // returned [[-180,-90],[180,90]] (the entire sphere) for it alone.
-      // d3-geo is spherical-aware, so a wrongly-wound ring gets interpreted
-      // as "everything except this tiny island" rather than "just this
-      // tiny island" -- filling that feature paints almost the whole
-      // texture solid, which is what turned the globe into a flat teal
-      // sphere with no visible ocean. Filtering out any feature whose
-      // bounds are a degenerate whole-sphere box (rather than hardcoding
-      // Maldives' id) also guards against any other similarly malformed
-      // feature in this dataset.
-      // Kept in lockstep (same filter, same order) so landGeometries can be
-      // handed to topojson.merge() below for the single coastline outline —
-      // merge() needs the raw TopoJSON geometry objects, not GeoJSON
-      // features, so this can't just be derived from `features` alone.
-      const allGeometries = world.objects.countries.geometries;
-      const allFeatures = topojson.feature(world, world.objects.countries).features;
-      const keepIdx = allFeatures.map((f, i) => {
-        const b = d3.geoBounds(f);
-        return (b[0][0] === -180 && b[0][1] === -90 && b[1][0] === 180 && b[1][1] === 90) ? -1 : i;
-      }).filter(i => i !== -1);
-      const features = keepIdx.map(i => allFeatures[i]);
-      const landGeometries = keepIdx.map(i => allGeometries[i]);
-      paintHeroTexture(features, landGeometries, world);
-      bakeDownsampledHeroTexture();
-      finishHeroGlobeSetup();
-    }).catch(() => { /* hero globe just doesn't render if this fails — page still works fine */ });
+    // Only reached if the pre-baked static texture below is ever missing
+    // -- d3/topojson are no longer loaded eagerly on every page view (see
+    // the trigger at the bottom of this file), since this whole function
+    // is now just a fallback rather than the normal path. Loaded lazily
+    // here instead, right before they're actually needed.
+    loadWorldMapLibs().then(() => {
+      const TEX_W = 4096, TEX_H = 2048;
+      const heroProj = d3.geoEquirectangular().scale(TEX_W / (2 * Math.PI)).translate([TEX_W / 2, TEX_H / 2]);
+      const heroTexCanvas = document.createElement('canvas');
+      heroTexCanvas.width = TEX_W; heroTexCanvas.height = TEX_H;
+      const heroTexCtx = heroTexCanvas.getContext('2d');
+      const heroPathGen = d3.geoPath(heroProj, heroTexCtx);
+
+      function bakeDownsampledHeroTexture(){
+        // Repeated halving (rather than one giant resize) is what actually
+        // produces a clean result -- verified locally; a single large-ratio
+        // drawImage, even with imageSmoothingQuality:'high', visibly
+        // undersamples fine coastline detail compared to stepping down.
+        let step = heroTexCanvas, w = TEX_W, h = TEX_H;
+        while (w > BAKED_W * 2) {
+          const nw = Math.max(BAKED_W, Math.floor(w / 2));
+          const nh = Math.max(BAKED_H, Math.floor(h / 2));
+          const next = document.createElement('canvas');
+          next.width = nw; next.height = nh;
+          const nctx = next.getContext('2d');
+          nctx.imageSmoothingEnabled = true;
+          nctx.imageSmoothingQuality = 'high';
+          nctx.drawImage(step, 0, 0, w, h, 0, 0, nw, nh);
+          step = next; w = nw; h = nh;
+        }
+        heroBakedCtx.imageSmoothingEnabled = true;
+        heroBakedCtx.imageSmoothingQuality = 'high';
+        heroBakedCtx.clearRect(0, 0, BAKED_W, BAKED_H);
+        heroBakedCtx.drawImage(step, 0, 0, w, h, 0, 0, BAKED_W, BAKED_H);
+      }
+
+      function paintHeroTexture(features, landGeometries, world){
+        // Fully opaque fills — the previous 55%-opacity ocean fill on a
+        // transparent canvas was very likely why the globe read as washed
+        // out/low-quality rather than solid. A subtle gradient (rather than
+        // flat fill) also fakes a bit of depth/shading on what's otherwise
+        // an unshaded texture.
+        const oceanGrad = heroTexCtx.createLinearGradient(0, 0, 0, TEX_H);
+        oceanGrad.addColorStop(0, '#10101e');
+        oceanGrad.addColorStop(0.5, '#080810');
+        oceanGrad.addColorStop(1, '#10101e');
+        heroTexCtx.fillStyle = oceanGrad;
+        heroTexCtx.fillRect(0, 0, TEX_W, TEX_H);
+
+        // No per-country BORDER stroke — with the 10m dataset's real coastline
+        // detail, stroking every individual country outline in a contrasting
+        // color draws in every INTERNAL political border too (Brazil/Bolivia/
+        // Peru, every European border, etc.), which is a lot of thin lines
+        // packed close together and reads as noise once minified.
+        //
+        // Each feature still gets its OWN beginPath()/fill() — batching every
+        // country into a single path+fill (as a previous version of this did)
+        // hits the canvas's default "nonzero" winding rule: with thousands of
+        // separate rings from the 10m dataset, enough of them end up
+        // touching/overlapping after projection that the winding rule fills
+        // the gaps between them too, turning the globe into a solid teal
+        // sphere with no visible ocean at all. But two ADJACENT countries'
+        // independently-anti-aliased fill edges don't perfectly compose at
+        // their shared border, leaving a faint 1px seam of ocean color
+        // showing through — invisible once the globe itself was rendering
+        // blurry (a separate bug, now fixed), but visible as "missing"
+        // border definition once it sharpened up. Stroking each fill in the
+        // SAME color as the fill welds that seam shut without drawing a
+        // visible line.
+        features.forEach(f => {
+          heroTexCtx.beginPath();
+          heroPathGen(f);
+          heroTexCtx.fillStyle = '#00c9a7';
+          heroTexCtx.fill();
+          heroTexCtx.lineWidth = 1.5;
+          heroTexCtx.strokeStyle = '#00c9a7';
+          heroTexCtx.stroke();
+        });
+
+        // A single visible coastline outline, drawn once around the whole
+        // landmass merged into one shape (topojson.merge) rather than per
+        // country — merging drops every shared internal border, leaving only
+        // the true exterior coastline. This is what actually gives the
+        // landmass visible edge definition instead of just color contrast.
+        heroTexCtx.beginPath();
+        heroPathGen(topojson.merge(world, landGeometries));
+        heroTexCtx.lineWidth = 2.5;
+        heroTexCtx.strokeStyle = '#0d3d34';
+        heroTexCtx.stroke();
+      }
+
+      // 10m (1:10,000,000 scale) -- world-atlas's highest-resolution file.
+      // 50m still visibly simplified small islands into rough angular blobs
+      // (Indonesia/Philippines-style archipelagos are the worst case: lots of
+      // small landmasses, each reduced to only a handful of vertices at 50m).
+      // 10m is a larger one-time download, but it's fetched once, cached by
+      // the browser, and this is the only remaining lever for coastline
+      // detail -- the texture resolution and internal-border stroke were
+      // already addressed separately.
+      d3.json('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-10m.json').then(world => {
+        // At least one feature in this specific 10m file (Maldives, id 462)
+        // has an inverted ring winding -- confirmed by rendering this exact
+        // dataset locally and checking d3.geoBounds() per feature, which
+        // returned [[-180,-90],[180,90]] (the entire sphere) for it alone.
+        // d3-geo is spherical-aware, so a wrongly-wound ring gets interpreted
+        // as "everything except this tiny island" rather than "just this
+        // tiny island" -- filling that feature paints almost the whole
+        // texture solid, which is what turned the globe into a flat teal
+        // sphere with no visible ocean. Filtering out any feature whose
+        // bounds are a degenerate whole-sphere box (rather than hardcoding
+        // Maldives' id) also guards against any other similarly malformed
+        // feature in this dataset.
+        // Kept in lockstep (same filter, same order) so landGeometries can be
+        // handed to topojson.merge() below for the single coastline outline —
+        // merge() needs the raw TopoJSON geometry objects, not GeoJSON
+        // features, so this can't just be derived from `features` alone.
+        const allGeometries = world.objects.countries.geometries;
+        const allFeatures = topojson.feature(world, world.objects.countries).features;
+        const keepIdx = allFeatures.map((f, i) => {
+          const b = d3.geoBounds(f);
+          return (b[0][0] === -180 && b[0][1] === -90 && b[1][0] === 180 && b[1][1] === 90) ? -1 : i;
+        }).filter(i => i !== -1);
+        const features = keepIdx.map(i => allFeatures[i]);
+        const landGeometries = keepIdx.map(i => allGeometries[i]);
+        paintHeroTexture(features, landGeometries, world);
+        bakeDownsampledHeroTexture();
+        finishHeroGlobeSetup();
+      }).catch(() => { /* hero globe just doesn't render if this fails — page still works fine */ });
+    }).catch(() => { /* d3/topojson themselves failed to load -- hero globe just doesn't render, page still works fine */ });
   }
 
   // The world's coastlines don't change, so there's no reason to re-fetch
@@ -6177,13 +6184,16 @@ window.addEventListener('load', () => {
 // the 'load' event, which only fires once every last resource on the
 // page — images, fonts, everything — has finished. That gate alone was
 // adding the multi-second delay before the globe appeared: its own
-// libraries (Three.js, D3, topojson) hadn't even started downloading
-// until then. This line runs as soon as the parser reaches it, which
-// is already after #heroGlobeCanvas above in the DOM, so nothing here
-// needs to wait on. Loads independently of everything else on the
-// page either way, so a slow/failed load here never blocks or breaks
-// the rest of the site.
-Promise.all([loadWorldMapLibs(), loadThreeJs()]).then(initHeroGlobe).catch(() => {});
+// library (Three.js) hadn't even started downloading until then. This
+// line runs as soon as the parser reaches it, which is already after
+// #heroGlobeCanvas above in the DOM, so nothing here needs to wait on.
+// Loads independently of everything else on the page either way, so a
+// slow/failed load here never blocks or breaks the rest of the site.
+// D3/topojson are NOT loaded here -- the globe now loads a pre-baked
+// static texture (see initHeroGlobe) and only needs those two libraries
+// for its from-scratch fallback, which lazily loads them itself if it's
+// ever actually reached.
+loadThreeJs().then(initHeroGlobe).catch(() => {});
 
 // ── Live view refresh ────────────────────────────────────
 // Previously, dashboard stats, leaderboards, and ticket lists only
