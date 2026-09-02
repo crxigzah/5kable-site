@@ -856,6 +856,15 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
   <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
   <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144x144.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <!-- Otherwise this only starts downloading once Three.js has finished
+       loading and initHeroGlobe() actually sets img.src -- an avoidable
+       HTML -> script -> image dependency chain for a static asset that
+       has nothing to do with Three.js itself. Preloading here lets the
+       browser discover and start fetching it in parallel with the
+       Three.js script the moment HTML parsing reaches this tag, instead
+       of waiting on that script to finish first. fetchpriority="low"
+       since it's purely decorative, not the page's LCP element. -->
+  <link rel="preload" as="image" href="/hero-globe-texture.webp" fetchpriority="low">
 </head>
 <body>
 
