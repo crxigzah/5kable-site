@@ -315,6 +315,38 @@ const API = 'https://api.5kable.net';
 function getToken() { return localStorage.getItem('kbl_token'); }
 function getUser()  { try { return JSON.parse(localStorage.getItem('kbl_user')); } catch(e) { return null; } }
 
+// Same Render free-tier cold-start handling as index.html's login() --
+// without it, the role_info/discord/status/apply/status fetches below
+// have no timeout at all, so a cold backend just leaves the page on its
+// static "Loading…" placeholder forever with zero feedback (a real
+// reported bug: "it's just infinitely loading").
+let _serverAwake = false;
+async function wakeServer() {
+  if (_serverAwake) return;
+  for (let i = 0; i < 18; i++) {
+    try {
+      const controller = new AbortController();
+      const tid = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(API + '/health', {signal: controller.signal, mode: 'cors'});
+      clearTimeout(tid);
+      if (res.status < 500) {
+        _serverAwake = true;
+        setTimeout(() => _serverAwake = false, 55000);
+        return;
+      }
+    } catch(e) {}
+    await new Promise(r => setTimeout(r, 5000));
+  }
+}
+// Wraps a fetch with a hard timeout so a hung request (server still
+// waking, or a dropped connection) rejects instead of leaving whatever
+// awaited it stuck forever.
+function fetchWithTimeout(url, opts, ms) {
+  const controller = new AbortController();
+  const tid = setTimeout(() => controller.abort(), ms);
+  return fetch(url, {...opts, signal: controller.signal}).finally(() => clearTimeout(tid));
+}
+
 function toggleMobileNav() {
   document.getElementById('nav-links').classList.toggle('open');
   document.getElementById('nav-scrim').classList.toggle('open');
@@ -737,7 +769,20 @@ async function initApplyPage() {
   document.getElementById('apply-role-desc').textContent = ROLE_DESCRIPTIONS[roleKey];
   renderRoleDetail(roleKey);
 
-  fetch(`${API}/apply/role_info?role=${encodeURIComponent(roleKey)}`)
+  // Give visible progress instead of sitting on the static "Loading…"
+  // placeholder with no feedback while a cold Render instance wakes up
+  // (free tier can take up to 50s) -- was previously wired up nowhere
+  // in this file, so a cold backend just looked like an infinite hang.
+  let secs = 0;
+  const wakeTimer = setInterval(() => {
+    secs++;
+    cardEl.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px 0;">Waking server… ${secs}s (free tier takes up to 50s)</div>`;
+  }, 1000);
+  await wakeServer();
+  clearInterval(wakeTimer);
+  cardEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:20px 0;">Loading…</div>';
+
+  fetchWithTimeout(`${API}/apply/role_info?role=${encodeURIComponent(roleKey)}`, {}, 15000)
     .then(r => r.json())
     .then(data => {
       if (data.error) return;
@@ -757,9 +802,9 @@ async function initApplyPage() {
   }
 
   try {
-    const res = await fetch(`${API}/discord/status`, {
+    const res = await fetchWithTimeout(`${API}/discord/status`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token }),
-    });
+    }, 15000);
     const data = await res.json();
     if (data.error) {
       renderGate('🔒', 'Sign in to apply', 'You need a 5kable account (with Discord connected) to submit an application.',
@@ -772,9 +817,9 @@ async function initApplyPage() {
       return;
     }
 
-    const statusRes = await fetch(`${API}/apply/status`, {
+    const statusRes = await fetchWithTimeout(`${API}/apply/status`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, role: roleKey }),
-    });
+    }, 15000);
     const statusData = await statusRes.json();
     if (statusData.status && statusData.status !== 'none') {
       renderApplicationStatus(statusData.status, statusData.reapply_at);
