@@ -315,9 +315,10 @@ const API = 'https://api.5kable.net';
 function getToken() { return localStorage.getItem('kbl_token'); }
 function getUser()  { try { return JSON.parse(localStorage.getItem('kbl_user')); } catch(e) { return null; } }
 
-// Same Render free-tier cold-start handling as index.html's login() --
+// Same retry-with-timeout handling as index.html's login()/register() --
 // without it, the role_info/discord/status/apply/status fetches below
-// have no timeout at all, so a cold backend just leaves the page on its
+// have no timeout at all, so the backend being briefly unreachable (a
+// deploy restart, a dropped connection) just leaves the page on its
 // static "Loading…" placeholder forever with zero feedback (a real
 // reported bug: "it's just infinitely loading").
 let _serverAwake = false;
@@ -770,13 +771,16 @@ async function initApplyPage() {
   renderRoleDetail(roleKey);
 
   // Give visible progress instead of sitting on the static "Loading…"
-  // placeholder with no feedback while a cold Render instance wakes up
-  // (free tier can take up to 50s) -- was previously wired up nowhere
-  // in this file, so a cold backend just looked like an infinite hang.
+  // placeholder with no feedback if the backend is momentarily
+  // unreachable (a deploy restart, a dropped connection) -- was
+  // previously wired up nowhere in this file, so a hung request just
+  // looked like an infinite hang. Same generic wording as index.html's
+  // login()/register() -- no tier-specific claim, since that's about
+  // how long a request retry loop runs, not a cold-start wake-up.
   let secs = 0;
   const wakeTimer = setInterval(() => {
     secs++;
-    cardEl.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px 0;">Waking server… ${secs}s (free tier takes up to 50s)</div>`;
+    cardEl.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px 0;">Connecting to server… ${secs}s</div>`;
   }, 1000);
   await wakeServer();
   clearInterval(wakeTimer);

@@ -1357,10 +1357,12 @@ async function showCountry(c) {
   document.getElementById('cv-body').innerHTML = `<div class="loading-pulse"><div class="spinner"></div><div>Loading ${c.name} guide...</div></div>`;
   window.scrollTo(0,0);
 
-  // Retry up to 3 times — Render free tier can take 30-50s to wake from sleep
+  // Retry up to 3 times — covers a momentarily unreachable backend
+  // (a deploy restart, a dropped connection) rather than leaving the
+  // page stuck if the first attempt doesn't get a response.
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      document.getElementById('cv-body').innerHTML = `<div class="loading-pulse"><div class="spinner"></div><div>${attempt > 1 ? `Waking server... attempt ${attempt}/3` : `Loading ${c.name} guide...`}</div></div>`;
+      document.getElementById('cv-body').innerHTML = `<div class="loading-pulse"><div class="spinner"></div><div>${attempt > 1 ? `Connecting to server... attempt ${attempt}/3` : `Loading ${c.name} guide...`}</div></div>`;
       const res = await fetch(`${API}/ai/country_meta`, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
