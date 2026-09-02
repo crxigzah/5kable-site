@@ -3287,6 +3287,19 @@ async function loadAchievements(token){
   try {
     const res = await fetch(API + '/achievements/list', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
     const data = await res.json();
+    // A failed request (a Render free-tier cold start, a brief 500, a
+    // dropped connection) used to fall through with achievements
+    // defaulting to [] rather than landing in the catch block below --
+    // which then wrote that empty list into kbl_seen_achievements as if
+    // the player had genuinely unearned everything. The very next
+    // successful load saw all of it missing from "seen" and re-fired an
+    // "Achievement Unlocked!" toast for every already-earned achievement
+    // at once -- a real, reported bug ("every time I log in it looks
+    // like I'm unlocking all my achievements"), reproduced by mocking one
+    // failed /achievements/list call followed by a successful one.
+    // Throwing here instead routes a failed request through the same
+    // catch as a network error, leaving the seen-state untouched.
+    if (!res.ok) throw new Error(data.error || 'Failed to load achievements');
     const achievements = data.achievements || [];
     grid.innerHTML = achievements.map(a => `
       <div style="text-align:center;padding:8px 4px;border-radius:10px;background:${a.earned ? 'rgba(0,201,167,0.1)' : 'var(--bg2)'};border:1px solid ${a.earned ? 'var(--teal)' : 'transparent'};opacity:${a.earned ? '1' : '.45'};" title="${escapeHtmlLocal(a.desc)}">
