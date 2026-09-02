@@ -365,11 +365,21 @@ nav::before {
 .price-card.featured {
   border-color:rgba(0,201,167,0.4);
   background:linear-gradient(135deg,rgba(0,201,167,0.06),rgba(124,58,237,0.06));
+}
+/* Same compositor-only-property approach as .btn-primary's pulse-glow
+   above -- a static box-shadow on ::after with only its opacity
+   animated, instead of animating the card's own box-shadow value. */
+.price-card.featured::after {
+  content:'';
+  position:absolute; inset:0; border-radius:inherit;
+  box-shadow:0 0 32px 6px rgba(240,165,0,0.12);
+  opacity:0;
   animation:priceFeaturedPulse 3s ease-in-out infinite;
+  pointer-events:none; z-index:-1;
 }
 @keyframes priceFeaturedPulse {
-  0%,100% { box-shadow:0 0 0 0 rgba(240,165,0,0); }
-  50% { box-shadow:0 0 32px 6px rgba(240,165,0,0.12); }
+  0%,100% { opacity:0; }
+  50% { opacity:1; }
 }
 .price-card:hover { transform:translateY(-3px); }
 .price-badge {
@@ -549,11 +559,25 @@ footer {
 
 /* === INTERACTIVE POLISH === */
 
-/* Pulse on CTA button */
-.btn-primary { animation: pulse-glow 3s ease-in-out infinite; }
+/* Pulse on CTA button -- animates a separate pseudo-element's opacity
+   rather than the button's own box-shadow value directly. Animating
+   box-shadow forces a full repaint of the button on every frame
+   (flagged by Lighthouse as a non-composited animation); the glow
+   itself is now a static box-shadow on ::after, and only its opacity
+   (compositor-only, GPU-driven, no repaint) animates -- same pulsing
+   look, none of the per-frame paint cost. */
+.btn-primary { position:relative; }
+.btn-primary::after {
+  content:'';
+  position:absolute; inset:0; border-radius:inherit;
+  box-shadow: 0 0 20px 4px rgba(0,201,167,0.25);
+  opacity:0;
+  animation: pulse-glow 3s ease-in-out infinite;
+  pointer-events:none; z-index:-1;
+}
 @keyframes pulse-glow {
-  0%,100% { box-shadow: 0 0 0 0 rgba(0,201,167,0); }
-  50% { box-shadow: 0 0 20px 4px rgba(0,201,167,0.25); }
+  0%,100% { opacity:0; }
+  50% { opacity:1; }
 }
 
 /* Feature cards - lift + glow on hover */
