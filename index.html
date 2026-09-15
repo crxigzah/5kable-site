@@ -1172,7 +1172,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       <div class="pricing">
         <div class="price-card">
           <div class="price-name">Free</div>
-          <div class="price-amount"><span class="price-display" data-gbp="0">£0</span><span class="curr"> / month</span></div>
+          <div class="price-amount"><span class="price-display" data-gbp="0">£0</span></div>
           <div class="price-desc">Get a taste of AI-powered training</div>
           <ul class="price-features">
             <li>114 Country Meta Guides</li>
@@ -1190,9 +1190,9 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
         <div class="price-card featured">
           <div class="price-badge">👑 Most Popular</div>
           <div class="price-name">Pro</div>
-          <div class="price-amount"><span class="price-display" data-gbp="9.99">£9.99</span><span class="curr"> / month</span></div>
+          <div class="price-amount"><span class="price-display" data-gbp="19.99">£19.99</span></div>
           <div class="price-desc">Unlock Full Region Specific Knowledge</div>
-          <div style="color:var(--teal);font-size:12px;font-weight:700;margin-bottom:16px;">🎁 Free for your first 3 days</div>
+          <div style="color:var(--teal);font-size:12px;font-weight:700;margin-bottom:16px;">✨ Pay once, yours for good</div>
           <ul class="price-features">
             <li>114 Country Meta Guides</li>
             <li>5K live chat ask anything</li>
@@ -1203,7 +1203,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
             <li>Unlimited F7 scene captures</li>
             <li>Unlimited training guides</li>
           </ul>
-          <button class="btn btn-primary" id="pricing-pro-btn" onclick="proCtaClick(this)" style="margin-top:auto;">Start Free Trial</button>
+          <button class="btn btn-primary" id="pricing-pro-btn" onclick="proCtaClick(this)" style="margin-top:auto;">Unlock Pro — £19.99</button>
         </div>
       </div>
 
@@ -1260,7 +1260,7 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
               <tr>
                 <td style="border-bottom:none;padding:16px;"></td>
                 <td style="border-bottom:none;text-align:center;padding:16px;"><button class="btn btn-outline" onclick="getStarted()" style="padding:8px 20px;font-size:13px;">Free Forever</button></td>
-                <td style="border-bottom:none;text-align:center;padding:16px;"><button class="btn" id="compare-pro-btn" onclick="proCtaClick(this)" style="padding:8px 20px;font-size:13px;background:linear-gradient(135deg,#f0c02e,var(--gold));color:#080810;font-weight:700;">Start Free Trial</button></td>
+                <td style="border-bottom:none;text-align:center;padding:16px;"><button class="btn" id="compare-pro-btn" onclick="proCtaClick(this)" style="padding:8px 20px;font-size:13px;background:linear-gradient(135deg,#f0c02e,var(--gold));color:#080810;font-weight:700;">Unlock Pro — £19.99</button></td>
               </tr>
             </tfoot>
           </table>
@@ -1278,8 +1278,8 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
     <div id="faq-list">
       
       <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}"><span>Can I cancel my Pro subscription?</span><span class="faq-arrow">+</span></div>
-        <div class="faq-a">Yes, anytime. Pro is billed monthly through Stripe. You can cancel through the Stripe customer portal (accessible from Account Settings → Payment Methods) and your Pro access continues until the end of the current billing period. No questions asked.</div>
+        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}"><span>Is Pro a subscription?</span><span class="faq-arrow">+</span></div>
+        <div class="faq-a">No. Pro is a single one-time payment of £19.99. Pay once and it's yours for good — no recurring charges, nothing to cancel.</div>
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}"><span>Does 5kable work offline?</span><span class="faq-arrow">+</span></div>
@@ -1304,10 +1304,6 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}"><span>What happens to my data?</span><span class="faq-arrow">+</span></div>
         <div class="faq-a">F7 captures add a location (not an image) to our community library, which other users' training guides can reference, shown live via Google Street View, never a stored screenshot. Your account details (email, username) are stored securely and never sold or shared. See our Privacy Policy for full details.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-q" onclick="toggleFaq(this)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleFaq(this)}"><span>How do I cancel my Pro subscription?</span><span class="faq-arrow">+</span></div>
-        <div class="faq-a">You can cancel anytime from your Stripe billing portal. Your Pro access continues until the end of your current billing period. Contact support@5kable.net if you need any help with your subscription.</div>
       </div>
     </div>
   </div>
@@ -1443,11 +1439,8 @@ html { scroll-behavior: smooth; overflow-x: hidden; }
       </div>
       <div id="upgrade-section" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;">
         <div id="upgrade-title" style="font-weight:700;margin-bottom:8px;">⭐ Upgrade to Pro</div>
-        <div id="trial-banner" style="display:none;background:rgba(0,201,167,0.1);border:1px solid var(--teal);color:var(--teal);font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:12px;text-align:center;"></div>
-        <div id="upgrade-desc" style="color:var(--muted);font-size:13px;margin-bottom:16px;">Priority AI, advanced comparisons, export your library and more.</div>
-        <button id="start-trial-btn" onclick="startTrial()" style="display:none;width:100%;padding:11px;margin-bottom:8px;background:rgba(0,201,167,0.1);border:1px solid var(--teal);color:var(--teal);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">🎁 Start Your Free 3-Day Trial</button>
-        <button id="upgrade-now-btn" class="btn btn-primary" onclick="openUpgradeModal()" style="width:100%;padding:11px;">Upgrade Now <span class="price-display" data-gbp="9.99">£9.99</span>/mo</button>
-        <button id="manage-billing-btn" onclick="showPaymentMethods()" style="display:none;width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">Manage Billing</button>
+        <div id="upgrade-desc" style="color:var(--muted);font-size:13px;margin-bottom:16px;">Priority AI, advanced comparisons, export your library and more. One-time payment — yours for good, no subscription.</div>
+        <button id="upgrade-now-btn" class="btn btn-primary" onclick="upgradeToPro()" style="width:100%;padding:11px;">Unlock Pro — <span class="price-display" data-gbp="19.99">£19.99</span></button>
         <div id="upgrade-msg" style="font-size:12px;margin-top:8px;text-align:center;"></div>
       </div>
     </div>
@@ -1936,8 +1929,8 @@ async function checkAuth() {
 
 // Keeps the landing-page pricing cards honest for logged-in users: a Pro
 // user who navigates back to Home (goHome()) would otherwise still see a
-// generic "Upgrade to Pro" button, which re-triggers checkout and can create
-// a duplicate subscription. This reflects their real tier instead.
+// generic "Unlock Pro" button, which re-triggers checkout needlessly.
+// This reflects their real tier instead.
 function updatePricingButtons() {
   const freeBtn = document.getElementById('pricing-free-btn');
   const proBtn  = document.getElementById('pricing-pro-btn');
@@ -1947,21 +1940,19 @@ function updatePricingButtons() {
   const user = getUser();
   const token = getToken();
   if (!user || !token) {
-    // Logged out — restore defaults. "Start Free Trial" here is honest:
-    // proCtaClick() below opens the login/register modal first (same as
-    // upgradeToPro() always did with no token), and eligibility gets
-    // decided for real once they're actually signed in.
+    // Logged out — restore defaults. proCtaClick() below opens the
+    // login/register modal first (same as upgradeToPro() always did
+    // with no token).
     freeBtn.textContent = 'Get Started Free';
     freeBtn.disabled = false;
     freeBtn.onclick = getStarted;
-    proBtns.forEach(b => { b.textContent = 'Start Free Trial'; b.disabled = false; b.onclick = () => proCtaClick(b); });
+    proBtns.forEach(b => { b.textContent = 'Unlock Pro — £19.99'; b.disabled = false; b.onclick = () => proCtaClick(b); });
     return;
   }
-  // tier is Stripe-accurate for both trialing and paying customers (the
-  // trial is a real subscription — see /trial/start), so no separate
-  // "real tier" check is needed here anymore.
+  // tier is set permanently by the one-time-payment webhook -- once
+  // 'pro', it never expires or needs renewing.
   if (user.tier === 'pro') {
-    proBtns.forEach(b => { b.textContent = user.trial_active ? 'Trial Active ⭐' : "You're on Pro ⭐"; b.disabled = true; b.onclick = null; });
+    proBtns.forEach(b => { b.textContent = "You're on Pro ⭐"; b.disabled = true; b.onclick = null; });
     freeBtn.textContent = 'Current Plan: Pro';
     freeBtn.disabled = true;
     freeBtn.onclick = null;
@@ -1969,34 +1960,21 @@ function updatePricingButtons() {
     freeBtn.textContent = 'Current Plan';
     freeBtn.disabled = true;
     freeBtn.onclick = null;
-    // Only offer the trial CTA if there's an actual trial left to start —
-    // once it's been used (converted, expired, or cancelled), this is a
-    // plain upgrade button instead.
-    const trialAvailable = !user.trial_used;
     proBtns.forEach(b => {
-      b.textContent = trialAvailable ? 'Start Free Trial' : 'Upgrade to Pro';
+      b.textContent = 'Unlock Pro — £19.99';
       b.disabled = false;
       b.onclick = () => proCtaClick(b);
     });
   }
 }
 
-// Routes the pricing page's Pro CTA to whichever action is actually
-// correct for this visitor — starting the trial for someone eligible,
-// or straight to Stripe checkout otherwise — rather than always sending
-// a "Start Free Trial"-labelled button to a paid checkout page. Both
-// paths end up redirecting to Stripe's own hosted checkout either way
-// (see startTrial() and upgradeToPro()) — Stripe collects the card and,
-// for a trial, automatically charges it when the trial period ends.
+// Routes the pricing page's Pro CTA to Stripe's hosted checkout for the
+// one-time payment, opening the login/register modal first if the
+// visitor isn't signed in yet.
 function proCtaClick(btnEl) {
   const token = getToken();
   if (!token) { showModal('login'); return; }
-  const user = getUser();
-  if (user && user.tier !== 'pro' && !user.trial_used) {
-    startTrial(btnEl);
-  } else {
-    upgradeToPro();
-  }
+  upgradeToPro();
 }
 
 // ── Modal ─────────────────────────────────────────────────
@@ -3093,86 +3071,16 @@ function showDashboard(user, token) {
   const tierText = user.tier === 'pro' ? '⭐ Pro' : 'Free';
   if (tierEl) { tierEl.textContent = tierText; if (user.tier === 'pro') tierEl.classList.add('pro'); }
   if (tierDisplayEl) tierDisplayEl.textContent = tierText;
-  // Hidden only for a genuinely settled Pro account (paying, trial not
-  // active) — kept visible in trial mode so the card can show the
-  // countdown/auto-charge notice and a way to manage billing instead.
+  // Pro is permanent (one-time payment), so once it's set there's
+  // nothing left to upgrade -- hide the card entirely.
   const upgradeSection = document.getElementById('upgrade-section');
-  if (upgradeSection) upgradeSection.style.display = (user.tier === 'pro' && !user.trial_active) ? 'none' : '';
-  renderTrialUI(user);
+  if (upgradeSection) upgradeSection.style.display = (user.tier === 'pro') ? 'none' : '';
   if (user.created_at) {
     document.getElementById('dash-joined').textContent = new Date(user.created_at).toLocaleDateString('en-AU', {month:'short', year:'numeric'});
   }
   loadRegionAccuracy(token);
   loadGuessInsights(token);
   loadDashboardUsage(token);
-}
-
-// Switches the Upgrade to Pro card between three states: never tried
-// (show the trial + upgrade buttons), mid-trial (show the countdown/
-// auto-charge notice + a way to manage billing, hide the sales pitch),
-// or settled (plain upgrade card, no trial mention — either it's been
-// used before or this account converted/cancelled already).
-function renderTrialUI(user) {
-  const title = document.getElementById('upgrade-title');
-  const banner = document.getElementById('trial-banner');
-  const desc = document.getElementById('upgrade-desc');
-  const startBtn = document.getElementById('start-trial-btn');
-  const upgradeBtn = document.getElementById('upgrade-now-btn');
-  const manageBtn = document.getElementById('manage-billing-btn');
-  if (!startBtn || !banner) return;
-
-  if (user.tier === 'pro' && user.trial_active) {
-    if (title) title.textContent = '🎁 Pro Trial Active';
-    if (user.trial_ends_at) {
-      const daysLeft = Math.max(1, Math.ceil((new Date(user.trial_ends_at) - new Date()) / 86400000));
-      const endDate = new Date(user.trial_ends_at).toLocaleDateString('en-GB', {day:'numeric', month:'short'});
-      banner.textContent = `${daysLeft} day${daysLeft === 1 ? '' : 's'} left — your card charges £9.99 automatically on ${endDate} unless you cancel first.`;
-    } else {
-      banner.textContent = 'Trial active — your card will be charged automatically when it ends, unless you cancel first.';
-    }
-    banner.style.display = 'block';
-    if (desc) desc.style.display = 'none';
-    startBtn.style.display = 'none';
-    if (upgradeBtn) upgradeBtn.style.display = 'none';
-    if (manageBtn) manageBtn.style.display = 'block';
-    return;
-  }
-
-  if (title) title.textContent = '⭐ Upgrade to Pro';
-  banner.style.display = 'none';
-  if (desc) desc.style.display = '';
-  if (upgradeBtn) upgradeBtn.style.display = '';
-  if (manageBtn) manageBtn.style.display = 'none';
-  startBtn.style.display = (user.tier !== 'pro' && !user.trial_used) ? 'block' : 'none';
-}
-
-// btnEl lets this be triggered from more than one place (the dashboard's
-// own trial button, or the pricing page's Pro CTA via proCtaClick()) and
-// give feedback on whichever button was actually clicked, defaulting to
-// the dashboard button when called with no argument. Redirects to
-// Stripe's hosted checkout exactly like upgradeToPro() does — /trial/start
-// creates a real subscription with a trial period attached, so Stripe (not
-// us) collects the card and later auto-charges it when the trial ends.
-async function startTrial(btnEl) {
-  const btn = btnEl || document.getElementById('start-trial-btn');
-  const token = getToken();
-  if (!token || !btn) return;
-  const originalText = btn.textContent;
-  btn.disabled = true;
-  btn.textContent = 'Redirecting to checkout...';
-  try {
-    const res = await fetch(API + '/trial/start', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const d = await res.json();
-    if (d.url) {
-      window.location.href = d.url;
-    } else {
-      throw new Error(d.error || 'Could not start trial');
-    }
-  } catch(e) {
-    btn.disabled = false;
-    btn.textContent = originalText;
-    alert('Could not start trial: ' + e.message);
-  }
 }
 
 // ── Level / XP + GeoX mascot + seasonal banner ──────────────────
@@ -4314,10 +4222,9 @@ async function upgradeToPro() {
 const urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get('upgrade') === 'success') {
   // Re-verify token to get the real tier rather than assuming success from
-  // the redirect alone — the backend webhook can still reject a trial
-  // checkout after Stripe's own page said it went fine (e.g. the card's
-  // already been used for a trial on a different account), so check what
-  // actually landed before claiming Pro is active.
+  // the redirect alone — Stripe's own success page can show before our
+  // webhook has actually processed the payment, so check what landed
+  // before claiming Pro is active.
   checkAuth().then(() => {
     const msg = document.getElementById('upgrade-msg');
     if (!msg) return;
@@ -4642,7 +4549,6 @@ function showAccountSettings() {
       <div style="display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid #1e1e35;">
         <button id="settings-tab-btn-profile" onclick="switchSettingsTab('profile')" style="flex:1;padding:12px 8px;background:none;border:none;border-bottom:2px solid #00c9a7;color:#eee;font-size:13px;font-weight:700;cursor:pointer;">👤 Profile</button>
         <button id="settings-tab-btn-security" onclick="switchSettingsTab('security')" style="flex:1;padding:12px 8px;background:none;border:none;border-bottom:2px solid transparent;color:#8888aa;font-size:13px;font-weight:700;cursor:pointer;">🔒 Security</button>
-        <button id="settings-tab-btn-billing" onclick="switchSettingsTab('billing')" style="flex:1;padding:12px 8px;background:none;border:none;border-bottom:2px solid transparent;color:#8888aa;font-size:13px;font-weight:700;cursor:pointer;">💳 Billing</button>
         <button id="settings-tab-btn-preferences" onclick="switchSettingsTab('preferences')" style="flex:1;padding:12px 8px;background:none;border:none;border-bottom:2px solid transparent;color:#8888aa;font-size:13px;font-weight:700;cursor:pointer;">🔔 Preferences</button>
       </div>
 
@@ -4766,35 +4672,6 @@ function showAccountSettings() {
         ` : ''}
       </div>
 
-      <!-- Billing tab -->
-      <div id="settings-tab-panel-billing" style="display:none;">
-        <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
-          <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleBillingSection()">
-            <label style="color:#8888aa;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">💳 BILLING</label>
-            <span id="billing-toggle-icon" style="color:#6a6a9a;font-size:12px;">▼</span>
-          </div>
-          <div id="billing-section" style="display:none;margin-top:12px;">
-            <div style="font-size:12px;font-weight:700;color:#c0c0d8;margin-bottom:8px;">Payment Methods</div>
-            <div id="settings-payment-methods-list" style="margin-bottom:10px;"><div style="color:#7a7a9a;font-size:12px;">Loading...</div></div>
-            <button id="add-card-toggle-btn" onclick="toggleAddCardForm()" style="width:100%;padding:9px;background:none;border:1px dashed #2a2a3e;color:#8888aa;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;margin-bottom:16px;">+ Add a card</button>
-            <div id="add-card-form" style="display:none;background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:14px;margin-bottom:16px;">
-              <div id="stripe-card-element" style="padding:10px 4px;"></div>
-              <div id="stripe-card-errors" style="color:var(--red);font-size:11px;margin-top:6px;min-height:14px;"></div>
-              <div style="display:flex;gap:8px;margin-top:10px;">
-                <button onclick="saveNewCard()" id="save-card-btn" style="flex:1;padding:9px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;">Save Card</button>
-                <button onclick="toggleAddCardForm()" style="padding:9px 14px;background:none;border:1px solid #1e1e35;color:#eee;border-radius:8px;font-size:12px;cursor:pointer;">Cancel</button>
-              </div>
-            </div>
-
-            ${user.tier === 'pro' ? `
-            <div style="display:flex;gap:8px;">
-              <button onclick="openManageSubscriptionModal()" style="flex:1;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid #1e1e35;color:#c0c0d8;border-radius:10px;font-size:13px;cursor:pointer;">📋 Manage Subscription</button>
-              <button onclick="openCancelSubscriptionModal()" style="flex:1;text-align:left;padding:11px 14px;background:#0d0d18;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:10px;font-size:13px;cursor:pointer;">❌ Cancel Subscription</button>
-            </div>` : ''}
-          </div>
-        </div>
-      </div>
-
       <!-- Preferences tab -->
       <div id="settings-tab-panel-preferences" style="display:none;">
         <div style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #1e1e35;">
@@ -4816,7 +4693,6 @@ function showAccountSettings() {
   loadBadgesIntoSettings();
   loadLevelIntoSettings();
   loadNotificationPrefsIntoSettings();
-  loadPaymentMethodsIntoSettings();
 }
 
 async function loadNotificationPrefsIntoSettings(){
@@ -4863,341 +4739,6 @@ async function loadNotificationPrefsIntoSettings(){
     `;
   } catch(e) {
     el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">Couldn\'t load preferences right now.</div>';
-  }
-}
-
-// ── In-app payment methods & history (Account Settings → Billing) ──
-// Card brand → emoji, purely cosmetic so the list doesn't read as a
-// bare wall of "visa"/"mastercard" strings.
-const CARD_BRAND_ICON = { visa:'💳', mastercard:'💳', amex:'💳', discover:'💳', diners:'💳', jcb:'💳', unionpay:'💳' };
-
-let _stripeJs = null;
-let _stripeElements = null;
-let _stripeCardElement = null;
-
-// Lazily loads and caches the Stripe.js instance using the publishable
-// key from our own backend (never hardcoded in this file), so switching
-// between test/live only ever needs an env var change server-side.
-// Stripe recommends always loading Elements straight from their own CDN
-// rather than self-hosting/bundling it — that's part of how it stays
-// PCI-compliant and gets their fraud-detection updates. Loaded lazily
-// here (used to be a static <script> in <head>, on every page load)
-// since almost nobody who lands on the site ever opens the "Add a
-// card" form that actually needs it.
-async function getStripeJs() {
-  if (_stripeJs) return _stripeJs;
-  if (!window.Stripe) await _gaxLoadScript('https://js.stripe.com/v3/');
-  const res = await fetch(API + '/stripe/config');
-  const data = await res.json();
-  if (!data.publishable_key) throw new Error('Stripe is not configured');
-  _stripeJs = Stripe(data.publishable_key);
-  return _stripeJs;
-}
-
-async function loadPaymentMethodsIntoSettings(){
-  const el = document.getElementById('settings-payment-methods-list');
-  if (!el) return;
-  const token = getToken();
-  if (!token) { el.innerHTML = ''; return; }
-  try {
-    const res = await fetch(API + '/stripe/payment-methods', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    const methods = data.methods || [];
-    if (!methods.length) {
-      el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">No saved cards yet.</div>';
-      return;
-    }
-    // Blocking removal of the only card while subscribed is enforced
-    // server-side (the real guard) — this just hides the button ahead
-    // of time so nobody hits that error message needlessly.
-    const isOnlyCardWhileSubscribed = methods.length === 1 && getUser()?.tier === 'pro';
-    el.innerHTML = methods.map(m => {
-      const isDefault = m.id === data.default_id;
-      return `
-      <div style="display:flex;align-items:center;justify-content:space-between;background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:10px 12px;margin-bottom:8px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span>${CARD_BRAND_ICON[m.brand] || '💳'}</span>
-          <div>
-            <div style="font-size:13px;font-weight:600;text-transform:capitalize;">${escapeHtmlLocal(m.brand)} •••• ${escapeHtmlLocal(m.last4)}</div>
-            <div style="font-size:11px;color:#7a7a9a;">Expires ${String(m.exp_month).padStart(2,'0')}/${m.exp_year}${isDefault ? ' · Default' : ''}</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:6px;">
-          ${!isDefault ? `<button onclick="setDefaultPaymentMethodCard('${m.id}')" style="background:none;border:1px solid #2a2a3e;color:#8888aa;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">Set default</button>` : ''}
-          ${isOnlyCardWhileSubscribed
-            ? `<span title="Cancel your subscription first to remove your only card" style="color:#5a5a7a;font-size:11px;padding:5px 2px;">Cancel subscription to remove</span>`
-            : `<button onclick="removePaymentMethodCard('${m.id}')" style="background:none;border:1px solid rgba(255,76,106,0.3);color:#ff6b6b;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer;">Remove</button>`}
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerHTML = '<div style="color:#7a7a9a;font-size:12px;">Couldn\'t load payment methods right now.</div>';
-  }
-}
-
-async function toggleAddCardForm(){
-  const form = document.getElementById('add-card-form');
-  const toggleBtn = document.getElementById('add-card-toggle-btn');
-  if (!form) return;
-  const opening = form.style.display === 'none';
-  form.style.display = opening ? 'block' : 'none';
-  if (toggleBtn) toggleBtn.style.display = opening ? 'none' : 'block';
-  if (!opening) return;
-
-  const errEl = document.getElementById('stripe-card-errors');
-  if (errEl) errEl.textContent = '';
-
-  // Only mount the card Element once — reopening the form after closing
-  // it reuses the same mounted Element rather than creating a duplicate.
-  if (_stripeCardElement) return;
-  try {
-    const stripeJs = await getStripeJs();
-    _stripeElements = stripeJs.elements();
-    _stripeCardElement = _stripeElements.create('card', {
-      style: {
-        base: {
-          color: '#eee',
-          fontSize: '14px',
-          '::placeholder': { color: '#5a5a7a' },
-        },
-        invalid: { color: '#ff6b6b' },
-      },
-    });
-    _stripeCardElement.mount('#stripe-card-element');
-    _stripeCardElement.on('change', (event) => {
-      if (errEl) errEl.textContent = event.error ? event.error.message : '';
-    });
-  } catch(e) {
-    if (errEl) errEl.textContent = 'Could not load card form: ' + e.message;
-  }
-}
-
-async function saveNewCard(){
-  const btn = document.getElementById('save-card-btn');
-  const errEl = document.getElementById('stripe-card-errors');
-  const token = getToken();
-  if (!token || !_stripeJs || !_stripeCardElement) return;
-  btn.disabled = true;
-  btn.textContent = 'Saving...';
-  try {
-    // Was this the customer's first card? If so, make it the default
-    // automatically once saved — otherwise leave whatever's already
-    // marked default alone, since adding a second card shouldn't
-    // silently switch what gets charged.
-    const beforeRes = await fetch(API + '/stripe/payment-methods', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const beforeData = await beforeRes.json();
-    const wasFirstCard = !(beforeData.methods || []).length;
-
-    const intentRes = await fetch(API + '/stripe/create-setup-intent', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const intentData = await intentRes.json();
-    if (intentData.error) throw new Error(intentData.error);
-
-    const result = await _stripeJs.confirmCardSetup(intentData.client_secret, {
-      payment_method: { card: _stripeCardElement },
-    });
-    if (result.error) throw new Error(result.error.message);
-
-    if (wasFirstCard && result.setupIntent?.payment_method) {
-      await fetch(API + '/stripe/set-default-payment-method', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token, payment_method_id: result.setupIntent.payment_method}) });
-    }
-
-    _stripeCardElement.clear();
-    toggleAddCardForm();
-    loadPaymentMethodsIntoSettings();
-  } catch(e) {
-    if (errEl) errEl.textContent = e.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Save Card';
-  }
-}
-
-// ── In-app Pro upgrade (calls Stripe's Subscription API directly instead
-// of redirecting to a hosted Checkout Session) ──
-let _stripeUpgradeElements = null;
-let _stripeUpgradeCardElement = null;
-
-function closeUpgradeModal() {
-  document.getElementById('gax-upgrade-modal')?.remove();
-  _stripeUpgradeElements = null;
-  _stripeUpgradeCardElement = null;
-}
-
-function openUpgradeModal() {
-  closeUserMenu();
-  const token = getToken();
-  if (!token) { showModal('login'); return; }
-  document.getElementById('gax-upgrade-modal')?.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = 'gax-upgrade-modal';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2100;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
-  overlay.innerHTML = `
-    <div style="background:#10101e;border:1px solid #1e1e35;border-radius:20px;padding:32px;width:440px;max-width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.8);" onclick="event.stopPropagation()">
-      <div style="font-size:18px;font-weight:800;margin-bottom:4px;">⭐ Upgrade to Pro</div>
-      <div style="color:var(--muted);font-size:13px;margin:6px 0 18px;">Unlimited Guides, GeoX Live Chat, Export your library and more! £9.99/mo, cancel anytime.</div>
-      <div id="upgrade-modal-body"><div style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px;">Loading...</div></div>
-      <button onclick="closeUpgradeModal()" id="upgrade-modal-close-btn" style="width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;margin-top:14px;">Cancel</button>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', closeUpgradeModal);
-  loadUpgradeModalBody();
-}
-
-async function loadUpgradeModalBody() {
-  const body = document.getElementById('upgrade-modal-body');
-  if (!body) return;
-  const token = getToken();
-  try {
-    const res = await fetch(API + '/stripe/payment-methods', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error);
-    const methods = data.methods || [];
-    let html = '';
-    if (methods.length) {
-      html += `<div style="font-size:12px;font-weight:700;color:#c0c0d8;margin-bottom:8px;">Pay with</div>`;
-      html += methods.map(m => `
-        <div onclick="submitUpgradeWithPaymentMethod('${m.id}')" style="display:flex;align-items:center;justify-content:space-between;background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .15s;" onmouseover="this.style.borderColor='#00c9a7'" onmouseout="this.style.borderColor='#1e1e35'">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span>${CARD_BRAND_ICON[m.brand] || '💳'}</span>
-            <div>
-              <div style="font-size:13px;font-weight:600;text-transform:capitalize;">${escapeHtmlLocal(m.brand)} •••• ${escapeHtmlLocal(m.last4)}</div>
-              <div style="font-size:11px;color:#7a7a9a;">Expires ${String(m.exp_month).padStart(2,'0')}/${m.exp_year}${m.id === data.default_id ? ' · Default' : ''}</div>
-            </div>
-          </div>
-          <span style="color:var(--teal);font-size:12px;font-weight:700;">Use this card</span>
-        </div>`).join('');
-      html += `<button onclick="toggleUpgradeNewCardForm()" id="upgrade-add-card-toggle-btn" style="width:100%;padding:9px;background:none;border:1px dashed #2a2a3e;color:#8888aa;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;margin-top:2px;">+ Use a different card</button>`;
-    } else {
-      html += `<div style="font-size:12px;font-weight:700;color:#c0c0d8;margin-bottom:8px;">Card details</div>`;
-    }
-    html += `
-      <div id="upgrade-new-card-form" style="${methods.length ? 'display:none;margin-top:12px;' : ''}">
-        <div style="background:#0d0d18;border:1px solid #1e1e35;border-radius:10px;padding:14px;">
-          <div id="upgrade-card-element" style="padding:10px 4px;"></div>
-          <div id="upgrade-card-errors" style="color:var(--red);font-size:11px;margin-top:6px;min-height:14px;"></div>
-        </div>
-        <button onclick="submitUpgradeWithNewCard()" id="upgrade-submit-btn" style="width:100%;padding:11px;margin-top:10px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Upgrade Now £9.99/mo</button>
-      </div>`;
-    body.innerHTML = html;
-    if (!methods.length) mountUpgradeCardElement();
-  } catch(e) {
-    body.innerHTML = `<div style="color:var(--red);font-size:13px;">Couldn't load payment methods: ${e.message}</div>`;
-  }
-}
-
-function toggleUpgradeNewCardForm() {
-  const form = document.getElementById('upgrade-new-card-form');
-  const btn = document.getElementById('upgrade-add-card-toggle-btn');
-  if (!form) return;
-  const opening = form.style.display === 'none';
-  form.style.display = opening ? 'block' : 'none';
-  if (btn) btn.style.display = opening ? 'none' : 'block';
-  if (opening && !_stripeUpgradeCardElement) mountUpgradeCardElement();
-}
-
-async function mountUpgradeCardElement() {
-  const errEl = document.getElementById('upgrade-card-errors');
-  try {
-    const stripeJs = await getStripeJs();
-    _stripeUpgradeElements = stripeJs.elements();
-    _stripeUpgradeCardElement = _stripeUpgradeElements.create('card', {
-      style: {
-        base: {
-          color: '#eee',
-          fontSize: '14px',
-          '::placeholder': { color: '#5a5a7a' },
-        },
-        invalid: { color: '#ff6b6b' },
-      },
-    });
-    _stripeUpgradeCardElement.mount('#upgrade-card-element');
-    _stripeUpgradeCardElement.on('change', (event) => {
-      if (errEl) errEl.textContent = event.error ? event.error.message : '';
-    });
-  } catch(e) {
-    if (errEl) errEl.textContent = 'Could not load card form: ' + e.message;
-  }
-}
-
-async function submitUpgradeWithNewCard() {
-  const btn = document.getElementById('upgrade-submit-btn');
-  const errEl = document.getElementById('upgrade-card-errors');
-  if (!_stripeJs || !_stripeUpgradeCardElement) return;
-  btn.disabled = true;
-  btn.textContent = 'Processing...';
-  try {
-    const { paymentMethod, error } = await _stripeJs.createPaymentMethod({ type: 'card', card: _stripeUpgradeCardElement });
-    if (error) throw new Error(error.message);
-    await submitUpgradeWithPaymentMethod(paymentMethod.id);
-  } catch(e) {
-    if (errEl) errEl.textContent = e.message;
-    btn.disabled = false;
-    btn.textContent = 'Upgrade Now £9.99/mo';
-  }
-}
-
-async function submitUpgradeWithPaymentMethod(pmId) {
-  const body = document.getElementById('upgrade-modal-body');
-  const closeBtn = document.getElementById('upgrade-modal-close-btn');
-  if (body) body.innerHTML = '<div style="text-align:center;padding:24px 0;color:var(--muted);font-size:13px;">Processing payment...</div>';
-  if (closeBtn) closeBtn.style.display = 'none';
-  const token = getToken();
-  try {
-    const res = await fetch(API + '/stripe/create-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token, payment_method_id: pmId}) });
-    const d = await res.json();
-    if (d.error) throw new Error(d.error);
-    if (d.status === 'requires_action') {
-      const stripeJs = await getStripeJs();
-      const confirmResult = await stripeJs.confirmCardPayment(d.client_secret);
-      if (confirmResult.error) throw new Error(confirmResult.error.message);
-    }
-    // tier itself only ever changes via the customer.subscription.created
-    // webhook (see /stripe/create-subscription on the backend), same
-    // invariant as every other billing flow — checkAuth() re-verifies so
-    // the nav badge, dashboard, and this modal all reflect the real tier.
-    await checkAuth();
-    if (document.getElementById('gax-settings-modal')) showAccountSettings();
-    if (body) body.innerHTML = `
-      <div style="text-align:center;padding:6px 0;">
-        <div style="font-size:32px;margin-bottom:10px;">🎉</div>
-        <div style="font-weight:700;margin-bottom:6px;">You're on Pro!</div>
-        <div style="color:var(--muted);font-size:13px;">Welcome to 5kable Pro. Enjoy priority AI, advanced comparisons, and more.</div>
-      </div>`;
-    setTimeout(closeUpgradeModal, 1800);
-  } catch(e) {
-    if (closeBtn) closeBtn.style.display = 'block';
-    if (body) body.innerHTML = `
-      <div style="text-align:center;padding:6px 0;">
-        <div style="color:var(--red);font-size:13px;margin-bottom:14px;">${e.message}</div>
-        <button onclick="loadUpgradeModalBody()" style="width:100%;padding:11px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Try again</button>
-      </div>`;
-  }
-}
-
-async function removePaymentMethodCard(pmId){
-  if (!confirm('Remove this card?')) return;
-  const token = getToken();
-  try {
-    const res = await fetch(API + '/stripe/remove-payment-method', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token, payment_method_id: pmId}) });
-    const d = await res.json();
-    if (d.error) throw new Error(d.error);
-    loadPaymentMethodsIntoSettings();
-  } catch(e) {
-    alert('Could not remove card: ' + e.message);
-  }
-}
-
-async function setDefaultPaymentMethodCard(pmId){
-  const token = getToken();
-  try {
-    const res = await fetch(API + '/stripe/set-default-payment-method', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token, payment_method_id: pmId}) });
-    const d = await res.json();
-    if (d.error) throw new Error(d.error);
-    loadPaymentMethodsIntoSettings();
-  } catch(e) {
-    alert('Could not set default card: ' + e.message);
   }
 }
 
@@ -5282,7 +4823,7 @@ function toggleCountryBadgeSection() {
 }
 
 function switchSettingsTab(tab) {
-  const tabs = ['profile', 'security', 'billing', 'preferences'];
+  const tabs = ['profile', 'security', 'preferences'];
   tabs.forEach(t => {
     const panel = document.getElementById(`settings-tab-panel-${t}`);
     const btn = document.getElementById(`settings-tab-btn-${t}`);
@@ -5306,15 +4847,6 @@ function toggleDisplayNameSection() {
 function toggleEmailSection() {
   const sec = document.getElementById('email-section');
   const icon = document.getElementById('email-toggle-icon');
-  if (!sec) return;
-  const open = sec.style.display !== 'none';
-  sec.style.display = open ? 'none' : 'block';
-  if (icon) icon.textContent = open ? '▼' : '▲';
-}
-
-function toggleBillingSection() {
-  const sec = document.getElementById('billing-section');
-  const icon = document.getElementById('billing-toggle-icon');
   if (!sec) return;
   const open = sec.style.display !== 'none';
   sec.style.display = open ? 'none' : 'block';
@@ -5729,223 +5261,6 @@ async function loadStatsBadges(){
   }
 }
 
-function showPaymentMethods() {
-  closeUserMenu();
-  const token = getToken();
-  if (!token) { showModal('login'); return; }
-  const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2000;display:flex;align-items:center;justify-content:center;';
-  overlay.innerHTML = `<div style="background:#10101e;border:1px solid #1e1e35;border-radius:16px;padding:36px;width:420px;max-width:95vw;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <div style="font-size:18px;font-weight:700;">Payment Methods</div>
-      <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;color:#6a6a9a;font-size:20px;cursor:pointer;">✕</button>
-    </div>
-    <div id="payment-methods-body" style="color:#6a6a9a;font-size:13px;text-align:center;padding:32px 0;">
-      <div style="font-size:32px;margin-bottom:12px;">💳</div>
-      <div id="payment-methods-status">Opening Stripe's secure payment portal...</div>
-    </div>
-  </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', e => { if(e.target===overlay) overlay.remove(); });
-
-  const statusEl = overlay.querySelector('#payment-methods-status');
-  (async () => {
-    try {
-      const res = await fetch(API + '/stripe/create-portal-session', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ token })
-      });
-      const data = await res.json();
-      if (data.url) {
-        // Redirect to Stripe's own hosted portal — adding, removing, or
-        // changing the default card there is all Stripe needs; it
-        // automatically charges whichever is marked default on each
-        // subscription renewal, no extra logic required on our end.
-        window.location.href = data.url;
-      } else {
-        statusEl.style.color = 'var(--red)';
-        statusEl.textContent = '✗ ' + (data.error || 'Could not open payment portal');
-        console.error('Stripe portal error:', data);
-      }
-    } catch(e) {
-      statusEl.style.color = 'var(--red)';
-      statusEl.textContent = 'Could not connect to server — please try again.';
-      console.error('Stripe portal fetch error:', e);
-    }
-  })();
-}
-
-// ── Manage Subscription (read-only details, in-app) ──
-function closeManageSubscriptionModal() {
-  document.getElementById('gax-manage-sub-modal')?.remove();
-}
-
-async function openManageSubscriptionModal() {
-  closeUserMenu();
-  const token = getToken();
-  if (!token) { showModal('login'); return; }
-  document.getElementById('gax-manage-sub-modal')?.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = 'gax-manage-sub-modal';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2100;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
-  overlay.innerHTML = `
-    <div style="background:#10101e;border:1px solid #1e1e35;border-radius:20px;padding:32px;width:440px;max-width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.8);" onclick="event.stopPropagation()">
-      <div style="font-size:18px;font-weight:800;margin-bottom:14px;">Your Subscription</div>
-      <div id="manage-sub-body"><div style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center;">Loading...</div></div>
-      <button onclick="closeManageSubscriptionModal()" style="width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;margin-top:14px;">Close</button>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', closeManageSubscriptionModal);
-
-  const body = document.getElementById('manage-sub-body');
-  try {
-    const res = await fetch(API + '/stripe/subscription-details', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const d = await res.json();
-    if (d.error) throw new Error(d.error);
-    const sub = d.subscription;
-    if (!body) return;
-    if (!sub) {
-      body.innerHTML = '<div style="color:var(--muted);font-size:13px;">No active subscription found.</div>';
-      return;
-    }
-    const priceLine = sub.amount != null
-      ? `${sub.currency === 'GBP' ? '£' : sub.currency + ' '}${sub.amount.toFixed(2)} / ${sub.interval}`
-      : '—';
-    let statusLine;
-    if (sub.status === 'trialing' && sub.trial_end) {
-      const trialEndDate = new Date(sub.trial_end * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
-      statusLine = sub.cancel_at_period_end
-        ? `Your free trial ends and access stops on <b>${trialEndDate}</b>. You won't be charged.`
-        : `You're on a free trial. Your card will be charged automatically on <b>${trialEndDate}</b> unless you cancel first.`;
-    } else if (sub.cancel_at_period_end && sub.current_period_end) {
-      const endDate = new Date(sub.current_period_end * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
-      statusLine = `Your subscription is set to cancel on <b>${endDate}</b>. You'll keep Pro access until then.`;
-    } else if (sub.current_period_end) {
-      const renewDate = new Date(sub.current_period_end * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'});
-      statusLine = `Renews automatically on <b>${renewDate}</b>.`;
-    } else {
-      statusLine = '';
-    }
-    body.innerHTML = `
-      <div style="background:#0d0d18;border:1px solid #1e1e35;border-radius:12px;padding:16px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div style="font-weight:700;font-size:14px;">5kable Pro</div>
-          <div style="font-weight:700;font-size:14px;color:var(--teal);">${priceLine}</div>
-        </div>
-        <div style="color:var(--muted);font-size:12px;line-height:1.5;">${statusLine}</div>
-      </div>`;
-  } catch(e) {
-    if (body) body.innerHTML = `<div style="color:var(--red);font-size:13px;">Couldn't load subscription details: ${e.message}</div>`;
-  }
-}
-
-// ── Cancel Subscription (custom flow, not Stripe's hosted portal) ──
-// Stripe's own Customer Portal cancellation screen shows a retention
-// offer too, but its copy/design is fixed by Stripe's template — this
-// is the same £4.99-first-month offer, just built on our own page so we
-// control every word. Still calls Stripe's API underneath for the
-// actual cancel/discount action; tier itself only ever changes via the
-// existing webhook handler, not from this modal directly.
-function closeCancelSubscriptionModal() {
-  document.getElementById('gax-cancel-modal')?.remove();
-}
-
-function openCancelSubscriptionModal() {
-  closeUserMenu();
-  const token = getToken();
-  if (!token) { showModal('login'); return; }
-  document.getElementById('gax-cancel-modal')?.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = 'gax-cancel-modal';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:2100;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;';
-  overlay.innerHTML = `
-    <div style="background:#10101e;border:1px solid #1e1e35;border-radius:20px;padding:32px;width:440px;max-width:100%;box-shadow:0 30px 80px rgba(0,0,0,0.8);" onclick="event.stopPropagation()">
-      <div style="font-size:18px;font-weight:800;margin-bottom:4px;">Cancel your subscription?</div>
-      <div id="cancel-modal-body">
-        <div style="color:var(--muted);font-size:13px;margin:14px 0 18px;">You'll lose unlimited training guides, 5K live chat, and your Pro badge right away.</div>
-        <div style="background:rgba(0,201,167,0.08);border:1px solid var(--teal);border-radius:12px;padding:18px;margin-bottom:18px;">
-          <div style="font-weight:800;font-size:16px;color:var(--teal);margin-bottom:4px;">Stay for £4.99 next month</div>
-          <div style="color:var(--muted);font-size:12px;margin-bottom:14px;">One-time discount on your next invoice — back to £9.99/mo after that. Cancel anytime.</div>
-          <button onclick="redeemRetentionOffer()" style="width:100%;padding:11px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Take the discount</button>
-        </div>
-        <button onclick="confirmCancelSubscription()" style="width:100%;padding:11px;background:none;border:1px solid var(--red);color:var(--red);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:8px;">Cancel subscription anyway</button>
-        <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Never mind, keep Pro</button>
-      </div>
-    </div>`;
-  document.body.appendChild(overlay);
-  overlay.addEventListener('click', closeCancelSubscriptionModal);
-}
-
-async function redeemRetentionOffer() {
-  const body = document.getElementById('cancel-modal-body');
-  if (!body) return;
-  body.innerHTML = '<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px;">Applying discount...</div>';
-  const token = getToken();
-  try {
-    const res = await fetch(API + '/stripe/redeem-retention-offer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const d = await res.json();
-    if (d.error) throw new Error(d.error);
-    body.innerHTML = `
-      <div style="text-align:center;padding:6px 0;">
-        <div style="font-size:32px;margin-bottom:10px;">🎉</div>
-        <div style="font-weight:700;margin-bottom:6px;">Discount applied!</div>
-        <div style="color:var(--muted);font-size:13px;margin-bottom:18px;">Your next invoice will be £4.99. Thanks for staying with 5kable.</div>
-        <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Done</button>
-      </div>`;
-  } catch(e) {
-    body.innerHTML = `
-      <div style="text-align:center;padding:6px 0;">
-        <div style="color:var(--red);font-size:13px;margin-bottom:18px;">Could not apply discount: ${e.message}</div>
-        <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Close</button>
-      </div>`;
-  }
-}
-
-async function confirmCancelSubscription() {
-  const body = document.getElementById('cancel-modal-body');
-  if (!body) return;
-  body.innerHTML = '<div style="text-align:center;padding:20px 0;color:var(--muted);font-size:13px;">Cancelling...</div>';
-  const token = getToken();
-  try {
-    const res = await fetch(API + '/stripe/cancel-subscription', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({token}) });
-    const d = await res.json();
-    if (d.error) throw new Error(d.error);
-    // Re-verify so the nav badge, dashboard, and this menu item all reflect
-    // the real tier, same pattern as everywhere else tier changes (starting
-    // a trial, a Stripe checkout success redirect). A trial cancellation
-    // drops straight to Free; a paid subscription keeps Pro until the
-    // period already paid for actually ends, so tier stays 'pro' here.
-    await checkAuth();
-    // The Account Settings modal (if that's where this cancel was started
-    // from) rendered its Billing section from the tier at open time and
-    // won't pick up checkAuth()'s update on its own -- rebuild it so the
-    // Manage/Cancel Subscription buttons and card controls reflect the
-    // new tier immediately instead of staying stale underneath this modal.
-    if (document.getElementById('gax-settings-modal')) showAccountSettings();
-    const periodEndDate = d.current_period_end
-      ? new Date(d.current_period_end * 1000).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'})
-      : null;
-    const message = d.immediate
-      ? "You're back on the Free plan. You're welcome back anytime."
-      : `You won't be charged again. You'll keep Pro access until${periodEndDate ? ` ${periodEndDate}` : ' the end of your current billing period'}.`;
-    body.innerHTML = `
-      <div style="text-align:center;padding:6px 0;">
-        <div style="font-weight:700;margin-bottom:6px;">Subscription cancelled</div>
-        <div style="color:var(--muted);font-size:13px;margin-bottom:18px;">${message}</div>
-        <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:var(--teal);color:#080810;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Done</button>
-      </div>`;
-  } catch(e) {
-    body.innerHTML = `
-      <div style="text-align:center;padding:6px 0;">
-        <div style="color:var(--red);font-size:13px;margin-bottom:18px;">Could not cancel: ${e.message}</div>
-        <button onclick="closeCancelSubscriptionModal()" style="width:100%;padding:11px;background:none;border:1px solid var(--border);color:var(--text);border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">Close</button>
-      </div>`;
-  }
-}
-
 // ── Nav dropdowns (Script + Tools) — JS-based to fix hover gap ──
 (function() {
   // Touchscreens synthesize a mouseenter right before click when tapping a
@@ -6022,8 +5337,8 @@ const POLICIES = {
       <h3>6. Third-Party Services</h3>
       <p>5kable's AI features are powered by the Anthropic Claude API, called from our own servers using our own API key — you do not need your own Anthropic account or API key to use 5kable. 5kable's use of the Claude API is governed by Anthropic's own Terms of Service and Usage Policies, and 5kable is not responsible for the availability of the Anthropic API.</p>
 
-      <h3>7. Subscriptions and Billing</h3>
-      <p>Pro subscriptions are billed monthly through Stripe. By subscribing, you authorise recurring charges. You may cancel at any time; access continues until the end of the current billing period. All prices are inclusive of applicable taxes.</p>
+      <h3>7. Payment</h3>
+      <p>5kable Pro is unlocked with a single one-time payment of £19.99, processed securely through Stripe. There is no subscription and no recurring charge — once payment is confirmed, Pro access is permanently attached to your account. All prices are inclusive of applicable taxes.</p>
 
       <h3>8. Disclaimer of Warranties</h3>
       <p>5kable is provided "as is" without warranties of any kind. We do not guarantee uninterrupted availability, accuracy of AI analysis, or fitness for any particular purpose.</p>
@@ -6129,24 +5444,20 @@ const POLICIES = {
 
       <h3>Eligibility for Refunds</h3>
       <ul>
-        <li><strong>New subscriptions</strong> If you subscribe to Pro and the core Pro features are not working due to a bug on our end, you may request a full refund within 7 days of your first payment.</li>
-        <li><strong>Billing errors</strong> If you were charged incorrectly (e.g. charged twice, or after cancellation), you are entitled to a full refund of the erroneous charge with no time limit.</li>
-        <li><strong>Service outages</strong> If 5kable experiences a significant, extended outage (more than 72 consecutive hours) affecting Pro features, you may request a pro-rated refund for the affected period.</li>
+        <li><strong>New purchases</strong> If you buy Pro and the core Pro features are not working due to a bug on our end, you may request a full refund within 7 days of your payment.</li>
+        <li><strong>Billing errors</strong> If you were charged incorrectly (e.g. charged twice), you are entitled to a full refund of the erroneous charge with no time limit.</li>
+        <li><strong>Service outages</strong> If 5kable experiences a significant, extended outage (more than 72 consecutive hours) affecting Pro features shortly after your purchase, you may request a refund.</li>
       </ul>
 
       <h3>Non-Refundable Situations</h3>
       <ul>
-        <li>Change of mind after 7 days from initial subscription.</li>
+        <li>Change of mind after 7 days from your purchase.</li>
         <li>Accounts suspended for violating our Terms of Service or Fair Use Policy.</li>
         <li>Dissatisfaction with the Anthropic Claude API's performance (this is outside our control).</li>
-        <li>Partially used billing periods upon voluntary cancellation (your access continues until the period ends).</li>
       </ul>
 
       <h3>How to Request a Refund</h3>
       <p>Contact us on Discord or at support@5kable.net with your account email and a brief description of the issue. We aim to respond to refund requests within 3 business days. Approved refunds are processed through Stripe and typically appear within 5–10 business days.</p>
-
-      <h3>Cancellations</h3>
-      <p>You may cancel your Pro subscription at any time via Account Settings → Payment Methods. Cancellation stops future charges; your Pro access continues until the end of the current billing period.</p>
     `
   },
   credits: {
