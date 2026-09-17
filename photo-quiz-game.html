@@ -11,16 +11,16 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Training Game — 5kable</title>
+<title>Training Game: 5kable</title>
 <meta name="description" content="Test your geography knowledge with AI-powered photo quizzes covering real Street View scenes.">
 <link rel="canonical" href="https://5kable.net/photo-quiz-game.html">
 <meta property="og:url" content="https://5kable.net/photo-quiz-game.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Training Game — 5kable">
+<meta property="og:title" content="Training Game: 5kable">
 <meta property="og:description" content="Test your geography knowledge with AI-powered photo quizzes covering real Street View scenes.">
 <meta property="og:image" content="https://5kable.net/apple-touch-icon.png">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Training Game — 5kable">
+<meta name="twitter:title" content="Training Game: 5kable">
 <meta name="twitter:description" content="Test your geography knowledge with AI-powered photo quizzes covering real Street View scenes.">
 <meta name="twitter:image" content="https://5kable.net/apple-touch-icon.png">
 <link rel="icon" href="/favicon.ico">
@@ -575,7 +575,7 @@ const API = 'https://api.5kable.net';
 const GAME_META = {
   bollard:        { title: '🚧 Bollard Bingo',        sub: 'Guess the country from the bollard alone.' },
   sign_shape:     { title: '🚸 Sign Shape Sprint',    sub: 'Guess the country from the road/warning sign shape and color.' },
-  vegetation:     { title: '🌿 Vegetation Snap',       sub: 'Guess the country/region from the landscape alone — no roads or signage to rely on.' },
+  vegetation:     { title: '🌿 Vegetation Snap',       sub: 'Guess the country/region from the landscape alone, no roads or signage to rely on.' },
   license_plate:  { title: '🚗 License Plate Guess',  sub: 'Guess the country from the license plate style.' },
   fifty_fifty:    { title: '🎲 50/50',                sub: 'One photo. Two countries. Pick the right one.' },
   google_car:     { title: '🚙 Guess the Google Car', sub: 'One photo of the Street View car. Guess the country from four options.' }
@@ -634,7 +634,7 @@ const quizType = params.get('type') || 'bollard';
 const meta = GAME_META[quizType] || GAME_META.bollard;
 document.getElementById('game-title').textContent = meta.title;
 document.getElementById('game-sub').textContent = meta.sub;
-document.title = meta.title + ' — 5kable';
+document.title = meta.title + ': 5kable';
 
 // Same localStorage keys as index.html, so a session logged in there
 // carries over here automatically — no separate login needed.
@@ -697,7 +697,7 @@ async function loadLeaderboard(){
     const data = await res.json();
     const rows = data.leaderboard || data.entries || [];
     if (!rows.length){
-      body.innerHTML = '<div class="lb-empty">No scores yet — be the first on the board!</div>';
+      body.innerHTML = '<div class="lb-empty">No scores yet. Be the first on the board!</div>';
       return;
     }
     const me = getUser();
@@ -716,7 +716,7 @@ async function loadLeaderboard(){
   } catch(e) {
     // Backend leaderboard endpoint isn't live yet / unreachable — fail quietly
     // rather than breaking the page, but say so plainly instead of pretending.
-    body.innerHTML = '<div class="lb-empty">Leaderboard isn\'t available right now — check back soon.</div>';
+    body.innerHTML = '<div class="lb-empty">Leaderboard isn\'t available right now. Check back soon.</div>';
   }
 }
 loadLeaderboard();
@@ -739,7 +739,7 @@ async function loadNext(){
   try {
     const res = await fetch(API + '/photo_quiz/random?type=' + encodeURIComponent(quizType));
     if (res.status === 404){
-      let msg = 'No images have been added for this game yet — check back soon!';
+      let msg = 'No images have been added for this game yet. Check back soon!';
       try { const errData = await res.json(); if (errData.error) msg = errData.error; } catch(e) {}
       document.getElementById('quiz-body').innerHTML = `<div class="empty-state">${msg}</div>`;
       return;
@@ -809,7 +809,7 @@ async function loadNext(){
       <button class="next-btn" id="next-btn" onclick="loadNext()">Next Scene →</button>
     `;
   } catch(e) {
-    document.getElementById('quiz-body').innerHTML = '<div class="empty-state">Could not load a scene right now — try refreshing.</div>';
+    document.getElementById('quiz-body').innerHTML = '<div class="empty-state">Could not load a scene right now. Try refreshing.</div>';
   }
 }
 
@@ -848,7 +848,7 @@ function submitAnswer(picked){
 
   document.getElementById('feedback').innerHTML = isCorrect
     ? `<span style="color:var(--teal);font-weight:700;">✓ Correct! This is ${current.correct_country}.</span>`
-    : `<span style="color:var(--red);font-weight:700;">✗ Not quite — this was ${current.correct_country}.</span>`;
+    : `<span style="color:var(--red);font-weight:700;">✗ Not quite. This was ${current.correct_country}.</span>`;
   document.getElementById('next-btn').style.display = 'block';
 }
 

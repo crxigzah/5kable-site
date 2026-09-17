@@ -892,7 +892,7 @@ async function loadMiniGameLeaderboard(type){
     const data = await res.json();
     const rows = data.leaderboard || [];
     if (!rows.length) {
-      el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No scores yet — be the first on the board!</div>`;
+      el.innerHTML = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:24px 0;">No scores yet. Be the first on the board!</div>`;
       return;
     }
     const me = getUser();
