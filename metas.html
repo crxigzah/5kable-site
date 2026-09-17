@@ -344,7 +344,7 @@ footer {
     <p>Click any highlighted country to learn how to identify it in map-guessing games</p>
   </div>
   <div class="legend">
-    <div class="legend-item"><div class="legend-dot" style="background:#00c9a7"></div>Street View coverage — click for guide</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#00c9a7"></div>Street View coverage: click for guide</div>
     <div class="legend-item"><div class="legend-dot" style="background:#1e1e38"></div>No Street View coverage</div>
   </div>
 
@@ -1104,7 +1104,7 @@ fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
   .catch(err => {
     console.error('Globe failed to load:', err);
     const wrap = globeCanvasEl.parentElement;
-    wrap.innerHTML = '<div style="color:var(--muted);text-align:center;padding:60px 20px;">Could not load the map right now — try refreshing the page.</div>';
+    wrap.innerHTML = '<div style="color:var(--muted);text-align:center;padding:60px 20px;">Could not load the map right now. Try refreshing the page.</div>';
   });
 
 // ── Country search bar ──────────────────────────────────────
@@ -1376,7 +1376,7 @@ async function showCountry(c) {
           <div class="loading-pulse">
             <div style="font-size:32px;margin-bottom:12px">🗺️</div>
             <div style="font-weight:700;margin-bottom:8px">${escapeHtml(c.name)} guide coming soon</div>
-            <div style="font-size:13px;color:var(--muted);margin-bottom:20px">We haven't published a guide for this country yet — check back later.</div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:20px">We haven't published a guide for this country yet. Check back later.</div>
             <button id="guide-request-btn" onclick="requestGuide('${escapeHtml(c.name)}','${escapeHtml(c.iso)}')" style="background:rgba(0,201,167,0.15);border:1px solid #00c9a7;color:#00c9a7;font-weight:700;padding:9px 20px;border-radius:8px;cursor:pointer;margin-right:10px;">🙋 Request this Guide</button>
             <button onclick="showMap()" style="background:#00c9a7;border:none;color:#080810;font-weight:700;padding:10px 24px;border-radius:8px;cursor:pointer;">← Back to World Map</button>
             <div id="guide-request-status" style="font-size:12px;color:var(--muted);margin-top:14px;min-height:16px;"></div>
@@ -1473,7 +1473,7 @@ function renderGuide(c, data) {
                     ? `<a href="${escapeHtml(safeGuideUrl(item.url))}" target="_blank" rel="noopener" style="color:#e0e0f0;font-weight:700;text-decoration:none;" onmouseover="this.style.color='#00c9a7'" onmouseout="this.style.color='#e0e0f0'">${escapeHtml(item.label)}</a>`
                     : `<strong style="color:#e0e0f0;">${escapeHtml(item.label)}</strong>`}
                   ${item.url ? ` <a href="${escapeHtml(safeGuideUrl(item.url))}" target="_blank" rel="noopener" style="color:#7c3aed;font-size:12px;text-decoration:underline;">link ↗</a>` : ''}
-                  ${item.desc ? ` <span style="color:#8888aa;">— ${escapeHtml(item.desc)}</span>` : ''}
+                  ${item.desc ? ` <span style="color:#8888aa;">: ${escapeHtml(item.desc)}</span>` : ''}
                 </span>
               </li>`).join('')}
           </ul>`;
@@ -1638,7 +1638,7 @@ async function checkGuideRequestStatus(iso){
     }
     if (status && data.total_requests > 0) {
       status.textContent = data.requested
-        ? `You've already requested this guide — ${data.total_requests} player${data.total_requests === 1 ? '' : 's'} want it so far.`
+        ? `You've already requested this guide: ${data.total_requests} player${data.total_requests === 1 ? '' : 's'} want it so far.`
         : `${data.total_requests} player${data.total_requests === 1 ? '' : 's'} have requested this guide so far.`;
     }
   } catch(e) {
@@ -1662,12 +1662,12 @@ async function requestGuide(country, iso){
     if (btn) { btn.textContent = '✓ Requested'; }
     if (status) {
       status.textContent = data.already_requested
-        ? `You've already requested this guide — ${data.total_requests} player${data.total_requests === 1 ? '' : 's'} want it so far.`
+        ? `You've already requested this guide: ${data.total_requests} player${data.total_requests === 1 ? '' : 's'} want it so far.`
         : `Thanks! ${data.total_requests} player${data.total_requests === 1 ? '' : 's'} have requested this guide.`;
     }
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = '🙋 Request this Guide'; }
-    if (status) status.textContent = "Couldn't submit your request — try again in a moment.";
+    if (status) status.textContent = "Couldn't submit your request. Try again in a moment.";
   }
 }
 
@@ -1715,7 +1715,7 @@ async function submitMetaReport(){
     btn.textContent = doneLabel;
     setTimeout(() => { closeReportModal(); }, 900);
   } catch(e){
-    errEl.textContent = e.message || 'Could not submit — please try again.';
+    errEl.textContent = e.message || 'Could not submit. Please try again.';
     errEl.style.display = 'block';
     btn.disabled = false;
     btn.textContent = currentReportMode === 'suggestion' ? 'Submit Suggestion' : 'Submit Report';

@@ -11,16 +11,16 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Camera Generation Game — 5kable</title>
+<title>Camera Generation Game: 5kable</title>
 <meta name="description" content="Practice identifying the camera generation of a Street View scene to sharpen your geography guessing skills.">
 <link rel="canonical" href="https://5kable.net/camera-gen-game.html">
 <meta property="og:url" content="https://5kable.net/camera-gen-game.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Camera Generation Game — 5kable">
+<meta property="og:title" content="Camera Generation Game: 5kable">
 <meta property="og:description" content="Practice identifying the camera generation of a Street View scene to sharpen your geography guessing skills.">
 <meta property="og:image" content="https://5kable.net/apple-touch-icon.png">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Camera Generation Game — 5kable">
+<meta name="twitter:title" content="Camera Generation Game: 5kable">
 <meta name="twitter:description" content="Practice identifying the camera generation of a Street View scene to sharpen your geography guessing skills.">
 <meta name="twitter:image" content="https://5kable.net/apple-touch-icon.png">
 <link rel="icon" href="/favicon.ico">
@@ -527,7 +527,7 @@ async function loadLeaderboard(){
     const data = await res.json();
     const rows = data.leaderboard || [];
     if (!rows.length){
-      body.innerHTML = '<div class="lb-empty">No scores yet — be the first on the board!</div>';
+      body.innerHTML = '<div class="lb-empty">No scores yet. Be the first on the board!</div>';
       return;
     }
     const me = getUser();
@@ -542,7 +542,7 @@ async function loadLeaderboard(){
         </div>`;
     }).join('');
   } catch(e) {
-    body.innerHTML = '<div class="lb-empty">Leaderboard isn\'t available right now — check back soon.</div>';
+    body.innerHTML = '<div class="lb-empty">Leaderboard isn\'t available right now. Check back soon.</div>';
   }
 }
 loadLeaderboard();
@@ -565,7 +565,7 @@ async function loadNext(){
   try {
     const res = await fetch(API + '/camera_quiz/random');
     if (res.status === 404){
-      document.getElementById('quiz-body').innerHTML = '<div class="empty-state">No quiz images have been added yet — check back soon!</div>';
+      document.getElementById('quiz-body').innerHTML = '<div class="empty-state">No quiz images have been added yet. Check back soon!</div>';
       return;
     }
     const data = await res.json();
@@ -583,7 +583,7 @@ async function loadNext(){
       <button class="next-btn" id="next-btn" onclick="loadNext()">Next Scene →</button>
     `;
   } catch(e) {
-    document.getElementById('quiz-body').innerHTML = '<div class="empty-state">Could not load a scene right now — try refreshing.</div>';
+    document.getElementById('quiz-body').innerHTML = '<div class="empty-state">Could not load a scene right now. Try refreshing.</div>';
   }
 }
 
@@ -622,7 +622,7 @@ function submitAnswer(picked){
 
   document.getElementById('feedback').innerHTML = isCorrect
     ? `<span style="color:var(--teal);font-weight:700;">✓ Correct! This is ${current.correct_gen}.</span>`
-    : `<span style="color:var(--red);font-weight:700;">✗ Not quite — this was ${current.correct_gen}.</span>`;
+    : `<span style="color:var(--red);font-weight:700;">✗ Not quite. This was ${current.correct_gen}.</span>`;
   document.getElementById('next-btn').style.display = 'block';
 }
 

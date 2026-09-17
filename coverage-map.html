@@ -11,16 +11,16 @@
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Coverage Map — 5kable</title>
+<title>Coverage Map: 5kable</title>
 <meta name="description" content="See exactly which countries and regions have Street View coverage for map-guessing games.">
 <link rel="canonical" href="https://5kable.net/coverage-map.html">
 <meta property="og:url" content="https://5kable.net/coverage-map.html">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Coverage Map — 5kable">
+<meta property="og:title" content="Coverage Map: 5kable">
 <meta property="og:description" content="See exactly which countries and regions have Street View coverage for map-guessing games.">
 <meta property="og:image" content="https://5kable.net/apple-touch-icon.png">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Coverage Map — 5kable">
+<meta name="twitter:title" content="Coverage Map: 5kable">
 <meta name="twitter:description" content="See exactly which countries and regions have Street View coverage for map-guessing games.">
 <meta name="twitter:image" content="https://5kable.net/apple-touch-icon.png">
 <link rel="icon" href="/favicon.ico">
@@ -377,10 +377,10 @@ nav::before {
 
   <div id="config-warning" style="display:none;">
     <strong>⚠️ Google Maps API key needed.</strong><br>
-    This page needs its own Google Maps JavaScript API key to work — open <code>coverage-map.html</code> and replace
+    This page needs its own Google Maps JavaScript API key to work. Open <code>coverage-map.html</code> and replace
     <code>YOUR_GOOGLE_MAPS_API_KEY</code> with a real key from the
     <a href="https://console.cloud.google.com/google/maps-apis" target="_blank">Google Cloud Console</a>
-    (enable the <strong>Maps JavaScript API</strong> and <strong>Places API</strong> on that project — Places is needed
+    (enable the <strong>Maps JavaScript API</strong> and <strong>Places API</strong> on that project; Places is needed
     for the search-suggestions dropdown).
     Google also offers a no-billing-required <strong>Maps Demo Key</strong> if you just want to test this out first.
   </div>
@@ -583,7 +583,7 @@ function handleMapClick(latLng){
       document.getElementById('open-in-maps-btn').href =
         `https://www.google.com/maps/@?api=1&map_action=pano&pano=${data.location.pano}`;
     } else {
-      statusEl.textContent = 'No Street View coverage within ~50m of that click — try clicking closer to a blue line.';
+      statusEl.textContent = 'No Street View coverage within ~50m of that click. Try clicking closer to a blue line.';
     }
   });
 }
@@ -639,7 +639,7 @@ function jumpToSearch(){
     if (status === 'OK' && results[0]) {
       map.fitBounds(results[0].geometry.viewport || results[0].geometry.bounds);
     } else {
-      alert('Could not find that place — try a different search.');
+      alert('Could not find that place. Try a different search.');
     }
   });
 }
