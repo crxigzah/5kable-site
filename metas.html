@@ -1341,8 +1341,20 @@ function renderCountryList(){
 renderCountryList();
 
 let currentCountryName = null;
+// Bumped on every showCountry() call and captured as myRequest below --
+// each in-flight call checks it's still the latest before touching the
+// DOM. The retry loop below means a slow/cold-starting request can take
+// a while, so it's common for an earlier, slower request (e.g. Andorra)
+// to still be in flight when a later, faster one (e.g. Australia)
+// already finished and rendered. Without this guard, the stale Andorra
+// response arrives last and overwrites the correctly-rendered Australia
+// guide's body -- the header still says "Australia" (set synchronously
+// below, never touched again by the Andorra call) while the body is
+// actually Andorra's, which is exactly the bug this fixes.
+let _guideRequestToken = 0;
 
 async function showCountry(c) {
+  const myRequest = ++_guideRequestToken;
   document.getElementById('map-view').style.display = 'none';
   globeIsVisible = false;
   currentCountryName = c.name;
@@ -1362,6 +1374,7 @@ async function showCountry(c) {
   // page stuck if the first attempt doesn't get a response.
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
+      if (myRequest !== _guideRequestToken) return; // a newer country was clicked since this attempt started
       document.getElementById('cv-body').innerHTML = `<div class="loading-pulse"><div class="spinner"></div><div>${attempt > 1 ? `Connecting to server... attempt ${attempt}/3` : `Loading ${c.name} guide...`}</div></div>`;
       const res = await fetch(`${API}/ai/country_meta`, {
         method:'POST',
@@ -1370,6 +1383,7 @@ async function showCountry(c) {
         signal: AbortSignal.timeout(55000)
       });
       const data = await res.json();
+      if (myRequest !== _guideRequestToken) return; // discard -- a newer request has since rendered
       if (data.error) throw new Error(data.error);
       if (data._source === 'none') {
         document.getElementById('cv-body').innerHTML = `
@@ -1387,6 +1401,7 @@ async function showCountry(c) {
       renderGuide(c, data);
       return;
     } catch(e) {
+      if (myRequest !== _guideRequestToken) return; // discard -- a newer request has since rendered
       if (attempt === 3) {
         document.getElementById('cv-body').innerHTML = `
           <div class="loading-pulse" style="color:#ff6b6b">
